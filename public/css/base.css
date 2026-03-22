@@ -107,6 +107,9 @@ html, body {
   flex-shrink: 0;
 }
 
+/* Utility */
+.hidden { display: none !important; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
