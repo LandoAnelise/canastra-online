@@ -1,0 +1,130 @@
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20,20,30,0.95);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--cream);
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 0.85rem;
+  z-index: 200;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+#toast.hidden { display: none; }
+#toast.error { border-color: rgba(231,76,60,0.5); background: rgba(80,10,10,0.95); }
+#toast.success { border-color: rgba(100,220,100,0.5); background: rgba(10,60,20,0.95); }
+
+/* ── INLINE DISCARD DROPDOWN ──────────────────────────────────── */
+#discard-dropdown {
+  position: absolute;
+  top: 120px;
+  left: calc(50% + 10px);
+  background: rgba(10,35,18,0.97);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  z-index: 50;
+  min-width: 200px;
+  max-width: 320px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+#discard-dropdown.hidden { display: none; }
+
+.discard-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+.discard-dropdown-header button {
+  background: none;
+  border: none;
+  color: var(--cream);
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 0.9rem;
+  transition: opacity 0.15s;
+}
+.discard-dropdown-header button:hover { opacity: 1; }
+
+.discard-dropdown-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#btn-expand-discard {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.4);
+  border: none;
+  border-radius: 4px;
+  color: var(--cream);
+  font-size: 0.65rem;
+  padding: 2px 5px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+#btn-expand-discard:hover { opacity: 1; }
+
+#btn-expand-discard {
+  display: block;
+  margin: 4px auto 0;
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: 6px;
+  color: var(--gold-light);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-family: var(--font-body);
+  padding: 3px 10px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+#btn-expand-discard:hover { background: rgba(201,168,76,0.3); }
+
+/* ── DISCARD PILE EXPAND MODAL ───────────────────────────────── */
+#modal-discard-pile .modal-box {
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+#discard-pile-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 8px 0;
+}
+.discard-view-card {
+  width: 52px;
+  height: 74px;
+  border-radius: 7px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  flex-shrink: 0;
+}
+.discard-view-card.red { color: var(--red-suit); }
+.discard-view-card:last-child {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(201,168,76,0.4);
+}

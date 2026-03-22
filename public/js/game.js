@@ -72,6 +72,48 @@ function showScreen(id) {
 }
 
 // ─── LOBBY ───────────────────────────────────────────────────────────────────
+let amLeader = false;
+let selectedRoomType = 'private';
+
+// Tab switching
+document.querySelectorAll('.lobby-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+    tab.classList.add('active');
+    document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
+    if (tab.dataset.tab === 'browse') loadPublicRooms();
+  });
+});
+
+// Room type selection
+document.getElementById('type-private').addEventListener('click', () => {
+  document.getElementById('type-private').classList.add('active');
+  document.getElementById('type-public').classList.remove('active');
+  selectedRoomType = 'private';
+});
+document.getElementById('type-public').addEventListener('click', () => {
+  document.getElementById('type-public').classList.add('active');
+  document.getElementById('type-private').classList.remove('active');
+  selectedRoomType = 'public';
+});
+
+// Create Room
+document.getElementById('btn-create').addEventListener('click', () => {
+  const name = document.getElementById('input-name').value.trim();
+  if (!name) { showToast('Digite seu nome!', 'error'); return; }
+  myName = name;
+  socket.emit('createRoom', { playerName: name, isPublic: selectedRoomType === 'public' }, (res) => {
+    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    myRoomId = res.roomId;
+    mySeatIndex = res.seatIndex;
+    document.getElementById('waiting-room-code').textContent = res.roomId;
+    history.replaceState(null, '', `?sala=${res.roomId}`);
+    showScreen('screen-waiting');
+  });
+});
+
+// Random room code generator (for join-by-code tab)
 document.getElementById('btn-random-room').addEventListener('click', () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -79,32 +121,90 @@ document.getElementById('btn-random-room').addEventListener('click', () => {
   document.getElementById('input-room').value = code;
 });
 
-document.getElementById('btn-join').addEventListener('click', joinRoom);
-document.getElementById('input-name').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
-document.getElementById('input-room').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
-
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('sala')) document.getElementById('input-room').value = urlParams.get('sala').toUpperCase();
-
-function joinRoom() {
+// Join by code
+function joinRoomByCode(code) {
   const name = document.getElementById('input-name').value.trim();
-  const room = document.getElementById('input-room').value.trim().toUpperCase();
   if (!name) { showToast('Digite seu nome!', 'error'); return; }
-  if (!room) { showToast('Digite o código da sala!', 'error'); return; }
-  myName = name; myRoomId = room;
-  socket.emit('joinRoom', { roomId: room, playerName: name }, (res) => {
+  if (!code) { showToast('Digite o código da sala!', 'error'); return; }
+  myName = name; myRoomId = code;
+  socket.emit('joinRoom', { roomId: code, playerName: name }, (res) => {
     if (!res.ok) { showToast(res.msg, 'error'); return; }
     mySeatIndex = res.seatIndex;
-    document.getElementById('waiting-room-code').textContent = room;
-    history.replaceState(null, '', `?sala=${room}`);
+    document.getElementById('waiting-room-code').textContent = code;
+    history.replaceState(null, '', `?sala=${code}`);
     if (res.reconnected) {
       showToast('✅ Reconectado com sucesso!', 'success', 3000);
-      // gameState will arrive via 'gameResumed' → broadcastState
     } else {
       showScreen('screen-waiting');
     }
   });
 }
+
+document.getElementById('btn-join').addEventListener('click', () => {
+  joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
+});
+document.getElementById('input-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const activeTab = document.querySelector('.lobby-tab.active')?.dataset.tab;
+    if (activeTab === 'join') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
+    else if (activeTab === 'create') document.getElementById('btn-create').click();
+  }
+});
+document.getElementById('input-room').addEventListener('keydown', e => {
+  if (e.key === 'Enter') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
+});
+
+// Auto-join from URL param — switch to join tab and pre-fill
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('sala')) {
+  const code = urlParams.get('sala').toUpperCase();
+  document.getElementById('input-room').value = code;
+  // Switch to join tab
+  document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelector('[data-tab="join"]').classList.add('active');
+  document.getElementById('panel-join').classList.remove('hidden');
+}
+
+// Public rooms
+function loadPublicRooms() {
+  const list = document.getElementById('public-rooms-list');
+  list.innerHTML = '<div class="rooms-loading">Carregando…</div>';
+  socket.emit('getPublicRooms', {}, (res) => {
+    if (!res.ok) { list.innerHTML = '<div class="rooms-empty">Erro ao carregar.</div>'; return; }
+    renderPublicRooms(res.rooms);
+  });
+}
+
+function renderPublicRooms(rooms) {
+  const list = document.getElementById('public-rooms-list');
+  if (!rooms || rooms.length === 0) {
+    list.innerHTML = '<div class="rooms-empty">Nenhuma sala pública disponível no momento.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  rooms.forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'public-room-item';
+    item.innerHTML = `
+      <div>
+        <div class="pri-code">${r.roomId}</div>
+        <div class="pri-players">${r.players.join(', ')} · ${r.playerCount}/4</div>
+      </div>
+      <button class="pri-join-btn">Entrar →</button>`;
+    item.querySelector('.pri-join-btn').addEventListener('click', () => {
+      joinRoomByCode(r.roomId);
+    });
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('btn-refresh-rooms').addEventListener('click', loadPublicRooms);
+
+socket.on('publicRoomsUpdated', ({ rooms }) => {
+  const panel = document.getElementById('panel-browse');
+  if (!panel.classList.contains('hidden')) renderPublicRooms(rooms);
+});
 
 // ─── SOCKET EVENTS ───────────────────────────────────────────────────────────
 socket.on('playerJoined', ({ playerName, totalPlayers }) => {
@@ -112,6 +212,7 @@ socket.on('playerJoined', ({ playerName, totalPlayers }) => {
 });
 
 socket.on('teamsAssigned', ({ players }) => {
+  teamsInitialized = false; // allow re-setup when teams change
   readyPlayers = new Set();
   iAmReady = false;
   document.getElementById('ready-room-code').textContent = myRoomId;
@@ -221,34 +322,48 @@ let dragSeat = null;
 let teamsInitialized = false;
 
 function renderTeamSelection(state) {
-  if (teamsInitialized) { updateTeamChips(state); return; }
+  amLeader = !!state.isLeader;
+
+  // Update leader notice
+  const notice = document.getElementById('teams-leader-notice');
+  if (notice) {
+    notice.textContent = amLeader
+      ? '👑 Você é o líder — arraste os jogadores para montar as duplas'
+      : `👑 Aguardando ${state.players[0]?.name || 'o líder'} montar as duplas…`;
+    notice.className = amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
+  }
+  document.getElementById('btn-confirm-teams').style.display = amLeader ? '' : 'none';
+
+  if (teamsInitialized) { updateTeamChips(state, amLeader); return; }
   teamsInitialized = true;
   teamAssignments = {};
   state.players.forEach((_, i) => { teamAssignments[i] = -1; });
 
-  ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
-    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-    el.addEventListener('drop', e => {
-      e.preventDefault();
-      el.classList.remove('drag-over');
-      if (dragSeat === null) return;
-      const targetTeam = id === 'team0-slots' ? 0 : id === 'team1-slots' ? 1 : -1;
-      if (targetTeam !== -1) {
-        const inTeam = Object.values(teamAssignments).filter(t => t === targetTeam).length;
-        if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
-      }
-      teamAssignments[dragSeat] = targetTeam;
-      updateTeamChips(state);
-      updateConfirmBtn();
+  if (amLeader) {
+    ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        el.classList.remove('drag-over');
+        if (dragSeat === null) return;
+        const targetTeam = id === 'team0-slots' ? 0 : id === 'team1-slots' ? 1 : -1;
+        if (targetTeam !== -1) {
+          const inTeam = Object.values(teamAssignments).filter(t => t === targetTeam).length;
+          if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
+        }
+        teamAssignments[dragSeat] = targetTeam;
+        updateTeamChips(state, amLeader);
+        updateConfirmBtn();
+      });
     });
-  });
+  }
 
-  updateTeamChips(state);
+  updateTeamChips(state, amLeader);
 }
 
-function updateTeamChips(state) {
+function updateTeamChips(state, isLeader = false) {
   const slots = {
     '-1': document.getElementById('unassigned-slots'),
     '0':  document.getElementById('team0-slots'),
@@ -261,18 +376,20 @@ function updateTeamChips(state) {
     const isMe = i === mySeatIndex;
     const chip = document.createElement('div');
     chip.className = `player-chip${isMe ? ' me-chip' : ''}`;
-    chip.draggable = true;
+    chip.draggable = isLeader;
     chip.dataset.seat = i;
     chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
       <span>${p.name}${isMe ? ' (você)' : ''}</span>`;
-    chip.addEventListener('dragstart', () => {
-      dragSeat = i;
-      setTimeout(() => chip.classList.add('dragging'), 0);
-    });
-    chip.addEventListener('dragend', () => {
-      chip.classList.remove('dragging');
-      dragSeat = null;
-    });
+    if (isLeader) {
+      chip.addEventListener('dragstart', () => {
+        dragSeat = i;
+        setTimeout(() => chip.classList.add('dragging'), 0);
+      });
+      chip.addEventListener('dragend', () => {
+        chip.classList.remove('dragging');
+        dragSeat = null;
+      });
+    }
     slots[team].appendChild(chip);
   });
 }
@@ -488,7 +605,7 @@ function renderMelds(state) {
         </div>
         <div class="meld-cards-row">${meld.cards.map(fullCardHTML).join('')}</div>`;
 
-      // Add button handler
+      // Add button handler + drag-to-meld
       if (canAdd) {
         el.querySelector('.btn-add-to-meld').addEventListener('click', () => {
           if (selectedCards.length === 0) { showToast('Selecione cartas na mão primeiro.', 'error'); return; }
@@ -496,6 +613,24 @@ function renderMelds(state) {
           socket.emit('playMelds', { meldActions }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); return; }
             showToast('Cartas adicionadas!', 'success');
+            clearSelection();
+          });
+        });
+
+        // Drag a card from hand directly onto this meld
+        el.addEventListener('dragover', e => {
+          if (!dragCardId) return;
+          e.preventDefault();
+          el.classList.add('drop-target');
+        });
+        el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('drop-target');
+          if (!dragCardId) return;
+          socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, res => {
+            if (!res.ok) { showToast(res.msg, 'error'); return; }
+            showToast('Carta adicionada!', 'success', 1400);
             clearSelection();
           });
         });
@@ -567,6 +702,13 @@ document.getElementById('btn-bater').addEventListener('click', () => {
     if (!res?.ok) { showToast(res?.msg || 'Erro ao bater.', 'error'); return; }
     clearSelection();
   });
+});
+
+document.getElementById('btn-sort-hand').addEventListener('click', () => {
+  if (!gameState) return;
+  myHandOrder = autoSortHand(gameState.myHand).map(c => c.id);
+  renderMe(gameState);
+  showToast('Cartas reordenadas!', 'success', 1400);
 });
 
 document.getElementById('deck-pile').addEventListener('click', () => {
@@ -647,8 +789,6 @@ document.addEventListener('click', (e) => {
     document.getElementById('btn-expand-discard').textContent = '▼';
   }
 });
-
-document.getElementById('btn-close-discard-modal')?.addEventListener('click', () => closeModal('modal-discard-pile'));
 
 // ─── DRAG CARD TO DISCARD PILE ────────────────────────────────────────────────
 const discardPileEl = document.getElementById('discard-pile');

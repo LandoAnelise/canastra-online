@@ -31,18 +31,55 @@
       <input id="input-name" type="text" placeholder="Como quer ser chamado?" maxlength="20" autocomplete="off" />
     </div>
 
-    <div class="form-group">
-      <label>Código da sala</label>
-      <div class="room-row">
-        <input id="input-room" type="text" placeholder="Ex: FAMILIA01" maxlength="12" autocomplete="off" />
-        <button id="btn-random-room" class="btn-ghost" title="Gerar código aleatório">⟳</button>
+    <!-- Mode tabs -->
+    <div class="lobby-tabs">
+      <button class="lobby-tab active" data-tab="create">✦ Criar Sala</button>
+      <button class="lobby-tab" data-tab="join">🔑 Código</button>
+      <button class="lobby-tab" data-tab="browse">🌐 Públicas</button>
+    </div>
+
+    <!-- Panel: Create Room -->
+    <div class="lobby-panel" id="panel-create">
+      <div class="room-type-grid">
+        <button class="room-type-btn active" id="type-private">
+          <span style="font-size:1.4rem">🔒</span>
+          <span class="rt-name">Privada</span>
+          <span class="rt-desc">Compartilhe o código com amigos</span>
+        </button>
+        <button class="room-type-btn" id="type-public">
+          <span style="font-size:1.4rem">🌐</span>
+          <span class="rt-name">Pública</span>
+          <span class="rt-desc">Aparece na lista para qualquer um entrar</span>
+        </button>
+      </div>
+      <button id="btn-create" class="btn-primary">Criar Sala</button>
+    </div>
+
+    <!-- Panel: Join by code -->
+    <div class="lobby-panel hidden" id="panel-join">
+      <div class="form-group" style="margin:0">
+        <label>Código da sala</label>
+        <div class="room-row">
+          <input id="input-room" type="text" placeholder="Ex: FAMILIA01" maxlength="12" autocomplete="off" />
+          <button id="btn-random-room" class="btn-ghost" title="Gerar código aleatório">⟳</button>
+        </div>
+      </div>
+      <button id="btn-join" class="btn-primary">Entrar na Sala</button>
+    </div>
+
+    <!-- Panel: Browse public rooms -->
+    <div class="lobby-panel hidden" id="panel-browse">
+      <div class="public-rooms-header">
+        <span class="public-rooms-title">Salas disponíveis</span>
+        <button id="btn-refresh-rooms" class="btn-ghost" style="font-size:0.8rem;padding:5px 10px">↻ Atualizar</button>
+      </div>
+      <div id="public-rooms-list" class="public-rooms-list">
+        <div class="rooms-loading">Clique em Atualizar para carregar</div>
       </div>
     </div>
 
-    <button id="btn-join" class="btn-primary">Entrar na Sala</button>
-    <button id="btn-show-rules" class="btn-ghost" style="text-align:center">📋 Ver regras do jogo</button>
-
-    <p class="lobby-hint">Compartilhe o código da sala com os outros 3 jogadores.<br/>O jogo começa automaticamente quando todos entrarem.</p>
+    <button id="btn-show-rules" class="btn-ghost" style="text-align:center;margin-top:4px">📋 Ver regras do jogo</button>
+    <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
   </div>
 </div>
 
@@ -60,7 +97,7 @@
 <div id="screen-teams" class="screen">
   <div class="waiting-card">
     <h2>Montar Duplas</h2>
-    <p class="waiting-hint" style="margin-bottom:8px">Arraste os jogadores para definir as duplas</p>
+    <p id="teams-leader-notice" class="teams-leader-notice">Aguardando o líder montar as duplas…</p>
     <div id="teams-grid">
       <div class="team-column" id="team-col-unassigned">
         <div class="team-col-label">Sem dupla</div>
@@ -181,11 +218,17 @@
 
   <!-- Action bar -->
   <div id="action-bar">
-    <button id="btn-draw" class="btn-action" disabled>🂠 Pescar</button>
-    <button id="btn-take-discard" class="btn-action" disabled>♻️ Pegar Lixo</button>
-    <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
-    <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
-    <button id="btn-bater" class="btn-action bater" disabled>🏆 Bater!</button>
+    <div class="action-group main-actions">
+      <button id="btn-draw" class="btn-action" disabled>🂠 Pescar</button>
+      <button id="btn-take-discard" class="btn-action" disabled>♻️ Pegar Lixo</button>
+      <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
+      <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
+      <button id="btn-bater" class="btn-action bater" disabled>🏆 Bater!</button>
+    </div>
+    <div class="action-sep"></div>
+    <div class="action-group util-actions">
+      <button id="btn-sort-hand" class="btn-action sort-hand" title="Reordenar cartas por naipe e valor">🔀 Reordenar</button>
+    </div>
   </div>
 
   <!-- Turn indicator -->
@@ -313,6 +356,6 @@
 <div id="toast" class="hidden"></div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="/js/game.js"></script>
+<script type="module" src="/js/main.js"></script>
 </body>
 </html>

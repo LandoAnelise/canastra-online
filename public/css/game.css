@@ -1,0 +1,458 @@
+/* ── GAME SCREEN ──────────────────────────────────────────────── */
+#screen-game {
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 50% 50%, #1e8040 0%, #155c2e 40%, #0d3d20 100%);
+  overflow: hidden;
+  position: relative;
+  padding: 0;
+}
+
+/* Top bar */
+#game-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid rgba(201,168,76,0.2);
+  flex-shrink: 0;
+  height: 52px;
+}
+.score-block { display: flex; flex-direction: column; align-items: flex-start; }
+.score-block.right { align-items: flex-end; }
+.score-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.55; }
+.score-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--gold-light); }
+#game-status-label { font-family: var(--font-display); font-size: 0.95rem; color: var(--gold); opacity: 0.8; }
+
+/* Table layout */
+#table-area {
+  flex: 1;
+  display: grid;
+  grid-template-areas:
+    ". top ."
+    "left center right"
+    ". bottom .";
+  grid-template-columns: 100px 1fr 100px;
+  grid-template-rows: auto 1fr auto;
+  gap: 6px;
+  padding: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Player slots */
+.player-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.player-slot.top { grid-area: top; flex-direction: column; }
+.player-slot.left {
+  grid-area: left; flex-direction: column; justify-content: center;
+  background: rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 4px;
+}
+.player-slot.right {
+  grid-area: right; flex-direction: column; justify-content: center;
+  background: rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 4px;
+}
+.player-slot.bottom { grid-area: bottom; }
+.player-slot.me { }
+
+.player-info { display: flex; align-items: center; gap: 8px; }
+.player-info.vertical { flex-direction: column; gap: 2px; }
+.player-name { font-size: 0.75rem; font-weight: 600; color: var(--cream); opacity: 0.85; }
+.hand-count {
+  font-size: 0.65rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: 20px;
+  padding: 1px 7px;
+  color: var(--gold);
+}
+
+/* Highlight current player slot */
+.player-slot.active-turn .player-name {
+  color: var(--gold-light);
+}
+.player-slot.active-turn .player-info::before {
+  content: '▶';
+  font-size: 0.6rem;
+  color: var(--gold);
+  margin-right: 2px;
+}
+
+/* Opponent card backs */
+.hand-fan { display: flex; gap: -8px; }
+.hand-fan .back-card {
+  width: 28px;
+  height: 40px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #1a3a8f, #0d1f5c);
+  border: 1px solid rgba(255,255,255,0.2);
+  margin-left: -10px;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+}
+.hand-fan .back-card:first-child { margin-left: 0; }
+.hand-fan.vertical { flex-direction: column; }
+.hand-fan.vertical .back-card { margin-left: 0; margin-top: -16px; width: 36px; height: 24px; }
+
+/* Center area */
+#center-area {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* Center area needs position:relative for dropdown */
+#center-area { position: relative; }
+
+#decks-row { display: flex; gap: 20px; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.pile {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.pile:hover { transform: scale(1.05); }
+.pile-card {
+  width: 60px;
+  height: 86px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.pile-card.back {
+  background: linear-gradient(135deg, #1a3a8f, #0d1f5c);
+  color: rgba(255,255,255,0.4);
+}
+.pile-card.front {
+  background: var(--card-bg);
+  color: var(--black-suit);
+  font-size: 1rem;
+  font-weight: 700;
+  border-color: var(--card-border);
+  flex-direction: column;
+  line-height: 1.1;
+}
+.pile-card.front .card-rank { font-size: 1.1rem; }
+.pile-card.front .card-suit { font-size: 1.3rem; }
+.pile-card.front.red { color: var(--red-suit); }
+.pile-count {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+/* Melds area */
+#melds-area {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 2px;
+}
+.melds-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
+.melds-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 2px;
+}
+.melds-list { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.meld-group {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 4px 6px;
+  display: flex;
+  gap: 2px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.meld-group:hover { border-color: rgba(201,168,76,0.5); }
+.meld-group.canastra-limpa { border-color: rgba(100,220,100,0.5); box-shadow: 0 0 8px rgba(100,220,100,0.2); }
+.meld-group.canastra-suja { border-color: rgba(255,200,50,0.5); box-shadow: 0 0 8px rgba(255,200,50,0.2); }
+.meld-mini-card {
+  width: 22px;
+  height: 32px;
+  border-radius: 3px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #1a1a2e;
+}
+.meld-mini-card.red { color: var(--red-suit); }
+.meld-mini-card.wild { background: linear-gradient(135deg, #fffde7, #fff8c5); border-color: #f0c040; }
+
+/* ── MELD GROUP TEAM LABELS ───────────────────────────────────── */
+.melds-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.55;
+  padding: 2px 0 4px;
+}
+.melds-label-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+.melds-label-you {
+  font-size: 0.65rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-style: italic;
+  opacity: 0.8;
+}
+.melds-label-you.hidden { display: none; }
+
+/* My team highlight */
+.melds-group.my-team {
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: rgba(201,168,76,0.04);
+}
+.melds-group.my-team .melds-label {
+  opacity: 1;
+}
+.melds-group.my-team .melds-label-dot {
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(201,168,76,0.6);
+}
+.melds-group.my-team .melds-label-text {
+  color: var(--gold-light);
+}
+
+.melds-empty {
+  font-size: 0.72rem;
+  opacity: 0.3;
+  font-style: italic;
+  padding: 8px;
+}
+
+/* My hand */
+#player-bottom {
+  padding: 6px 10px 4px;
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px 10px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+#my-hand {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 8px 8px;
+  scrollbar-width: thin;
+}
+.my-card {
+  width: 58px;
+  height: 82px;
+  border-radius: 7px;
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  user-select: none;
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.my-card .card-rank { font-size: 0.9rem; line-height: 1; }
+.my-card .card-suit { font-size: 1.1rem; line-height: 1; }
+.my-card.red { color: var(--red-suit); }
+.my-card.wild { background: linear-gradient(135deg, #fffde7, #fff8c5); border-color: #f0c040; }
+.my-card:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
+.my-card.selected {
+  border-color: var(--gold);
+  transform: translateY(-10px);
+  box-shadow: 0 10px 24px rgba(201,168,76,0.5);
+  background: #fffff0;
+}
+.my-card.to-discard {
+  border-color: #e74c3c;
+  transform: translateY(-10px);
+  box-shadow: 0 10px 24px rgba(231,76,60,0.5);
+}
+
+/* ── NEWLY DRAWN CARD HIGHLIGHT ──────────────────────────────── */
+@keyframes newCardPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(100,220,150,0.9), 0 3px 10px rgba(0,0,0,0.4); border-color: #4caf82; }
+  60%  { box-shadow: 0 0 0 10px rgba(100,220,150,0), 0 3px 10px rgba(0,0,0,0.4); border-color: #4caf82; }
+  100% { box-shadow: 0 3px 10px rgba(0,0,0,0.4); border-color: var(--card-border); }
+}
+.my-card.just-drawn {
+  animation: newCardPulse 1.8s ease-out forwards;
+  border-color: #4caf82;
+}
+
+/* Action bar */
+#action-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(0,0,0,0.4);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Turn banner */
+#turn-banner {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(201,168,76,0.9);
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 0.82rem;
+  padding: 5px 18px;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#turn-banner.hidden { display: none; }
+
+/* ── MELD FULL CARDS ──────────────────────────────────────────── */
+.meld-group-full {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.meld-group-full.canastra-limpa { border-color: rgba(100,220,100,0.5); box-shadow: 0 0 10px rgba(100,220,100,0.15); }
+.meld-group-full.canastra-suja  { border-color: rgba(255,200,50,0.5);  box-shadow: 0 0 10px rgba(255,200,50,0.15); }
+.meld-group-full.drop-target {
+  border-color: var(--gold) !important;
+  background: rgba(201,168,76,0.12);
+  box-shadow: 0 0 16px rgba(201,168,76,0.4);
+  transform: scale(1.02);
+  transition: all 0.1s;
+}
+
+.meld-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.meld-type-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+.canastra-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 20px;
+}
+.canastra-badge.limpa { background: rgba(100,220,100,0.2); color: #6de89a; }
+.canastra-badge.suja  { background: rgba(255,200,50,0.2);  color: #ffd060; }
+
+.btn-add-to-meld {
+  margin-left: auto;
+  background: rgba(201,168,76,0.15);
+  border: 1px solid rgba(201,168,76,0.4);
+  border-radius: 6px;
+  color: var(--gold-light);
+  font-size: 0.7rem;
+  font-family: var(--font-body);
+  padding: 2px 9px;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.btn-add-to-meld:hover { background: rgba(201,168,76,0.3); }
+
+.meld-cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.meld-card {
+  width: 34px;
+  height: 48px;
+  border-radius: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #1a1a2e;
+  flex-shrink: 0;
+}
+.meld-card .card-rank { font-size: 0.68rem; line-height: 1; }
+.meld-card .card-suit { font-size: 0.78rem; line-height: 1; }
+.meld-card.red  { color: var(--red-suit); }
+.meld-card.wild { background: linear-gradient(135deg,#fffde7,#fff8c5); border-color:#f0c040; }
+
+/* ── DRAG-AND-DROP HAND ───────────────────────────────────────── */
+.my-card.drag-over-card {
+  border-color: var(--gold);
+  box-shadow: -4px 0 12px rgba(201,168,76,0.4);
+}
+.my-card[draggable="true"] { cursor: grab; }
+.my-card[draggable="true"]:active { cursor: grabbing; }
+
+/* ── DISCARD DROP ZONE ───────────────────────────────────────── */
+#discard-pile.drop-target {
+  outline: 3px dashed var(--red-suit);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+#discard-pile.drop-target .pile-card {
+  box-shadow: 0 0 20px rgba(192,57,43,0.5);
+}

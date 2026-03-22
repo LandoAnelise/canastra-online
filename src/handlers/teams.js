@@ -1,0 +1,58 @@
+'use strict';
+
+function registerTeamHandlers(socket, io, rm) {
+  const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
+
+  // ── ASSIGN TEAMS ──
+  socket.on('assignTeams', ({ teams }, cb) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: false, msg: 'Você não está em uma sala.' });
+    const game = rooms.get(info.roomId);
+    if (!game) return cb?.({ ok: false, msg: 'Sala não encontrada.' });
+    if (game.players.length < 4) return cb?.({ ok: false, msg: 'Aguardando todos os jogadores.' });
+    if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) {
+      return cb?.({ ok: false, msg: 'Apenas o líder da sala pode definir as duplas.' });
+    }
+
+    const result = game.assignTeams(teams);
+    if (!result.ok) return cb?.({ ok: false, msg: result.msg });
+
+    game.readyPlayers = new Set();
+    cb?.({ ok: true });
+    broadcastState(game);
+    broadcastToRoom(info.roomId, 'teamsAssigned', {
+      players: game.players.map(p => ({ name: p.name, teamIndex: p.teamIndex })),
+      readyPlayers: [],
+    });
+  });
+
+  // ── PLAYER READY ──
+  socket.on('playerReady', (_, cb) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
+    const game = rooms.get(info.roomId);
+    if (!game) return cb?.({ ok: false, msg: 'Sala não encontrada.' });
+
+    if (!game.readyPlayers) game.readyPlayers = new Set();
+    game.readyPlayers.add(info.seatIndex);
+
+    broadcastToRoom(info.roomId, 'readyUpdate', {
+      readyPlayers: [...game.readyPlayers],
+      totalPlayers: game.players.length,
+    });
+    cb?.({ ok: true });
+
+    if (game.readyPlayers.size === 4) {
+      const { roomMeta, broadcastPublicRooms } = rm;
+      const meta4 = roomMeta.get(info.roomId);
+      if (meta4?.isPublic) broadcastPublicRooms();
+      setTimeout(() => {
+        game.startRound();
+        broadcastState(game);
+        broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+      }, 800);
+    }
+  });
+}
+
+module.exports = { registerTeamHandlers };

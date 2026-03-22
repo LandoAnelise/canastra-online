@@ -1,0 +1,16 @@
+export const state = {
+  myName: '',
+  myRoomId: '',
+  mySeatIndex: -1,
+  gameState: null,
+  selectedCards: [],
+  myHandOrder: [],
+  justDrawnCardId: null,
+  readyPlayers: new Set(),
+  iAmReady: false,
+  amLeader: false,
+  selectedRoomType: 'private',
+  teamAssignments: {},
+  dragSeat: null,
+  teamsInitialized: false,
+};
