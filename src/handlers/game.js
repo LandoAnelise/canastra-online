@@ -34,6 +34,7 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
     broadcastState(game);
+    if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
   }));
 
   socket.on('discard', gameAction((game, info, { cardId }, cb) => {
@@ -41,6 +42,7 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
     broadcastState(game);
+    if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
   }));
 
   socket.on('bater', gameAction((game, info, { discardCardId = null } = {}, cb) => {

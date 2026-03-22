@@ -134,12 +134,12 @@
   <!-- Top bar -->
   <div id="game-topbar">
     <div id="score-team0" class="score-block">
-      <span class="score-label">Dupla 1</span>
+      <span class="score-label" id="score-label-0">Dupla 1</span>
       <span class="score-value" id="val-score-0">0</span>
     </div>
     <div id="game-status-label">Rodada 1</div>
     <div id="score-team1" class="score-block right">
-      <span class="score-label">Dupla 2</span>
+      <span class="score-label" id="score-label-1">Dupla 2</span>
       <span class="score-value" id="val-score-1">0</span>
     </div>
   </div>
@@ -186,7 +186,7 @@
         <div class="melds-group" id="melds-team0">
           <div class="melds-label" id="melds-label-0">
             <span class="melds-label-dot"></span>
-            <span class="melds-label-text">Dupla 1</span>
+            <span class="melds-label-text" id="melds-label-text-0">Dupla 1</span>
             <span class="melds-label-you hidden">— sua mesa</span>
           </div>
           <div class="melds-list" id="melds-list-0"></div>
@@ -194,7 +194,7 @@
         <div class="melds-group" id="melds-team1">
           <div class="melds-label" id="melds-label-1">
             <span class="melds-label-dot"></span>
-            <span class="melds-label-text">Dupla 2</span>
+            <span class="melds-label-text" id="melds-label-text-1">Dupla 2</span>
             <span class="melds-label-you hidden">— sua mesa</span>
           </div>
           <div class="melds-list" id="melds-list-1"></div>
@@ -223,7 +223,7 @@
       <button id="btn-take-discard" class="btn-action" disabled>♻️ Pegar Lixo</button>
       <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
       <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
-      <button id="btn-bater" class="btn-action bater" disabled>🏆 Bater!</button>
+      <button id="btn-bater" class="btn-action bater hidden" disabled>🏆 Bater!</button>
     </div>
     <div class="action-sep"></div>
     <div class="action-group util-actions">

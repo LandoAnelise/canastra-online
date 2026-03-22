@@ -287,6 +287,8 @@ class Game {
     this.players = []; // [{id, name, teamIndex}]
     this.status = 'waiting'; // waiting | playing | finished
     this.scores = [0, 0]; // team 0, team 1
+    this.teamNames = ['Dupla 1', 'Dupla 2'];
+    this.teamOrders = [[], []]; // teamOrders[t] = [seatIndex, seatIndex] em ordem
     this.round = 0;
 
     // round state
@@ -323,6 +325,13 @@ class Game {
     for (const { seatIndex, teamIndex } of teams) {
       this.players[seatIndex].teamIndex = teamIndex;
     }
+    this.teamNames = [0, 1].map(t =>
+      this.players.filter(p => p.teamIndex === t).map(p => p.name).join(' e ')
+    );
+    // Ordem dos jogadores dentro de cada time (por seatIndex crescente)
+    this.teamOrders = [0, 1].map(t =>
+      teams.filter(a => a.teamIndex === t).map(a => a.seatIndex).sort((a, b) => a - b)
+    );
     return { ok: true };
   }
 
@@ -353,7 +362,9 @@ class Game {
     // Lixo começa vazio — primeiro jogador é obrigado a pescar do monte
     this.discard = [];
     this.deck = deck;
-    this.currentPlayerIndex = (this.round === 1) ? 0 : this.currentPlayerIndex;
+    // Rotação de quem começa: J1T1 → J1T2 → J2T1 → J2T2 → J1T1 …
+    const ri = (this.round - 1) % 4;
+    this.currentPlayerIndex = this.teamOrders[ri % 2]?.[Math.floor(ri / 2)] ?? 0;
     this.drawnThisTurn = false;
     this.status = 'playing';
   }
@@ -463,9 +474,23 @@ class Game {
       this.hasFirstMeld[teamIndex] = true;
     }
 
+    const remainingHand = hand.filter(c => !usedIds.has(c.id));
+    const hasCanastraAfter = melds.some(m => isCanastra(m));
+
+    // Não pode baixar e ficar sem cartas suficientes se não tiver canastra
+    if (remainingHand.length < 2 && !hasCanastraAfter) {
+      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+    }
+
     // Aplicar
     this.melds[teamIndex] = melds;
-    this.hands[playerIndex] = hand.filter(c => !usedIds.has(c.id));
+    this.hands[playerIndex] = remainingHand;
+
+    // Baixou todas as cartas e tem canastra → bater automático
+    if (remainingHand.length === 0 && hasCanastraAfter) {
+      return this._autoBater(playerIndex, teamIndex);
+    }
+
     return { ok: true };
   }
 
@@ -479,6 +504,19 @@ class Game {
     if (idx === -1) return { ok: false, msg: 'Carta não encontrada na mão.' };
 
     const [card] = hand.splice(idx, 1);
+
+    // Descartou a última carta → bater automático (exige canastra)
+    if (hand.length === 0) {
+      const teamIndex = this.players[playerIndex].teamIndex;
+      const hasCanastra = this.melds[teamIndex].some(m => isCanastra(m));
+      if (!hasCanastra) {
+        hand.splice(idx, 0, card); // desfaz
+        return { ok: false, msg: 'Sua dupla precisa ter pelo menos 1 canastra para descartar a última carta.' };
+      }
+      this.discard.push(card);
+      return this._autoBater(playerIndex, teamIndex);
+    }
+
     this.discard.push(card);
     this.drawnThisTurn = false;
     this._advanceTurn();
@@ -510,6 +548,11 @@ class Game {
   }
 
   // ── ROUND END ──
+  _autoBater(playerIndex, teamIndex) {
+    this._batterIndex = playerIndex;
+    return { autoBater: true, ...this._endRound(teamIndex) };
+  }
+
   _endRound(winningTeam) {
     const roundPoints = [0, 0];
 
@@ -575,7 +618,7 @@ class Game {
       winnerTeam: gameOver ? (this.scores[0] >= WIN_SCORE ? 0 : 1) : null,
       teamMeldDetails,
       playerHandLoss,
-      teamNames: ['Dupla 1', 'Dupla 2'],
+      teamNames: this.teamNames,
       round: this.round,
     };
   }
@@ -609,6 +652,7 @@ class Game {
       deckSize: this.deck.length,
       myIndex: playerIndex,
       myTeam: this.players[playerIndex]?.teamIndex,
+      teamNames: this.teamNames,
     };
   }
 }

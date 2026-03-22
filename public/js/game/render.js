@@ -23,6 +23,10 @@ export function renderGame(gs) {
 
   document.getElementById('val-score-0').textContent = gs.scores[0];
   document.getElementById('val-score-1').textContent = gs.scores[1];
+  if (gs.teamNames) {
+    document.getElementById('score-label-0').textContent = gs.teamNames[0];
+    document.getElementById('score-label-1').textContent = gs.teamNames[1];
+  }
   document.getElementById('game-status-label').textContent = `Rodada ${gs.round}`;
 
   const seats = getRelativeSeats(gs);
@@ -121,6 +125,9 @@ export function renderMelds(gs) {
     const label    = document.getElementById(`melds-label-${t}`);
     const youBadge = label?.querySelector('.melds-label-you');
     const group    = document.getElementById(`melds-team${t}`);
+    if (gs.teamNames) {
+      document.getElementById(`melds-label-text-${t}`).textContent = gs.teamNames[t];
+    }
     if (t === gs.myTeam) {
       group?.classList.add('my-team');
       youBadge?.classList.remove('hidden');
@@ -198,11 +205,13 @@ export function updateButtons(gs) {
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const drawn = gs.drawnThisTurn;
   const hasCanastra = gs.melds[gs.myTeam]?.some(m => m.cards.length >= 7);
+  const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
   document.getElementById('btn-draw').disabled          = !isMyTurn || drawn;
   document.getElementById('btn-take-discard').disabled  = !isMyTurn || drawn || !gs.discardTop;
   document.getElementById('btn-play-melds').disabled    = !isMyTurn || !drawn || state.selectedCards.length === 0;
   document.getElementById('btn-discard').disabled       = !isMyTurn || !drawn;
-  document.getElementById('btn-bater').disabled         = !isMyTurn || !drawn || !hasCanastra;
+  document.getElementById('btn-bater').classList.toggle('hidden', !showBater);
+  document.getElementById('btn-bater').disabled         = !showBater;
 }
 
 export function onCardClick(cardId) {
