@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canastra Online</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<!-- ══════════ LOBBY ══════════ -->
+<div id="screen-lobby" class="screen active">
+  <div class="lobby-bg">
+    <div class="suit-float s1">♠</div>
+    <div class="suit-float s2">♥</div>
+    <div class="suit-float s3">♦</div>
+    <div class="suit-float s4">♣</div>
+  </div>
+  <div class="lobby-card">
+    <div class="lobby-logo">
+      <span class="logo-suit red">♥</span>
+      <h1>Canastra</h1>
+      <span class="logo-suit red">♦</span>
+    </div>
+    <p class="lobby-sub">Online · 2 duplas · Suas regras</p>
+
+    <div class="form-group">
+      <label>Seu nome</label>
+      <input id="input-name" type="text" placeholder="Como quer ser chamado?" maxlength="20" autocomplete="off" />
+    </div>
+
+    <div class="form-group">
+      <label>Código da sala</label>
+      <div class="room-row">
+        <input id="input-room" type="text" placeholder="Ex: FAMILIA01" maxlength="12" autocomplete="off" />
+        <button id="btn-random-room" class="btn-ghost" title="Gerar código aleatório">⟳</button>
+      </div>
+    </div>
+
+    <button id="btn-join" class="btn-primary">Entrar na Sala</button>
+    <button id="btn-show-rules" class="btn-ghost" style="text-align:center">📋 Ver regras do jogo</button>
+
+    <p class="lobby-hint">Compartilhe o código da sala com os outros 3 jogadores.<br/>O jogo começa automaticamente quando todos entrarem.</p>
+  </div>
+</div>
+
+<!-- ══════════ WAITING ROOM ══════════ -->
+<div id="screen-waiting" class="screen">
+  <div class="waiting-card">
+    <h2>Aguardando jogadores…</h2>
+    <div id="waiting-room-code" class="room-code-badge"></div>
+    <div id="waiting-seats" class="seats-grid"></div>
+    <p class="waiting-hint">Envie o código acima para seus parceiros!</p>
+  </div>
+</div>
+
+<!-- ══════════ TEAM SELECTION ══════════ -->
+<div id="screen-teams" class="screen">
+  <div class="waiting-card">
+    <h2>Montar Duplas</h2>
+    <p class="waiting-hint" style="margin-bottom:8px">Arraste os jogadores para definir as duplas</p>
+    <div id="teams-grid">
+      <div class="team-column" id="team-col-unassigned">
+        <div class="team-col-label">Sem dupla</div>
+        <div class="team-col-slots" id="unassigned-slots"></div>
+      </div>
+      <div class="team-column" id="team-col-0">
+        <div class="team-col-label team0-label">🔵 Dupla 1</div>
+        <div class="team-col-slots" id="team0-slots"></div>
+      </div>
+      <div class="team-column" id="team-col-1">
+        <div class="team-col-label team1-label">🔴 Dupla 2</div>
+        <div class="team-col-slots" id="team1-slots"></div>
+      </div>
+    </div>
+    <button id="btn-confirm-teams" class="btn-primary" disabled>Confirmar e Iniciar Jogo</button>
+    <p id="teams-hint" class="waiting-hint">Distribua 2 jogadores em cada dupla</p>
+  </div>
+</div>
+
+<!-- ══════════ READY CHECK ══════════ -->
+<div id="screen-ready" class="screen">
+  <div class="waiting-card">
+    <h2>Prontos para jogar?</h2>
+    <div id="ready-room-code" class="room-code-badge"></div>
+    <div id="ready-players-list" class="ready-list"></div>
+    <button id="btn-ready" class="btn-primary">✅ Estou Pronto!</button>
+    <p id="ready-hint" class="waiting-hint">Aguardando todos marcarem pronto…</p>
+  </div>
+</div>
+
+<!-- ══════════ GAME ══════════ -->
+<div id="screen-game" class="screen">
+
+  <!-- Top bar -->
+  <div id="game-topbar">
+    <div id="score-team0" class="score-block">
+      <span class="score-label">Dupla 1</span>
+      <span class="score-value" id="val-score-0">0</span>
+    </div>
+    <div id="game-status-label">Rodada 1</div>
+    <div id="score-team1" class="score-block right">
+      <span class="score-label">Dupla 2</span>
+      <span class="score-value" id="val-score-1">0</span>
+    </div>
+  </div>
+
+  <!-- Players around table -->
+  <div id="table-area">
+
+    <!-- Opponent top -->
+    <div id="player-top" class="player-slot opponent top">
+      <div class="player-info"><span class="player-name" id="name-top">—</span><span class="hand-count" id="count-top">0</span></div>
+      <div class="hand-fan" id="hand-top"></div>
+    </div>
+
+    <!-- Left opponent -->
+    <div id="player-left" class="player-slot opponent left">
+      <div class="player-info vertical"><span class="player-name" id="name-left">—</span><span class="hand-count" id="count-left">0</span></div>
+      <div class="hand-fan vertical" id="hand-left"></div>
+    </div>
+
+    <!-- Center: decks + melds -->
+    <div id="center-area">
+      <div id="decks-row">
+        <div id="deck-pile" class="pile" title="Pescar do monte">
+          <div class="pile-card back">🂠</div>
+          <span id="deck-count" class="pile-count">0</span>
+        </div>
+        <div id="discard-pile" class="pile" title="Pegar o lixo">
+          <div id="discard-top" class="pile-card front"></div>
+          <span id="discard-count" class="pile-count">0 no lixo</span>
+          <button id="btn-expand-discard" title="Ver lixo">▼ ver lixo</button>
+        </div>
+        <!-- Inline discard dropdown -->
+        <div id="discard-dropdown" class="discard-dropdown hidden">
+          <div class="discard-dropdown-header">
+            <span id="discard-dropdown-count">Pilha de descarte</span>
+            <button id="btn-close-discard-dropdown">✕</button>
+          </div>
+          <div id="discard-dropdown-cards" class="discard-dropdown-cards"></div>
+        </div>
+      </div>
+
+      <!-- Melds area -->
+      <div id="melds-area">
+        <div class="melds-group" id="melds-team0">
+          <div class="melds-label" id="melds-label-0">
+            <span class="melds-label-dot"></span>
+            <span class="melds-label-text">Dupla 1</span>
+            <span class="melds-label-you hidden">— sua mesa</span>
+          </div>
+          <div class="melds-list" id="melds-list-0"></div>
+        </div>
+        <div class="melds-group" id="melds-team1">
+          <div class="melds-label" id="melds-label-1">
+            <span class="melds-label-dot"></span>
+            <span class="melds-label-text">Dupla 2</span>
+            <span class="melds-label-you hidden">— sua mesa</span>
+          </div>
+          <div class="melds-list" id="melds-list-1"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right opponent -->
+    <div id="player-right" class="player-slot opponent right">
+      <div class="player-info vertical"><span class="player-name" id="name-right">—</span><span class="hand-count" id="count-right">0</span></div>
+      <div class="hand-fan vertical" id="hand-right"></div>
+    </div>
+
+    <!-- My hand (bottom) -->
+    <div id="player-bottom" class="player-slot me bottom">
+      <div class="player-info"><span class="player-name" id="name-me">Você</span><span class="hand-count" id="count-me">0</span></div>
+      <div id="my-hand" class="my-hand"></div>
+    </div>
+
+  </div>
+
+  <!-- Action bar -->
+  <div id="action-bar">
+    <button id="btn-draw" class="btn-action" disabled>🂠 Pescar</button>
+    <button id="btn-take-discard" class="btn-action" disabled>♻️ Pegar Lixo</button>
+    <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
+    <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
+    <button id="btn-bater" class="btn-action bater" disabled>🏆 Bater!</button>
+  </div>
+
+  <!-- Turn indicator -->
+  <div id="turn-banner" class="hidden"></div>
+
+
+</div>
+
+<!-- ══════════ PAUSED MODAL ══════════ -->
+<div id="modal-paused" class="modal hidden">
+  <div class="modal-box">
+    <div style="font-size:2.5rem">⏸</div>
+    <h2>Jogo Pausado</h2>
+    <p id="paused-msg" style="opacity:0.75;font-size:0.9rem"></p>
+    <div id="paused-timer" class="paused-countdown"></div>
+    <p style="font-size:0.75rem;opacity:0.45">O jogo continua automaticamente quando o jogador reconectar.</p>
+  </div>
+</div>
+
+<!-- ══════════ ROUND END MODAL ══════════ -->
+<div id="modal-round" class="modal hidden">
+  <div class="modal-box round-modal-box">
+    <div class="round-modal-header">
+      <div class="round-winner-badge" id="round-winner-badge">🏆 Dupla 1 bateu!</div>
+      <div class="round-number" id="round-modal-number">Rodada 1</div>
+    </div>
+
+    <div class="round-scores-grid">
+      <!-- Team 0 -->
+      <div class="round-team-col" id="round-team-col-0">
+        <div class="round-team-name" id="round-team-name-0">Dupla 1</div>
+        <div class="round-breakdown" id="round-breakdown-0"></div>
+        <div class="round-team-subtotal" id="round-subtotal-0"></div>
+        <div class="round-team-total" id="round-total-0"></div>
+      </div>
+      <!-- Divider -->
+      <div class="round-divider">VS</div>
+      <!-- Team 1 -->
+      <div class="round-team-col" id="round-team-col-1">
+        <div class="round-team-name" id="round-team-name-1">Dupla 2</div>
+        <div class="round-breakdown" id="round-breakdown-1"></div>
+        <div class="round-team-subtotal" id="round-subtotal-1"></div>
+        <div class="round-team-total" id="round-total-1"></div>
+      </div>
+    </div>
+
+    <!-- Player hand losses -->
+    <div class="round-hand-losses" id="round-hand-losses"></div>
+
+    <button id="btn-continue-round" class="btn-primary round-continue-btn">
+      Próxima Rodada →
+    </button>
+  </div>
+</div>
+
+<!-- ══════════ GAME OVER MODAL ══════════ -->
+<div id="modal-gameover" class="modal hidden">
+  <div class="modal-box">
+    <div class="trophy">🏆</div>
+    <h2 id="modal-go-title">Jogo Encerrado!</h2>
+    <div id="modal-go-body"></div>
+    <button id="btn-new-game" class="btn-primary">Jogar Novamente</button>
+  </div>
+</div>
+
+<!-- ══════════ RULES MODAL ══════════ -->
+<div id="modal-rules" class="modal hidden">
+  <div class="modal-box rules-box">
+    <h2>📋 Regras</h2>
+    <div class="rules-content">
+      <section>
+        <h4>Configuração</h4>
+        <p>2 baralhos (104 cartas), 4 jogadores em 2 duplas, alternados (J1→J2→J3→J4). Cada jogador recebe <strong>13 cartas</strong>.</p>
+      </section>
+      <section>
+        <h4>Coringas</h4>
+        <p>Todos os <strong>2s</strong> são coringas (10 pts). As naturais devem ser maioria em qualquer combinação. Exceção: o 2 numa sequência que passa pelo rank 2 é natural (ex: A♥ 2♥ 3♥).</p>
+      </section>
+      <section>
+        <h4>Pontuação das cartas</h4>
+        <p>Ás = 15 pts &nbsp;|&nbsp; 7 ao K = 10 pts &nbsp;|&nbsp; 3 ao 6 = 5 pts &nbsp;|&nbsp; 2 = 10 pts</p>
+      </section>
+      <section>
+        <h4>Turno</h4>
+        <p>Primeiro <strong>compre</strong> (monte ou lixo inteiro). Depois baixe combinações ou adicione à mesa. Termine <strong>descartando</strong> uma carta (ou não, ao bater).</p>
+      </section>
+      <section>
+        <h4>Pegar o lixo</h4>
+        <p>Sempre permitido, exceto se você tiver <strong>1 carta na mão</strong> e o lixo tiver <strong>1 carta</strong> — nesse caso é obrigado a pescar do monte.</p>
+      </section>
+      <section>
+        <h4>Combinações válidas</h4>
+        <p><strong>Grupo:</strong> 3+ cartas do mesmo rank (ex: K♥ K♠ K♦).<br/>
+        <strong>Sequência:</strong> 3+ cartas consecutivas do mesmo naipe (ex: 5♥ 6♥ 7♥).<br/>
+        Coringas preenchem lacunas, mas as naturais devem ser maioria.</p>
+      </section>
+      <section>
+        <h4>Primeira baixa — Buraco</h4>
+        <p><strong>Fora do buraco</strong> (&lt; 1000 pts): qualquer combinação válida com 3+ cartas.<br/>
+        <strong>No buraco</strong> (≥ 1000 pts): primeira baixa precisa somar <strong>≥ 100 pts</strong> contando bônus de canastra.</p>
+      </section>
+      <section>
+        <h4>Canastras (7+ cartas)</h4>
+        <p><strong>Limpa</strong> (sem coringa atuando como coringa) = +200 pts<br/>
+        <strong>Suja</strong> (com coringa) = +100 pts</p>
+      </section>
+      <section>
+        <h4>Bater</h4>
+        <p>Precisa de <strong>≥ 1 canastra</strong> na mesa. Bônus de <strong>+50 pts</strong>. Pode ou não descartar ao bater.</p>
+      </section>
+      <section>
+        <h4>Fim da rodada</h4>
+        <p>Todos que não bateram (inclusive o parceiro de quem bateu) <strong>perdem os pontos das cartas na mão</strong>.</p>
+      </section>
+      <section>
+        <h4>Vitória</h4>
+        <p>Primeira dupla a atingir <strong>2000 pontos</strong> vence!</p>
+      </section>
+    </div>
+    <button id="btn-close-rules" class="btn-primary">Fechar</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/game.js"></script>
+</body>
+</html>
