@@ -289,6 +289,7 @@ class Game {
     this.scores = [0, 0]; // team 0, team 1
     this.teamNames = ['Dupla 1', 'Dupla 2'];
     this.teamOrders = [[], []]; // teamOrders[t] = [seatIndex, seatIndex] em ordem
+    this.playOrder = [0, 1, 2, 3]; // ordem intercalada: T0P0, T1P0, T0P1, T1P1
     this.round = 0;
 
     // round state
@@ -332,6 +333,13 @@ class Game {
     this.teamOrders = [0, 1].map(t =>
       teams.filter(a => a.teamIndex === t).map(a => a.seatIndex).sort((a, b) => a - b)
     );
+    // Ordem de jogo intercalada entre os times: T0P0, T1P0, T0P1, T1P1
+    this.playOrder = [
+      this.teamOrders[0][0],
+      this.teamOrders[1][0],
+      this.teamOrders[0][1],
+      this.teamOrders[1][1],
+    ];
     return { ok: true };
   }
 
@@ -362,9 +370,9 @@ class Game {
     // Lixo começa vazio — primeiro jogador é obrigado a pescar do monte
     this.discard = [];
     this.deck = deck;
-    // Rotação de quem começa: J1T1 → J1T2 → J2T1 → J2T2 → J1T1 …
+    // Rotação de quem começa: T0P0 → T1P0 → T0P1 → T1P1 → T0P0 …
     const ri = (this.round - 1) % 4;
-    this.currentPlayerIndex = this.teamOrders[ri % 2]?.[Math.floor(ri / 2)] ?? 0;
+    this.currentPlayerIndex = this.playOrder[ri] ?? 0;
     this.drawnThisTurn = false;
     this.status = 'playing';
   }
@@ -629,7 +637,8 @@ class Game {
   }
 
   _advanceTurn() {
-    this.currentPlayerIndex = (this.currentPlayerIndex + 1) % 4;
+    const pos = this.playOrder.indexOf(this.currentPlayerIndex);
+    this.currentPlayerIndex = this.playOrder[(pos + 1) % 4];
     this.drawnThisTurn = false;
   }
 
