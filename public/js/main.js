@@ -1,6 +1,9 @@
 import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
+import { playCampainha, playPalmas } from './sounds.js';
+
+let _prevTurnIdx = -1;
 import './screens/lobby.js';
 import { renderWaiting, renderReadyScreen } from './screens/waiting.js';
 import { renderTeamSelection } from './screens/teams.js';
@@ -46,10 +49,19 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
   // If reconnectWindowMs is set, gamePaused event handles the UI
 });
 
-socket.on('roundEnded', (result) => { showRoundModal(result); });
+socket.on('roundEnded', (result) => { playPalmas(); showRoundModal(result); });
+
+socket.on('deckEmpty', ({ playerName }) => {
+  showToast(`⚠️ Monte acabou! ${playerName} joga sua última mão e a rodada encerra.`, 'error', 5000);
+});
 
 socket.on('gameState', (gs) => {
   state.gameState = gs;
+  // Campainha quando passa a ser minha vez
+  if (gs.status === 'playing' && gs.currentPlayerIndex === state.mySeatIndex && _prevTurnIdx !== state.mySeatIndex) {
+    playCampainha();
+  }
+  _prevTurnIdx = gs.currentPlayerIndex;
 
   if (gs.status === 'waiting') {
     renderWaiting(gs);

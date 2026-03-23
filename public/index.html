@@ -138,6 +138,7 @@
       <span class="score-value" id="val-score-0">0</span>
     </div>
     <div id="game-status-label">Rodada 1</div>
+    <button id="btn-mute" class="btn-mute" title="Mutar/desmutar sons">🔊</button>
     <div id="score-team1" class="score-block right">
       <span class="score-label" id="score-label-1">Dupla 2</span>
       <span class="score-value" id="val-score-1">0</span>
@@ -159,30 +160,10 @@
       <div class="hand-fan vertical" id="hand-left"></div>
     </div>
 
-    <!-- Center: decks + melds -->
+    <!-- Center: melds split by decks divider -->
     <div id="center-area">
-      <div id="decks-row">
-        <div id="deck-pile" class="pile" title="Pescar do monte">
-          <div class="pile-card back">🂠</div>
-          <span id="deck-count" class="pile-count">0</span>
-        </div>
-        <div id="discard-pile" class="pile" title="Pegar o lixo">
-          <div id="discard-top" class="pile-card front"></div>
-          <span id="discard-count" class="pile-count">0 no lixo</span>
-          <button id="btn-expand-discard" title="Ver lixo">▼ ver lixo</button>
-        </div>
-        <!-- Inline discard dropdown -->
-        <div id="discard-dropdown" class="discard-dropdown hidden">
-          <div class="discard-dropdown-header">
-            <span id="discard-dropdown-count">Pilha de descarte</span>
-            <button id="btn-close-discard-dropdown">✕</button>
-          </div>
-          <div id="discard-dropdown-cards" class="discard-dropdown-cards"></div>
-        </div>
-      </div>
-
-      <!-- Melds area -->
       <div id="melds-area">
+        <!-- Opponent melds (order set dynamically) -->
         <div class="melds-group" id="melds-team0">
           <div class="melds-label" id="melds-label-0">
             <span class="melds-label-dot"></span>
@@ -191,6 +172,21 @@
           </div>
           <div class="melds-list" id="melds-list-0"></div>
         </div>
+
+        <!-- Deck + discard divider (always center) -->
+        <div id="decks-row">
+          <div id="deck-pile" class="pile" title="Pescar do monte">
+            <div class="pile-card back">🂠</div>
+            <span id="deck-count" class="pile-count">0</span>
+          </div>
+          <div id="discard-pile" class="pile" title="Pegar o lixo">
+            <div id="discard-stack" class="discard-stack-row"></div>
+            <span id="discard-count" class="pile-count">0 no lixo</span>
+            <button id="btn-expand-discard" class="hidden" title="Ver lixo">▼ ver lixo</button>
+          </div>
+        </div>
+
+        <!-- My team melds (order set dynamically) -->
         <div class="melds-group" id="melds-team1">
           <div class="melds-label" id="melds-label-1">
             <span class="melds-label-dot"></span>
@@ -199,6 +195,15 @@
           </div>
           <div class="melds-list" id="melds-list-1"></div>
         </div>
+      </div>
+
+      <!-- Discard dropdown (kept for JS compatibility) -->
+      <div id="discard-dropdown" class="discard-dropdown hidden">
+        <div class="discard-dropdown-header">
+          <span id="discard-dropdown-count">Pilha de descarte</span>
+          <button id="btn-close-discard-dropdown">✕</button>
+        </div>
+        <div id="discard-dropdown-cards" class="discard-dropdown-cards"></div>
       </div>
     </div>
 
@@ -227,7 +232,8 @@
     </div>
     <div class="action-sep"></div>
     <div class="action-group util-actions">
-      <button id="btn-sort-hand" class="btn-action sort-hand" title="Reordenar cartas por naipe e valor">🔀 Reordenar</button>
+      <button id="btn-sort-hand" class="btn-action sort-hand" title="Ordenar por naipe e valor">♠ Naipe</button>
+      <button id="btn-sort-rank" class="btn-action sort-hand" title="Ordenar por número (para grupos)">🔢 Número</button>
     </div>
   </div>
 

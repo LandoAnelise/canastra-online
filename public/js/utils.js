@@ -10,15 +10,28 @@ export function autoSortHand(hand) {
   });
 }
 
+export function sortHandByRank(hand) {
+  return [...hand].sort((a, b) => {
+    const rankDiff = RANK_ORDER_SORT.indexOf(a.rank) - RANK_ORDER_SORT.indexOf(b.rank);
+    if (rankDiff !== 0) return rankDiff;
+    return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit];
+  });
+}
+
 export function isRed(suit) { return suit === '♥' || suit === '♦'; }
 export function isWild(card) { return card.rank === '2'; }
+
+const FACE_GLYPH = { 'K': '♚', 'Q': '♛', 'J': '♞', 'A': '' };
 
 export function cardHTML(card, extra = '') {
   const red = isRed(card.suit) ? 'red' : '';
   const wild = isWild(card) ? 'wild' : '';
+  const glyph = FACE_GLYPH[card.rank] ?? '';
+  const face = glyph ? `<span class="card-face">${glyph}</span>` : `<span class="card-face-suit">${card.suit}</span>`;
   return `<div class="my-card ${red} ${wild} ${extra}" data-id="${card.id}" draggable="true">
     <span class="card-rank">${card.rank}</span>
     <span class="card-suit">${card.suit}</span>
+    ${face}
   </div>`;
 }
 

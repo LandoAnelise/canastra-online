@@ -4,7 +4,7 @@ function registerTeamHandlers(socket, io, rm) {
   const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
 
   // ── ASSIGN TEAMS ──
-  socket.on('assignTeams', ({ teams }, cb) => {
+  socket.on('assignTeams', ({ teams, teamOrders }, cb) => {
     const info = playerRoom.get(socket.id);
     if (!info) return cb?.({ ok: false, msg: 'Você não está em uma sala.' });
     const game = rooms.get(info.roomId);
@@ -14,7 +14,7 @@ function registerTeamHandlers(socket, io, rm) {
       return cb?.({ ok: false, msg: 'Apenas o líder da sala pode definir as duplas.' });
     }
 
-    const result = game.assignTeams(teams);
+    const result = game.assignTeams(teams, teamOrders);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
 
     game.readyPlayers = new Set();
@@ -48,8 +48,8 @@ function registerTeamHandlers(socket, io, rm) {
       if (meta4?.isPublic) broadcastPublicRooms();
       setTimeout(() => {
         game.startRound();
-        broadcastState(game);
         broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+        broadcastState(game);
       }, 800);
     }
   });

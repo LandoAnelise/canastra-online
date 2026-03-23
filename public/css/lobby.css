@@ -311,6 +311,33 @@
 }
 #team-col-0 .player-chip { border-color: rgba(100,180,255,0.35); }
 #team-col-1 .player-chip { border-color: rgba(255,140,100,0.35); }
+.chip-pos {
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.55;
+  min-width: 18px;
+  text-align: center;
+}
+.chip-name { flex: 1; }
+.chip-order-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: auto;
+}
+.btn-chip-move {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.6rem;
+  line-height: 1;
+  padding: 2px 5px;
+  transition: background 0.12s;
+}
+.btn-chip-move:hover:not(:disabled) { background: rgba(255,255,255,0.18); }
+.btn-chip-move:disabled { opacity: 0.25; cursor: default; }
 
 /* ── TEAM LEADER NOTICE ──────────────────────────────────────── */
 .teams-leader-notice {

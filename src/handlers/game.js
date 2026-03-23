@@ -20,6 +20,9 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
     broadcastState(game);
+    if (result.deckNowEmpty) {
+      broadcastToRoom(info.roomId, 'deckEmpty', { playerName: game.players[info.seatIndex]?.name });
+    }
   }));
 
   socket.on('takeDiscard', gameAction((game, info, _, cb) => {
@@ -42,7 +45,7 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
     broadcastState(game);
-    if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
+    if (result.autoBater || result.deckEndRound) broadcastToRoom(info.roomId, 'roundEnded', result);
   }));
 
   socket.on('bater', gameAction((game, info, { discardCardId = null } = {}, cb) => {
@@ -59,8 +62,8 @@ function registerGameHandlers(socket, io, rm) {
   socket.on('continueRound', gameAction((game, info, _, cb) => {
     if (game.status !== 'roundOver') return cb?.({ ok: false, msg: 'Não há rodada aguardando.' });
     game.startRound();
-    broadcastState(game);
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+    broadcastState(game);
     cb?.({ ok: true });
   }));
 
@@ -83,8 +86,8 @@ function registerGameHandlers(socket, io, rm) {
     game.round = 0;
     game.readyPlayers = new Set();
     game.startRound();
-    broadcastState(game);
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+    broadcastState(game);
     cb?.({ ok: true });
   });
 }

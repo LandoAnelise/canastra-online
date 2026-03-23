@@ -322,7 +322,7 @@ class Game {
   }
 
   // Confirmar duplas: teams = [{seatIndex, teamIndex}, ...]
-  assignTeams(teams) {
+  assignTeams(teams, providedTeamOrders) {
     if (this.status !== 'waiting') return { ok: false, msg: 'Jogo já começou.' };
     if (teams.length !== 4) return { ok: false, msg: 'Informe os times dos 4 jogadores.' };
     const counts = [0, 0];
@@ -338,10 +338,12 @@ class Game {
     this.teamNames = [0, 1].map(t =>
       this.players.filter(p => p.teamIndex === t).map(p => p.name).join(' e ')
     );
-    // Ordem dos jogadores dentro de cada time (por seatIndex crescente)
-    this.teamOrders = [0, 1].map(t =>
-      teams.filter(a => a.teamIndex === t).map(a => a.seatIndex).sort((a, b) => a - b)
-    );
+    // Ordem dos jogadores dentro de cada time (usa ordem definida pelo líder, ou seatIndex crescente)
+    this.teamOrders = [0, 1].map(t => {
+      const provided = providedTeamOrders?.[t];
+      if (Array.isArray(provided) && provided.length === 2) return provided;
+      return teams.filter(a => a.teamIndex === t).map(a => a.seatIndex).sort((a, b) => a - b);
+    });
     // Ordem de jogo intercalada entre os times: T0P0, T1P0, T0P1, T1P1
     this.playOrder = [
       this.teamOrders[0][0],
@@ -379,6 +381,8 @@ class Game {
     // Lixo começa vazio — primeiro jogador é obrigado a pescar do monte
     this.discard = [];
     this.deck = deck;
+    this.deckEmptyLastDrawer = null; // quem pescou a última carta do monte
+    this.tookSingleDiscardId = null; // carta única do lixo que foi pega (não pode ser descartada de volta)
     // Rotação de quem começa: T0P0 → T1P0 → T0P1 → T1P1 → T0P0 …
     const ri = (this.round - 1) % 4;
     this.currentPlayerIndex = this.playOrder[ri] ?? 0;
@@ -397,7 +401,8 @@ class Game {
     const card = this.deck.pop();
     this.hands[playerIndex].push(card);
     this.drawnThisTurn = true;
-    return { ok: true, card };
+    if (this.deck.length === 0) this.deckEmptyLastDrawer = playerIndex;
+    return { ok: true, card, deckNowEmpty: this.deck.length === 0 };
   }
 
   // Pegar o lixo inteiro
@@ -413,6 +418,8 @@ class Game {
     }
 
     const pile = [...this.discard];
+    // Regra: carta única do lixo não pode ser descartada de volta no mesmo turno
+    this.tookSingleDiscardId = pile.length === 1 ? pile[0].id : null;
     this.discard = [];
     this.hands[playerIndex] = [...hand, ...pile];
     this.drawnThisTurn = true;
@@ -516,6 +523,11 @@ class Game {
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de descartar.' };
 
+    // Regra: carta única do lixo não pode ser devolvida no mesmo turno
+    if (this.tookSingleDiscardId && cardId === this.tookSingleDiscardId) {
+      return { ok: false, msg: 'Você não pode descartar a carta que pegou quando o lixo tinha apenas 1 carta.' };
+    }
+
     const hand = this.hands[playerIndex];
     const idx = hand.findIndex(c => c.id === cardId);
     if (idx === -1) return { ok: false, msg: 'Carta não encontrada na mão.' };
@@ -535,6 +547,15 @@ class Game {
     }
 
     this.discard.push(card);
+    this.tookSingleDiscardId = null;
+
+    // Regra: monte esgotado — quem pescou a última carta encerra a rodada ao descartar
+    if (this.deckEmptyLastDrawer === playerIndex) {
+      const teamIndex = this.players[playerIndex].teamIndex;
+      this._batterIndex = playerIndex;
+      return { deckEndRound: true, ...this._endRound(teamIndex, true) };
+    }
+
     this.drawnThisTurn = false;
     this._advanceTurn();
     return { ok: true, card };
@@ -570,12 +591,12 @@ class Game {
     return { autoBater: true, ...this._endRound(teamIndex) };
   }
 
-  _endRound(winningTeam) {
+  _endRound(winningTeam, noBaterBonus = false) {
     const roundPoints = [0, 0];
 
     for (let t = 0; t < 2; t++) {
       roundPoints[t] += calcTablePoints(this.melds[t]);
-      if (t === winningTeam) roundPoints[t] += BATER_BONUS;
+      if (t === winningTeam && !noBaterBonus) roundPoints[t] += BATER_BONUS;
     }
 
     // Subtrair cartas na mão de todos os jogadores que não bateram,
@@ -612,7 +633,7 @@ class Game {
         canastrasLimpas,
         canastrasSujas,
         canastrasBonus: canastrasLimpas * CLEAN_CANASTA_POINTS + canastrasSujas * DIRTY_CANASTA_POINTS,
-        baterBonus: t === winningTeam ? BATER_BONUS : 0,
+        baterBonus: (t === winningTeam && !noBaterBonus) ? BATER_BONUS : 0,
       };
     });
 
@@ -666,8 +687,11 @@ class Game {
       handSizes: this.hands.map(h => h.length),
       melds: this.melds,
       discardTop: this.discard.length > 0 ? this.discard[this.discard.length - 1] : null,
+      discardPile: this.discard.slice(-12),
       discardSize: this.discard.length,
       deckSize: this.deck.length,
+      deckEmpty: this.deck.length === 0,
+      deckEmptyLastDrawer: this.deckEmptyLastDrawer,
       myIndex: playerIndex,
       myTeam: this.players[playerIndex]?.teamIndex,
       teamNames: this.teamNames,

@@ -1,6 +1,12 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { autoSortHand, isRed, isWild, cardHTML, discardCardHTML, isCanastraLimpa, isCanastraSuja, showToast } from '../utils.js';
+import { autoSortHand, isRed, isWild, cardHTML, isCanastra, isCanastraLimpa, isCanastraSuja, showToast } from '../utils.js';
+import { playBzz, playCanastraLimpa, playCanastraSuja, playPica } from '../sounds.js';
+
+// Track canastra state per meld to detect new ones
+const _canastraState = {};
+// Track previous hand sizes to detect pica (1 card left)
+const _prevHandSizes = {};
 
 // ─── HAND REORDER DRAG-AND-DROP ───────────────────────────────────────────────
 let dragCardId = null;
@@ -21,6 +27,12 @@ export function renderGame(gs) {
     handIds.forEach(id => { if (!state.myHandOrder.includes(id)) state.myHandOrder.push(id); });
   }
 
+  // Detectar pica (qualquer jogador caiu para 1 carta)
+  gs.handSizes.forEach((size, i) => {
+    if (size === 1 && (_prevHandSizes[i] ?? 99) > 1) playPica();
+    _prevHandSizes[i] = size;
+  });
+
   document.getElementById('val-score-0').textContent = gs.scores[0];
   document.getElementById('val-score-1').textContent = gs.scores[1];
   if (gs.teamNames) {
@@ -37,16 +49,31 @@ export function renderGame(gs) {
 
   document.getElementById('deck-count').textContent = `${gs.deckSize} cartas`;
   document.getElementById('discard-count').textContent = `${gs.discardSize} no lixo`;
-  document.getElementById('discard-pile').querySelector('.pile-card')?.remove();
-  document.getElementById('discard-pile').querySelector('.pile-count')
-    .insertAdjacentHTML('beforebegin', discardCardHTML(gs.discardTop));
+  const discardStack = document.getElementById('discard-stack');
+  discardStack.innerHTML = '';
+  if (gs.discardPile && gs.discardPile.length > 0) {
+    gs.discardPile.forEach(card => {
+      const red = isRed(card.suit) ? 'red' : '';
+      const wild = isWild(card) ? 'wild' : '';
+      discardStack.insertAdjacentHTML('beforeend',
+        `<div class="meld-card ${red} ${wild}">
+          <span class="card-rank">${card.rank}</span>
+          <span class="card-suit">${card.suit}</span>
+        </div>`);
+    });
+  }
 
   renderMelds(gs);
 
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const currentName = gs.players[gs.currentPlayerIndex]?.name || '?';
   const turnBanner = document.getElementById('turn-banner');
-  turnBanner.textContent = isMyTurn ? '🎯 Sua vez!' : `Vez de ${currentName}`;
+  const isLastTurn = gs.deckEmpty && gs.deckEmptyLastDrawer === gs.currentPlayerIndex;
+  if (isMyTurn) {
+    turnBanner.textContent = isLastTurn ? '🎯 Sua vez! (última — monte acabou)' : '🎯 Sua vez!';
+  } else {
+    turnBanner.textContent = isLastTurn ? `Vez de ${currentName} (última — monte acabou)` : `Vez de ${currentName}`;
+  }
   turnBanner.classList.remove('hidden');
 
   document.querySelectorAll('.player-slot').forEach(s => s.classList.remove('active-turn'));
@@ -133,6 +160,20 @@ export function renderMe(gs) {
 }
 
 export function renderMelds(gs) {
+  // Detect newly formed canastras and play sounds
+  gs.melds.forEach((teamMelds, t) => {
+    teamMelds.forEach((meld, mi) => {
+      const key = `${t}-${mi}`;
+      const wasC = _canastraState[key];
+      const isC  = isCanastra(meld);
+      if (isC && !wasC) {
+        if (isCanastraLimpa(meld)) playCanastraLimpa();
+        else playCanastraSuja();
+      }
+      _canastraState[key] = isC;
+    });
+  });
+
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const drawn    = gs.drawnThisTurn;
 
@@ -147,9 +188,11 @@ export function renderMelds(gs) {
     if (t === gs.myTeam) {
       group?.classList.add('my-team');
       youBadge?.classList.remove('hidden');
+      if (group) group.style.order = '2';
     } else {
       group?.classList.remove('my-team');
       youBadge?.classList.add('hidden');
+      if (group) group.style.order = '0';
     }
   }
 
@@ -232,7 +275,7 @@ export function updateButtons(gs) {
 
 export function onCardClick(cardId) {
   if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || !state.gameState.drawnThisTurn) {
-    showToast('Não é sua vez ou você ainda não comprou.', 'error'); return;
+    showToast('Não é sua vez ou você ainda não comprou.', 'error'); playBzz(); return;
   }
   state.selectedCards = state.selectedCards.includes(cardId)
     ? state.selectedCards.filter(id => id !== cardId)
@@ -280,11 +323,18 @@ function setupHandDragDrop(container) {
   });
 }
 
+const FACE_GLYPH = { 'K': '♚', 'Q': '♛', 'J': '♞' };
+
 function fullCardHTML(card) {
   const red = isRed(card.suit) ? 'red' : '';
   const wild = isWild(card) ? 'wild' : '';
+  const glyph = FACE_GLYPH[card.rank];
+  const face = glyph
+    ? `<span class="meld-face">${glyph}</span>`
+    : `<span class="meld-face-suit">${card.suit}</span>`;
   return `<div class="meld-card ${red} ${wild}">
     <span class="card-rank">${card.rank}</span>
     <span class="card-suit">${card.suit}</span>
+    ${face}
   </div>`;
 }
