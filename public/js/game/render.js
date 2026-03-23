@@ -52,11 +52,18 @@ export function renderGame(gs) {
   const discardStack = document.getElementById('discard-stack');
   discardStack.innerHTML = '';
   if (gs.discardPile && gs.discardPile.length > 0) {
-    gs.discardPile.forEach(card => {
+    const cardW = 60;
+    const maxW  = 260;
+    const n     = gs.discardPile.length;
+    const overlap = n > 1
+      ? Math.min(34, cardW - Math.floor((maxW - cardW) / (n - 1)))
+      : 0;
+    gs.discardPile.forEach((card, i) => {
       const red = isRed(card.suit) ? 'red' : '';
       const wild = isWild(card) ? 'wild' : '';
+      const ml = i === 0 ? '' : `style="margin-left:-${overlap}px"`;
       discardStack.insertAdjacentHTML('beforeend',
-        `<div class="meld-card ${red} ${wild}">
+        `<div class="meld-card ${red} ${wild}" ${ml}>
           <span class="card-rank">${card.rank}</span>
           <span class="card-suit">${card.suit}</span>
         </div>`);
@@ -160,17 +167,19 @@ export function renderMe(gs) {
 }
 
 export function renderMelds(gs) {
-  // Detect newly formed canastras and play sounds
+  // Detect newly formed canastras and suja→limpa transitions
   gs.melds.forEach((teamMelds, t) => {
     teamMelds.forEach((meld, mi) => {
-      const key = `${t}-${mi}`;
-      const wasC = _canastraState[key];
+      const key  = `${t}-${mi}`;
+      const prev = _canastraState[key] || { isC: false, isL: false };
       const isC  = isCanastra(meld);
-      if (isC && !wasC) {
-        if (isCanastraLimpa(meld)) playCanastraLimpa();
-        else playCanastraSuja();
+      const isL  = isCanastraLimpa(meld);
+      if (isC && !prev.isC) {
+        isL ? playCanastraLimpa() : playCanastraSuja();
+      } else if (isC && isL && !prev.isL) {
+        playCanastraLimpa(); // era suja, ficou limpa
       }
-      _canastraState[key] = isC;
+      _canastraState[key] = { isC, isL };
     });
   });
 

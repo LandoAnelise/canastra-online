@@ -687,7 +687,7 @@ class Game {
       handSizes: this.hands.map(h => h.length),
       melds: this.melds,
       discardTop: this.discard.length > 0 ? this.discard[this.discard.length - 1] : null,
-      discardPile: this.discard.slice(-12),
+      discardPile: this.discard.slice(-20),
       discardSize: this.discard.length,
       deckSize: this.deck.length,
       deckEmpty: this.deck.length === 0,
