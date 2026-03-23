@@ -224,33 +224,42 @@ function countWildsActing(meld) {
   }
 
   if (meld.type === 'sequence') {
-    // Na sequencia, o rank 2 tem posicao fixa (indice 1 na RANK_ORDER).
-    // Um 2 e natural se a sequencia passa pelo rank 2 E ha uma "vaga" para ele.
-    // Estrategia: contar quantos 2s a sequencia natural comporta (max 1 por baralho,
-    // mas com 2 baralhos pode ter 2 cartas de rank 2 do mesmo naipe).
-    // Na pratica: a sequencia tem um slot para o rank 2 se min <= 1 <= max (indices).
+    // Um 2 e natural numa sequencia se o range completo da sequencia (incluindo
+    // extensoes de borda por coringas) passa pelo valor 2 E o 2 e do mesmo naipe.
     const naturals = meld.cards.filter(c => !isWild(c));
     const wilds    = meld.cards.filter(c => isWild(c));
     if (wilds.length === 0) return 0;
 
-    const sorted  = [...naturals].sort((a, b) => RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank));
-    const minIdx  = RANK_ORDER.indexOf(sorted[0].rank);
-    const maxIdx  = RANK_ORDER.indexOf(sorted[sorted.length - 1].rank);
-    const span    = maxIdx - minIdx;
-    // Lacunas internas que precisam de coringa
-    const internalGaps = span - (naturals.length - 1);
-    // Coringas nas bordas (esticam a sequencia) sao sempre coringas atuando como coringas
-    const wildcardBorders = wilds.length - internalGaps;
+    const suit = naturals[0]?.suit;
+    const hasAce = naturals.some(c => c.rank === 'A');
 
-    // Dos coringas internos, verificar se algum ocupa o slot do rank 2 (indice 1)
-    // O rank 2 esta na sequencia se minIdx <= 1 <= maxIdx E nao ha natural com rank 2
-    const has2AsNatural = naturals.some(c => c.rank === '2');
-    const seq2SlotExists = minIdx <= 1 && 1 <= maxIdx && !has2AsNatural;
+    let aceHigh = false;
+    if (hasAce) {
+      const vLow  = naturals.map(c => RANK_VAL[c.rank]).sort((a,b)=>a-b);
+      const vHigh = naturals.map(c => c.rank==='A'?14:RANK_VAL[c.rank]).sort((a,b)=>a-b);
+      aceHigh = (vHigh[vHigh.length-1]-vHigh[0]) < (vLow[vLow.length-1]-vLow[0]);
+    }
+    const valFn = r => (r==='A' ? (aceHigh?14:1) : RANK_VAL[r]);
 
-    // Se o slot do rank 2 existe e um coringa o ocupa, esse coringa e natural
-    const naturalsActingWilds = seq2SlotExists ? Math.max(0, internalGaps - 1) : internalGaps;
-    // Coringas de borda sao sempre coringas
-    return naturalsActingWilds + wildcardBorders;
+    const sortedVals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
+    const minVal = sortedVals[0];
+    const maxVal = sortedVals[sortedVals.length - 1];
+
+    const internalGaps = (maxVal - minVal) - (naturals.length - 1);
+    const borderWilds  = wilds.length - internalGaps;
+
+    // Calcular o range completo da sequencia (com extensoes de borda)
+    const minPossible = hasAce ? (aceHigh ? 2 : 1) : 2;
+    const leftBorder  = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+    const startVal    = minVal - leftBorder;
+    const endVal      = maxVal + (borderWilds - leftBorder);
+
+    // Um coringa do mesmo naipe que ocupa o slot do rank 2 e natural
+    const rank2InRange   = startVal <= 2 && 2 <= endVal;
+    const suitedWilds    = suit ? wilds.filter(c => c.suit === suit).length : 0;
+    const naturalWilds   = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+
+    return Math.max(0, wilds.length - naturalWilds);
   }
 
   return meld.cards.filter(c => isWild(c)).length;

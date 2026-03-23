@@ -38,8 +38,47 @@ export function discardCardHTML(card) {
 }
 
 export function isCanastra(meld) { return meld.cards.length >= 7; }
-export function isCanastraLimpa(meld) { return isCanastra(meld) && meld.cards.every(c => !isWild(c)); }
-export function isCanastraSuja(meld)  { return isCanastra(meld) && meld.cards.some(c => isWild(c)); }
+
+const _RANK_VAL = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13};
+
+function _wildsActingInSequence(meld) {
+  const naturals = meld.cards.filter(c => !isWild(c));
+  const wilds    = meld.cards.filter(c => isWild(c));
+  if (wilds.length === 0) return 0;
+  const suit = naturals[0]?.suit;
+  if (!suit) return wilds.length;
+  const hasAce = naturals.some(c => c.rank === 'A');
+  const valFn  = r => (r === 'A' ? 1 : _RANK_VAL[r]);
+  const sortedVals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
+  const minVal = sortedVals[0];
+  const maxVal = sortedVals[sortedVals.length - 1];
+  const internalGaps = (maxVal - minVal) - (naturals.length - 1);
+  const borderWilds  = wilds.length - internalGaps;
+  const minPossible  = hasAce ? 1 : 2;
+  const leftBorder   = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+  const startVal     = minVal - leftBorder;
+  const endVal       = maxVal + (borderWilds - leftBorder);
+  const rank2InRange = startVal <= 2 && 2 <= endVal;
+  const suitedWilds  = wilds.filter(c => c.suit === suit).length;
+  const naturalWilds = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+  return Math.max(0, wilds.length - naturalWilds);
+}
+
+export function isCanastraLimpa(meld) {
+  if (!isCanastra(meld)) return false;
+  const wilds = meld.cards.filter(c => isWild(c));
+  if (wilds.length === 0) return true;
+  if (meld.type !== 'sequence') return false;
+  return _wildsActingInSequence(meld) === 0;
+}
+
+export function isCanastraSuja(meld) {
+  if (!isCanastra(meld)) return false;
+  const wilds = meld.cards.filter(c => isWild(c));
+  if (wilds.length === 0) return false;
+  if (meld.type !== 'sequence') return true;
+  return _wildsActingInSequence(meld) > 0;
+}
 
 export function showToast(msg, type = '', duration = 2800) {
   const t = document.getElementById('toast');
