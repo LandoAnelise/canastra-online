@@ -55,7 +55,7 @@
     "left center right"
     ". bottom .";
   grid-template-columns: 210px 1fr 210px;
-  grid-template-rows: 118px 1fr 175px;
+  grid-template-rows: 118px minmax(0, 1fr) 180px;
   min-height: 0;
   overflow: hidden;
   margin: 10px 14px;
@@ -70,7 +70,7 @@
 }
 
 /* ── PLAYER SLOTS ────────────────────────────────────────────── */
-.player-slot { display: flex; }
+.player-slot { display: flex; overflow: hidden; }
 
 .player-slot.top {
   grid-area: top;
@@ -108,6 +108,9 @@
   gap: 4px;
   background: rgba(0,0,0,0.18);
   border-top: 1px solid rgba(255,255,255,0.06);
+  height: 180px;
+  min-height: 180px;
+  max-height: 180px;
 }
 
 /* Player name + card count */
@@ -496,9 +499,9 @@
   gap: 3px;
 }
 .meld-card {
-  width: 34px;
-  height: 48px;
-  border-radius: 4px;
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   display: flex;
@@ -508,9 +511,10 @@
   font-weight: 700;
   color: #1a1a2e;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
-.meld-card .card-rank { font-size: 0.68rem; line-height: 1; }
-.meld-card .card-suit { font-size: 0.78rem; line-height: 1; }
+.meld-card .card-rank { font-size: 0.85rem; line-height: 1; }
+.meld-card .card-suit { font-size: 1rem; line-height: 1; }
 .meld-card.red  { color: var(--red-suit); }
 .meld-card.wild { background: linear-gradient(135deg, #fffde7, #fff8c5); border-color: #f0c040; }
 
