@@ -62,6 +62,22 @@ export function renderGame(gs) {
 
 function getRelativeSeats(gs) {
   const me = state.mySeatIndex;
+  const myTeam = gs.myTeam;
+
+  // Teammate goes opposite (top); opponents fill right/left in clockwise order
+  if (myTeam !== undefined && myTeam !== null) {
+    const teammate = gs.players.findIndex((p, i) => i !== me && p?.teamIndex === myTeam);
+    if (teammate !== -1) {
+      const opponents = [];
+      for (let i = 1; i <= 3; i++) {
+        const seat = (me + i) % 4;
+        if (seat !== teammate) opponents.push(seat);
+      }
+      return { top: teammate, right: opponents[0], left: opponents[1] };
+    }
+  }
+
+  // Fallback: seat order
   return { right: (me+1)%4, top: (me+2)%4, left: (me+3)%4 };
 }
 
