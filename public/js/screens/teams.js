@@ -5,8 +5,13 @@ import { showToast } from '../utils.js';
 // Ordered seatIndex arrays per team — determines who plays 1st vs 2nd within each team
 const teamOrders = { 0: [], 1: [] };
 
+// Ghost element for touch drag
+let _ghost = null;
+let _currentGs = null; // latest gs reference
+
 export function renderTeamSelection(gs) {
   state.amLeader = !!gs.isLeader;
+  _currentGs = gs;
 
   const notice = document.getElementById('teams-leader-notice');
   if (notice) {
@@ -33,24 +38,44 @@ export function renderTeamSelection(gs) {
         e.preventDefault();
         el.classList.remove('drag-over');
         if (state.dragSeat === null) return;
-        const targetTeam = id === 'team0-slots' ? 0 : id === 'team1-slots' ? 1 : -1;
-        if (targetTeam !== -1) {
-          const inTeam = Object.values(state.teamAssignments).filter(t => t === targetTeam).length;
-          if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
-        }
-        // Remove from previous team order
-        const prevTeam = state.teamAssignments[state.dragSeat];
-        if (prevTeam !== -1) teamOrders[prevTeam] = teamOrders[prevTeam].filter(s => s !== state.dragSeat);
-        // Add to new team order
-        if (targetTeam !== -1) teamOrders[targetTeam].push(state.dragSeat);
-        state.teamAssignments[state.dragSeat] = targetTeam;
-        updateTeamChips(gs, state.amLeader);
-        updateConfirmBtn();
+        performDrop(id, gs);
       });
     });
   }
 
   updateTeamChips(gs, state.amLeader);
+}
+
+// Apply a draft broadcasted from the leader
+export function applyTeamDraft({ assignments, teamOrders: to }) {
+  if (!_currentGs || state.amLeader) return;
+  state.teamAssignments = assignments;
+  teamOrders[0] = to[0] ?? [];
+  teamOrders[1] = to[1] ?? [];
+  updateTeamChips(_currentGs, false);
+}
+
+function broadcastDraft() {
+  if (!state.amLeader) return;
+  socket.emit('teamDraftChanged', {
+    assignments: { ...state.teamAssignments },
+    teamOrders: { 0: [...teamOrders[0]], 1: [...teamOrders[1]] },
+  });
+}
+
+function performDrop(targetId, gs) {
+  const targetTeam = targetId === 'team0-slots' ? 0 : targetId === 'team1-slots' ? 1 : -1;
+  if (targetTeam !== -1) {
+    const inTeam = Object.values(state.teamAssignments).filter(t => t === targetTeam).length;
+    if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
+  }
+  const prevTeam = state.teamAssignments[state.dragSeat];
+  if (prevTeam !== -1) teamOrders[prevTeam] = teamOrders[prevTeam].filter(s => s !== state.dragSeat);
+  if (targetTeam !== -1) teamOrders[targetTeam].push(state.dragSeat);
+  state.teamAssignments[state.dragSeat] = targetTeam;
+  updateTeamChips(gs, state.amLeader);
+  updateConfirmBtn();
+  broadcastDraft();
 }
 
 function moveInTeam(gs, teamIdx, seatIdx, direction) {
@@ -61,6 +86,8 @@ function moveInTeam(gs, teamIdx, seatIdx, direction) {
   order.splice(pos, 1);
   order.splice(newPos, 0, seatIdx);
   updateTeamChips(gs, true);
+  updateConfirmBtn();
+  broadcastDraft();
 }
 
 function updateTeamChips(gs, isLeader = false) {
@@ -81,7 +108,7 @@ function updateTeamChips(gs, isLeader = false) {
     chip.dataset.seat = i;
     chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
       <span>${p.name}${isMe ? ' (você)' : ''}</span>`;
-    if (isLeader) attachDragHandlers(chip, i);
+    if (isLeader) attachDragHandlers(chip, i, gs);
     slots['-1'].appendChild(chip);
   });
 
@@ -110,12 +137,11 @@ function updateTeamChips(gs, isLeader = false) {
         ${orderControls}`;
 
       if (isLeader) {
-        attachDragHandlers(chip, seatIdx);
+        attachDragHandlers(chip, seatIdx, gs);
         chip.querySelectorAll('.btn-chip-move').forEach(btn => {
           btn.addEventListener('click', e => {
             e.stopPropagation();
             moveInTeam(gs, t, seatIdx, parseInt(btn.dataset.dir));
-            updateConfirmBtn();
           });
         });
       }
@@ -124,13 +150,95 @@ function updateTeamChips(gs, isLeader = false) {
   });
 }
 
-function attachDragHandlers(chip, seatIdx) {
+// ── Drop zone IDs for touch hit-testing ──────────────────────────────────────
+const ZONE_IDS = ['unassigned-slots', 'team0-slots', 'team1-slots'];
+
+function getDropZoneIdAt(x, y) {
+  if (_ghost) _ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  if (_ghost) _ghost.style.display = '';
+  if (!el) return null;
+  for (const id of ZONE_IDS) {
+    const zone = document.getElementById(id);
+    if (zone && zone.contains(el)) return id;
+  }
+  return null;
+}
+
+function removeGhost() {
+  if (_ghost) { _ghost.remove(); _ghost = null; }
+  ZONE_IDS.forEach(id => document.getElementById(id)?.classList.remove('drag-over'));
+}
+
+function attachDragHandlers(chip, seatIdx, gs) {
+  // ── HTML5 drag (desktop) ──────────────────────────────────────
   chip.addEventListener('dragstart', () => {
     state.dragSeat = seatIdx;
     setTimeout(() => chip.classList.add('dragging'), 0);
   });
   chip.addEventListener('dragend', () => {
     chip.classList.remove('dragging');
+    state.dragSeat = null;
+  });
+
+  // ── Touch drag (mobile) ───────────────────────────────────────
+  chip.addEventListener('touchstart', e => {
+    if (e.target.closest('.btn-chip-move')) return;
+    e.stopPropagation();
+
+    state.dragSeat = seatIdx;
+    chip.classList.add('dragging');
+
+    const touch = e.touches[0];
+    const rect = chip.getBoundingClientRect();
+
+    _ghost = chip.cloneNode(true);
+    _ghost.style.cssText = `
+      position: fixed;
+      left: ${rect.left}px;
+      top: ${rect.top}px;
+      width: ${rect.width}px;
+      pointer-events: none;
+      opacity: 0.85;
+      z-index: 9999;
+      transform: scale(1.08);
+      transition: none;
+    `;
+    _ghost.querySelectorAll('.chip-order-controls').forEach(el => el.remove());
+    document.body.appendChild(_ghost);
+
+    chip._touchOffsetX = touch.clientX - rect.left;
+    chip._touchOffsetY = touch.clientY - rect.top;
+  }, { passive: true });
+
+  chip.addEventListener('touchmove', e => {
+    if (!_ghost || state.dragSeat !== seatIdx) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    _ghost.style.left = `${touch.clientX - chip._touchOffsetX}px`;
+    _ghost.style.top  = `${touch.clientY - chip._touchOffsetY}px`;
+
+    ZONE_IDS.forEach(id => document.getElementById(id)?.classList.remove('drag-over'));
+    const zoneId = getDropZoneIdAt(touch.clientX, touch.clientY);
+    if (zoneId) document.getElementById(zoneId)?.classList.add('drag-over');
+  }, { passive: false });
+
+  chip.addEventListener('touchend', e => {
+    if (state.dragSeat !== seatIdx) return;
+    const touch = e.changedTouches[0];
+    const zoneId = getDropZoneIdAt(touch.clientX, touch.clientY);
+
+    chip.classList.remove('dragging');
+    removeGhost();
+
+    if (zoneId) performDrop(zoneId, gs);
+    state.dragSeat = null;
+  });
+
+  chip.addEventListener('touchcancel', () => {
+    chip.classList.remove('dragging');
+    removeGhost();
     state.dragSeat = null;
   });
 }

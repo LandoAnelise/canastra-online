@@ -14,19 +14,39 @@ export function renderWaiting(gs) {
   }
 }
 
+const TEAM_LABEL = ['🔵 Dupla 1', '🔴 Dupla 2'];
+const TEAM_CLASS  = ['team0',     'team1'];
+
 export function renderReadyScreen(players) {
   const list = document.getElementById('ready-players-list');
   if (!list || !players) return;
   list.innerHTML = '';
+
+  // Group by team: [team0 players, team1 players]
+  const byTeam = [[], []];
   players.forEach((p, i) => {
-    const isReady = state.readyPlayers.has(i);
-    const isMe = i === state.mySeatIndex;
-    const row = document.createElement('div');
-    row.className = `ready-player-row${isReady ? ' is-ready' : ''}`;
-    row.innerHTML = `
-      <span class="rp-name${isMe ? ' me' : ''}">${p.name}${isMe ? ' (você)' : ''}</span>
-      <span class="rp-status">${isReady ? '✅ Pronto!' : 'Aguardando…'}</span>`;
-    list.appendChild(row);
+    if (p?.teamIndex === 0 || p?.teamIndex === 1) byTeam[p.teamIndex].push({ p, i });
+  });
+
+  byTeam.forEach((members, t) => {
+    if (members.length === 0) return;
+
+    // Team header
+    const header = document.createElement('div');
+    header.className = `ready-team-header ${TEAM_CLASS[t]}`;
+    header.textContent = TEAM_LABEL[t];
+    list.appendChild(header);
+
+    members.forEach(({ p, i }) => {
+      const isReady = state.readyPlayers.has(i);
+      const isMe = i === state.mySeatIndex;
+      const row = document.createElement('div');
+      row.className = `ready-player-row${isReady ? ' is-ready' : ''}`;
+      row.innerHTML = `
+        <span class="rp-name${isMe ? ' me' : ''}">${p.name}${isMe ? ' (você)' : ''}</span>
+        <span class="rp-status">${isReady ? '✅ Pronto!' : 'Aguardando…'}</span>`;
+      list.appendChild(row);
+    });
   });
 
   const btn = document.getElementById('btn-ready');

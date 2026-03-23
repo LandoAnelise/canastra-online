@@ -6,23 +6,6 @@ import { playFolhaVirando, playBzz, isMuted, toggleMute } from '../sounds.js';
 
 function errSound(res) { if (!res.ok) playBzz(); }
 
-document.getElementById('btn-draw').addEventListener('click', () => {
-  const prevIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('drawFromDeck', {}, res => {
-    if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
-    playFolhaVirando();
-    window._prevHandIds = prevIds;
-  });
-});
-
-document.getElementById('btn-take-discard').addEventListener('click', () => {
-  window._prevHandIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('takeDiscard', {}, res => {
-    if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
-    playFolhaVirando();
-  });
-});
-
 document.getElementById('btn-play-melds').addEventListener('click', () => {
   if (state.selectedCards.length < 3) { showToast('Selecione pelo menos 3 cartas.', 'error'); playBzz(); return; }
   socket.emit('playMelds', { meldActions: [{ type: 'new', cards: [...state.selectedCards] }] }, res => {

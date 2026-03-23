@@ -240,7 +240,7 @@
 
 #decks-row {
   display: flex;
-  gap: 28px;
+  gap: 16px;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -249,7 +249,10 @@
   border-top: 1px solid rgba(255,255,255,0.08);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   background: rgba(0,0,0,0.18);
+  overflow: hidden;
 }
+#deck-pile { flex-shrink: 0; }
+#discard-pile { flex-shrink: 0; }
 
 /* ── PILES (deck + discard) ──────────────────────────────────── */
 .pile {
@@ -599,6 +602,87 @@
 .discard-stack-row::-webkit-scrollbar { display: none; }
 .discard-stack-row .meld-card { box-shadow: 2px 0 5px rgba(0,0,0,0.5); }
 
+/* ── EXPAND DISCARD BUTTON ───────────────────────────────────── */
+#btn-expand-discard {
+  margin-top: 4px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  color: var(--cream);
+  font-size: 0.62rem;
+  padding: 2px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+#btn-expand-discard:hover { background: rgba(255,255,255,0.16); }
+#btn-expand-discard.hidden { display: none; }
+
+/* ── DISCARD DROPDOWN OVERLAY ────────────────────────────────── */
+.discard-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: #1a1228;
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+  min-width: 200px;
+  max-width: min(340px, 90vw);
+}
+.discard-dropdown.hidden { display: none; }
+.discard-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  opacity: 0.7;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+#btn-close-discard-dropdown {
+  background: none;
+  border: none;
+  color: var(--cream);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 2px 4px;
+  opacity: 0.6;
+}
+#btn-close-discard-dropdown:hover { opacity: 1; }
+.discard-dropdown-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,168,76,0.3) transparent;
+}
+.discard-view-card {
+  width: 40px;
+  height: 56px;
+  border-radius: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 3px 4px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #1a1a2e;
+  flex-shrink: 0;
+}
+.discard-view-card .card-rank { font-size: 0.85rem; line-height: 1.1; }
+.discard-view-card .card-suit { font-size: 0.9rem; line-height: 1; }
+.discard-view-card.red { color: var(--red-suit); }
+
 /* ── DRAG AND DROP ───────────────────────────────────────────── */
 .my-card.drag-over-card {
   border-color: var(--gold);
@@ -615,4 +699,213 @@
 }
 #discard-pile.drop-target .pile-card {
   box-shadow: 0 0 24px rgba(192,57,43,0.65);
+}
+
+/* ── MOBILE ──────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+
+  /* Topbar */
+  #game-topbar {
+    height: 42px;
+    gap: 10px;
+    padding: 0 46px 0 8px;
+  }
+  .score-block { gap: 5px; }
+  .score-value { font-size: 1.15rem; }
+  .score-label { font-size: 0.5rem; letter-spacing: 0.8px; max-width: 90px; }
+  #game-status-label { font-size: 0.68rem; }
+  .btn-mute { right: 8px; font-size: 0.9rem; padding: 3px 6px; }
+
+  /* Table grid — side columns narrower, top row shorter, bottom full-width */
+  #table-area {
+    grid-template-areas:
+      ". top ."
+      "left center right"
+      "bottom bottom bottom";
+    grid-template-columns: 46px 1fr 46px;
+    grid-template-rows: 52px minmax(0, 1fr) 148px;
+    margin: 5px;
+    border-radius: 28px;
+    box-shadow:
+      0 0 0 6px #7b4118,
+      0 0 0 8px #4e2608,
+      0 0 0 10px rgba(0,0,0,0.4),
+      0 10px 30px rgba(0,0,0,0.85);
+  }
+
+  /* Opponent top slot — compact: name+count on one line, thin card slivers below */
+  .player-slot.top {
+    height: 52px;
+    max-height: 52px;
+    padding: 4px 8px 2px;
+    gap: 3px;
+    justify-content: center;
+  }
+  .player-slot.top .player-info {
+    gap: 5px;
+  }
+
+  /* Opponent side slots — compact: name+count stacked, thin horizontal slivers */
+  .player-slot.left,
+  .player-slot.right {
+    width: 46px;
+    max-width: 46px;
+    padding: 6px 2px 4px;
+    gap: 4px;
+  }
+  .player-slot.left .player-info,
+  .player-slot.right .player-info {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  /* Bottom (my) slot — full-width, allow hand to scroll inside */
+  .player-slot.bottom {
+    height: 148px;
+    min-height: 148px;
+    max-height: 148px;
+    padding: 5px 6px 4px;
+    gap: 3px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  /* Player labels */
+  .player-name { font-size: 0.52rem; letter-spacing: 0.5px; }
+  .hand-count   { font-size: 0.48rem; padding: 1px 4px; }
+
+  /* Opponent fan — top: thin horizontal slivers (just the card top edge) */
+  .hand-fan:not(.vertical) .back-card {
+    width: 22px;
+    height: 14px;
+    border-radius: 3px 3px 2px 2px;
+    margin-left: -8px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  }
+
+  /* Opponent fan — sides: thin horizontal slivers stacked */
+  .hand-fan.vertical .back-card {
+    width: 38px;
+    height: 13px;
+    border-radius: 3px;
+    margin-top: -4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  /* Decks row */
+  #decks-row { gap: 14px; padding: 5px 8px; }
+
+  /* Pile cards */
+  .pile-card {
+    width: 48px;
+    height: 68px;
+    border-radius: 7px;
+  }
+  .pile-card.front .card-rank { font-size: 1.1rem; }
+  .pile-card.front .card-suit { font-size: 1.2rem; }
+  .pile-count { font-size: 0.5rem; margin-top: 4px; }
+
+  /* Discard stack */
+  .discard-stack-row { height: 68px; }
+
+  /* My hand — single row */
+  #my-hand { padding: 8px 8px 3px; overflow-x: auto; }
+  .my-card {
+    width: 56px;
+    height: 80px;
+    border-radius: 7px;
+    margin-left: -30px;
+    padding: 4px 5px;
+  }
+  .my-card .card-rank { font-size: 0.95rem; }
+  .my-card .card-suit { font-size: 1.0rem; }
+  .card-face      { font-size: 1.9rem; bottom: 5px; right: 4px; }
+  .card-face-suit { font-size: 2.2rem; bottom: 3px; right: 3px; }
+
+  /* My hand — two rows (> 9 cards on mobile) */
+  #my-hand[data-rows="2"] {
+    flex-direction: column;
+    align-items: flex-start;
+    overflow: visible;
+    padding: 4px 4px 0;
+    gap: 0;
+  }
+  .hand-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .hand-row .my-card:first-child { margin-left: 0; }
+  .hand-row-2 {
+    margin-top: -42px;
+    position: relative;
+    z-index: 2;
+  }
+  /* Expand slot and grid row to fit two rows */
+  #table-area.has-two-rows {
+    grid-template-rows: 80px minmax(0, 1fr) 168px;
+  }
+  .player-slot.bottom.two-rows {
+    height: 168px;
+    min-height: 168px;
+    max-height: 168px;
+    overflow: visible;
+  }
+
+  /* Meld cards (mesa) */
+  .meld-card {
+    width: 44px;
+    height: 62px;
+    border-radius: 6px;
+    margin-left: -26px;
+    padding: 4px 5px;
+  }
+  .meld-card .card-rank { font-size: 0.9rem; }
+  .meld-card .card-suit { font-size: 0.95rem; }
+  .meld-face      { font-size: 1.1rem !important; }
+  .meld-face-suit { font-size: 1.1rem !important; }
+
+  /* Discard stack: less overlap than mesa cards so they're readable */
+  .discard-stack-row .meld-card          { margin-left: -18px !important; }
+  .discard-stack-row .meld-card:first-child { margin-left: 0 !important; }
+
+  /* Melds area */
+  .melds-group { padding: 4px 6px; gap: 3px; }
+  .melds-label { font-size: 0.55rem; padding: 2px 0 4px; }
+  .meld-group-full { padding: 4px 6px; gap: 3px; }
+  .meld-type-label { font-size: 0.55rem; }
+  .canastra-badge  { font-size: 0.55rem; padding: 1px 5px; }
+  .btn-add-to-meld { font-size: 0.6rem; padding: 2px 6px; }
+
+  /* Turn banner */
+  #turn-banner {
+    top: 48px;
+    font-size: 0.68rem;
+    padding: 4px 14px;
+  }
+
+  /* Action bar — fixed at bottom so it's never pushed off-screen */
+  #action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    padding: 6px 8px env(safe-area-inset-bottom, 6px);
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  #action-bar .btn-action {
+    font-size: 0.72rem;
+    padding: 7px 10px;
+    min-width: 0;
+  }
+
+  /* Push table up so fixed action bar doesn't cover the hand */
+  #screen-game {
+    padding-bottom: 72px;
+  }
 }

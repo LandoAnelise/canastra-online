@@ -102,3 +102,13 @@ export function playPica() {
 export function playBzz() {
   playFile('bzz', '/sounds/bzz.mp3', { volume: 0.75 });
 }
+
+// ── Vitória — time ganhador da rodada / jogo (arquivo real) ───────────────────
+export function playWin() {
+  playFile('win', '/sounds/win.mp3', { volume: 0.9, maxDuration: 4 });
+}
+
+// ── Derrota — time perdedor da rodada / jogo (arquivo real) ──────────────────
+export function playLose() {
+  playFile('lose', '/sounds/lose.mp3', { volume: 0.85, maxDuration: 5 });
+}

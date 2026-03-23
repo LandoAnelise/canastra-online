@@ -33,26 +33,20 @@
 
     <!-- Mode tabs -->
     <div class="lobby-tabs">
-      <button class="lobby-tab active" data-tab="create">✦ Criar Sala</button>
+      <button class="lobby-tab active" data-tab="browse">🌐 Públicas</button>
       <button class="lobby-tab" data-tab="join">🔑 Código</button>
-      <button class="lobby-tab" data-tab="browse">🌐 Públicas</button>
+      <button class="lobby-tab" data-tab="create">✦ Criar Sala</button>
     </div>
 
-    <!-- Panel: Create Room -->
-    <div class="lobby-panel" id="panel-create">
-      <div class="room-type-grid">
-        <button class="room-type-btn active" id="type-private">
-          <span style="font-size:1.4rem">🔒</span>
-          <span class="rt-name">Privada</span>
-          <span class="rt-desc">Compartilhe o código com amigos</span>
-        </button>
-        <button class="room-type-btn" id="type-public">
-          <span style="font-size:1.4rem">🌐</span>
-          <span class="rt-name">Pública</span>
-          <span class="rt-desc">Aparece na lista para qualquer um entrar</span>
-        </button>
+    <!-- Panel: Browse public rooms (default) -->
+    <div class="lobby-panel" id="panel-browse">
+      <div class="public-rooms-header">
+        <span class="public-rooms-title">Salas disponíveis</span>
+        <button id="btn-refresh-rooms" class="btn-ghost" style="font-size:0.8rem;padding:5px 10px">↻ Atualizar</button>
       </div>
-      <button id="btn-create" class="btn-primary">Criar Sala</button>
+      <div id="public-rooms-list" class="public-rooms-list">
+        <div class="rooms-loading">Clique em Atualizar para carregar</div>
+      </div>
     </div>
 
     <!-- Panel: Join by code -->
@@ -67,15 +61,21 @@
       <button id="btn-join" class="btn-primary">Entrar na Sala</button>
     </div>
 
-    <!-- Panel: Browse public rooms -->
-    <div class="lobby-panel hidden" id="panel-browse">
-      <div class="public-rooms-header">
-        <span class="public-rooms-title">Salas disponíveis</span>
-        <button id="btn-refresh-rooms" class="btn-ghost" style="font-size:0.8rem;padding:5px 10px">↻ Atualizar</button>
+    <!-- Panel: Create Room -->
+    <div class="lobby-panel hidden" id="panel-create">
+      <div class="room-type-grid">
+        <button class="room-type-btn active" id="type-private">
+          <span style="font-size:1.4rem">🔒</span>
+          <span class="rt-name">Privada</span>
+          <span class="rt-desc">Compartilhe o código com amigos</span>
+        </button>
+        <button class="room-type-btn" id="type-public">
+          <span style="font-size:1.4rem">🌐</span>
+          <span class="rt-name">Pública</span>
+          <span class="rt-desc">Aparece na lista para qualquer um entrar</span>
+        </button>
       </div>
-      <div id="public-rooms-list" class="public-rooms-list">
-        <div class="rooms-loading">Clique em Atualizar para carregar</div>
-      </div>
+      <button id="btn-create" class="btn-primary">Criar Sala</button>
     </div>
 
     <button id="btn-show-rules" class="btn-ghost" style="text-align:center;margin-top:4px">📋 Ver regras do jogo</button>
@@ -224,8 +224,6 @@
   <!-- Action bar -->
   <div id="action-bar">
     <div class="action-group main-actions">
-      <button id="btn-draw" class="btn-action" disabled>🂠 Pescar</button>
-      <button id="btn-take-discard" class="btn-action" disabled>♻️ Pegar Lixo</button>
       <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
       <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
       <button id="btn-bater" class="btn-action bater hidden" disabled>🏆 Bater!</button>

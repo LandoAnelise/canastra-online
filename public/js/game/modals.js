@@ -2,9 +2,14 @@ import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, closeModal } from '../utils.js';
 import { clearSelection } from './render.js';
+import { playWin, playLose } from '../sounds.js';
 
 export function showRoundModal(result) {
   if (result.gameOver) return; // game over modal handles it
+
+  // Play win/lose sound based on the local player's team
+  const myTeam = state.gameState?.myTeam;
+  if (myTeam === result.winningTeam) playWin(); else playLose();
 
   // Header
   const winnerTeamName = (result.teamNames && result.teamNames[result.winningTeam]) || ('Dupla ' + (result.winningTeam + 1));
@@ -97,6 +102,9 @@ document.getElementById('btn-continue-round').addEventListener('click', () => {
 export function showGameOverModal(gs) {
   const winner = gs.scores[0] >= 2000 ? 0 : 1;
   const tNames = gs.teamNames || ['Dupla 1', 'Dupla 2'];
+
+  // Play win/lose sound based on the local player's team
+  if (gs.myTeam === winner) playWin(); else playLose();
   document.getElementById('modal-go-title').textContent = tNames[winner] + ' venceu! 🎉';
   document.getElementById('modal-go-body').innerHTML =
     '<div class="score-row' + (winner === 0 ? ' winner' : '') + '"><span class="label">' + tNames[0] + '</span><span class="value">' + gs.scores[0] + ' pts</span></div>' +

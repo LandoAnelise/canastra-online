@@ -50,24 +50,28 @@ export function renderGame(gs) {
   document.getElementById('deck-count').textContent = `${gs.deckSize} cartas`;
   document.getElementById('discard-count').textContent = `${gs.discardSize} no lixo`;
   const discardStack = document.getElementById('discard-stack');
+  const btnExpand = document.getElementById('btn-expand-discard');
   discardStack.innerHTML = '';
   if (gs.discardPile && gs.discardPile.length > 0) {
-    const cardW = 60;
-    const maxW  = 260;
-    const n     = gs.discardPile.length;
-    const overlap = n > 1
-      ? Math.min(34, cardW - Math.floor((maxW - cardW) / (n - 1)))
-      : 0;
-    gs.discardPile.forEach((card, i) => {
+    const COMPACT_MAX = 8;
+    const OVERLAP_PX  = 34; // fixed overlap — always the same distance between cards
+    const displayCards = gs.discardPile.slice(-COMPACT_MAX);
+    displayCards.forEach((card, i) => {
       const red = isRed(card.suit) ? 'red' : '';
       const wild = isWild(card) ? 'wild' : '';
-      const ml = i === 0 ? '' : `style="margin-left:-${overlap}px"`;
+      const ml = i === 0 ? '' : `style="margin-left:-${OVERLAP_PX}px"`;
       discardStack.insertAdjacentHTML('beforeend',
         `<div class="meld-card ${red} ${wild}" ${ml}>
           <span class="card-rank">${card.rank}</span>
           <span class="card-suit">${card.suit}</span>
         </div>`);
     });
+  }
+  // Show/hide expand button
+  if (gs.discardSize > 8) {
+    btnExpand.classList.remove('hidden');
+  } else {
+    btnExpand.classList.add('hidden');
   }
 
   renderMelds(gs);
@@ -153,11 +157,43 @@ export function renderMe(gs) {
   }
 
   const ordered = state.myHandOrder.map(id => gs.myHand.find(c => c.id === id)).filter(Boolean);
-  ordered.forEach(card => {
-    const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
-    const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
-    hand.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
-  });
+
+  const isMobile = window.innerWidth <= 600;
+  const MOBILE_ROW_MAX = 9;
+  const needsTwoRows = isMobile && ordered.length > MOBILE_ROW_MAX;
+
+  // Sync two-row state on slot and table grid
+  const slot = hand.closest('.player-slot');
+  const tableArea = document.getElementById('table-area');
+  if (needsTwoRows) {
+    hand.setAttribute('data-rows', '2');
+    slot?.classList.add('two-rows');
+    tableArea?.classList.add('has-two-rows');
+  } else {
+    hand.setAttribute('data-rows', '1');
+    slot?.classList.remove('two-rows');
+    tableArea?.classList.remove('has-two-rows');
+  }
+
+  if (needsTwoRows) {
+    const mid = Math.ceil(ordered.length / 2);
+    [ordered.slice(0, mid), ordered.slice(mid)].forEach((rowCards, ri) => {
+      const rowEl = document.createElement('div');
+      rowEl.className = `hand-row hand-row-${ri + 1}`;
+      rowCards.forEach(card => {
+        const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
+        const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
+        rowEl.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
+      });
+      hand.appendChild(rowEl);
+    });
+  } else {
+    ordered.forEach(card => {
+      const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
+      const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
+      hand.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
+    });
+  }
 
   hand.querySelectorAll('.my-card').forEach(el => {
     el.addEventListener('click', () => onCardClick(el.dataset.id));
@@ -274,8 +310,6 @@ export function updateButtons(gs) {
   const drawn = gs.drawnThisTurn;
   const hasCanastra = gs.melds[gs.myTeam]?.some(m => m.cards.length >= 7);
   const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
-  document.getElementById('btn-draw').disabled          = !isMyTurn || drawn;
-  document.getElementById('btn-take-discard').disabled  = !isMyTurn || drawn || !gs.discardTop;
   document.getElementById('btn-play-melds').disabled    = !isMyTurn || !drawn || state.selectedCards.length === 0;
   document.getElementById('btn-discard').disabled       = !isMyTurn || !drawn;
   document.getElementById('btn-bater').classList.toggle('hidden', !showBater);

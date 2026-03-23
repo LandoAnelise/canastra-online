@@ -26,6 +26,17 @@ function registerTeamHandlers(socket, io, rm) {
     });
   });
 
+  // ── TEAM DRAFT PREVIEW (leader broadcasts each drag to non-leaders) ──
+  socket.on('teamDraftChanged', ({ assignments, teamOrders }) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return;
+    const game = rooms.get(info.roomId);
+    if (!game) return;
+    if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) return; // only leader
+    // Re-broadcast to everyone else in the room
+    socket.to(info.roomId).emit('teamDraftChanged', { assignments, teamOrders });
+  });
+
   // ── PLAYER READY ──
   socket.on('playerReady', (_, cb) => {
     const info = playerRoom.get(socket.id);
