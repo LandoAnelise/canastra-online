@@ -464,7 +464,7 @@ class Game {
         if (!meld) return { ok: false, msg: 'Meld nao encontrado.' };
         let newCards = [...meld.cards, ...cards];
         const newType = meldType(newCards);
-        if (!newType || newType !== meld.type) return { ok: false, msg: 'Adicao invalida ao meld (tipo incompativel).' };
+        if (!newType || newType !== meld.type) return { ok: false, msg: 'Adição inválida' };
         cards.forEach(c => usedIds.add(c.id));
         // Sort cards so sequence stays in order
         if (newType === 'sequence') {

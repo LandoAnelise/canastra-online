@@ -93,9 +93,9 @@ export function playThud() {
   playFile('thud', '/sounds/thud.mp3', { volume: 0.9 });
 }
 
-// ── Deal — baixar cartas na mesa (arquivo real, primeiro segundo) ─────────────
+// ── Deal — baixar cartas na mesa (desativado; trocar arquivo e descomentar quando encontrar som) ──
 export function playDeal() {
-  playFile('deal', '/sounds/deal_preview.mp3', { volume: 0.85, maxDuration: 1.0 });
+  // playFile('deal', '/sounds/deal_preview.mp3', { volume: 0.85, maxDuration: 1.0 });
 }
 
 // ── Whoosh — pega o lixo (arquivo real) ──────────────────────────────────────

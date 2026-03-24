@@ -100,6 +100,18 @@ html, body {
   font-weight: 600;
 }
 .btn-action.bater:hover:not(:disabled) { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(232,201,110,0.35)); }
+.btn-action.confirm-melds {
+  background: linear-gradient(135deg, rgba(46,160,67,0.35), rgba(46,160,67,0.2));
+  border-color: #2ea043;
+  color: #7ee787;
+  font-weight: 600;
+}
+.btn-action.confirm-melds:hover:not(:disabled) { background: linear-gradient(135deg, rgba(46,160,67,0.55), rgba(46,160,67,0.4)); }
+.btn-action.cancel-melds {
+  border-color: rgba(192,57,43,0.5);
+  color: #e74c3c;
+}
+.btn-action.cancel-melds:hover { background: rgba(192,57,43,0.12); border-color: #e74c3c; }
 .btn-action.sort-hand {
   border-color: rgba(120,180,255,0.35);
   color: #a8d4ff;

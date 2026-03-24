@@ -512,6 +512,16 @@
   100% { box-shadow: none; background: transparent; }
 }
 .meld-group-full.meld-new { animation: meld-new-flash 2.5s ease-out forwards; }
+
+/* ── Staged melds (em espera de confirmação — aparecem na mesa da dupla) ────── */
+.meld-group-full.staged-pending {
+  border: 1px dashed rgba(46,160,67,0.55);
+  background: rgba(46,160,67,0.06);
+  opacity: 0.85;
+}
+.staged-label-text {
+  color: #7ee787;
+}
 .meld-group-full.drop-target {
   border-color: var(--gold) !important;
   background: rgba(201,168,76,0.12);
@@ -527,7 +537,7 @@
   flex-wrap: wrap;
 }
 .meld-type-label {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   opacity: 0.5;
@@ -540,6 +550,15 @@
 }
 .canastra-badge.limpa { background: rgba(100,220,100,0.2); color: #6de89a; }
 .canastra-badge.suja  { background: rgba(255,200,50,0.2);  color: #ffd060; }
+
+.meld-group-full.can-add {
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.meld-group-full.can-add:hover {
+  border-color: rgba(201,168,76,0.6);
+  background: rgba(201,168,76,0.08);
+}
 
 .btn-add-to-meld {
   margin-left: auto;
@@ -852,18 +871,10 @@
   .player-slot.right .hand-fan.vertical .back-card { border-right: none; }
   .hand-fan.vertical .back-card:first-child { margin-top: 0; }
 
-  /* Decks row — deck fixo à esquerda, lixo cresce para a direita */
+  /* Decks row — centralizado entre as mesas */
   #decks-row {
-    justify-content: flex-start;
     gap: 10px;
     padding: 5px 8px;
-    overflow: hidden;
-  }
-  #deck-pile  { flex-shrink: 0; }
-  #discard-pile {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
   }
   .discard-stack-row {
     height: 68px;
@@ -871,11 +882,11 @@
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.35) transparent;
+    scrollbar-color: rgba(255,255,255,0.55) rgba(255,255,255,0.1);
   }
-  .discard-stack-row::-webkit-scrollbar { display: block; height: 4px; }
-  .discard-stack-row::-webkit-scrollbar-track { background: transparent; }
-  .discard-stack-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 2px; }
+  .discard-stack-row::-webkit-scrollbar { display: block; height: 5px; }
+  .discard-stack-row::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .discard-stack-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.55); border-radius: 3px; }
 
   /* Pile cards */
   .pile-card {
@@ -944,26 +955,25 @@
   .meld-face      { font-size: 1.1rem !important; }
   .meld-face-suit { font-size: 1.1rem !important; }
 
-  /* Discard stack: less overlap than mesa cards so they're readable */
-  .discard-stack-row .meld-card          { margin-left: -18px !important; }
+  /* Discard stack: more overlap so more cards fit before expand button */
+  .discard-stack-row .meld-card          { margin-left: -28px !important; }
   .discard-stack-row .meld-card:first-child { margin-left: 0 !important; }
 
-  /* Melds area — scroll sempre visível */
+  /* Melds area — scroll */
   .melds-group {
     padding: 4px 6px;
     gap: 3px;
     overflow-y: scroll;
     scrollbar-width: thin;
-    scrollbar-color: rgba(201,168,76,0.5) rgba(255,255,255,0.06);
+    scrollbar-color: rgba(201,168,76,0.7) rgba(255,255,255,0.1);
   }
-  .melds-group::-webkit-scrollbar { display: block; width: 4px; }
-  .melds-group::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 2px; }
-  .melds-group::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.5); border-radius: 2px; }
+  .melds-group::-webkit-scrollbar { display: block; width: 5px; }
+  .melds-group::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .melds-group::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.7); border-radius: 3px; min-height: 20px; }
   .melds-label { font-size: 0.55rem; padding: 2px 0 4px; }
   .meld-group-full { padding: 4px 6px; gap: 3px; }
-  .meld-type-label { font-size: 0.55rem; }
-  .canastra-badge  { font-size: 0.55rem; padding: 1px 5px; }
-  .btn-add-to-meld { font-size: 0.6rem; padding: 2px 6px; }
+  .meld-type-label { font-size: 0.5rem; }
+  .canastra-badge  { font-size: 0.5rem; padding: 1px 5px; }
 
   /* Turn banner */
   #turn-banner {

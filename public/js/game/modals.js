@@ -12,19 +12,17 @@ export function showRoundModal(result) {
   // Header
   const winnerTeamName = (result.teamNames && result.teamNames[result.winningTeam]) || ('Dupla ' + (result.winningTeam + 1));
   document.getElementById('round-winner-badge').textContent =
-    '🏆 ' + result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
+    result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
   document.getElementById('round-modal-number').textContent = 'Rodada ' + result.round;
 
   // Per-team breakdown
   for (let t = 0; t < 2; t++) {
     const d = result.teamMeldDetails[t];
-    const isWinner = t === result.winningTeam;
     const col = document.getElementById('round-team-col-' + t);
-    col.className = 'round-team-col ' + (isWinner ? 'winner' : 'loser');
+    col.className = 'round-team-col';
 
     const teamName = (result.teamNames && result.teamNames[t]) || ('Dupla ' + (t + 1));
-    document.getElementById('round-team-name-' + t).textContent =
-      teamName + (isWinner ? ' 🏆' : '');
+    document.getElementById('round-team-name-' + t).textContent = teamName;
 
     // Breakdown lines
     const bd = document.getElementById('round-breakdown-' + t);

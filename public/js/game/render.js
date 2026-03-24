@@ -55,7 +55,7 @@ export function renderGame(gs) {
   const btnExpand = document.getElementById('btn-expand-discard');
   discardStack.innerHTML = '';
   if (gs.discardPile && gs.discardPile.length > 0) {
-    const COMPACT_MAX = 8;
+    const COMPACT_MAX = 12;
     const OVERLAP_PX  = 34; // fixed overlap — always the same distance between cards
     const displayCards = gs.discardPile.slice(-COMPACT_MAX);
     displayCards.forEach((card, i) => {
@@ -70,13 +70,14 @@ export function renderGame(gs) {
     });
   }
   // Show/hide expand button
-  if (gs.discardSize > 8) {
+  if (gs.discardSize > 12) {
     btnExpand.classList.remove('hidden');
   } else {
     btnExpand.classList.add('hidden');
   }
 
   renderMelds(gs);
+  renderStagedMelds(gs);
 
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const currentName = gs.players[gs.currentPlayerIndex]?.name || '?';
@@ -153,7 +154,10 @@ export function renderMe(gs) {
     }
   }
 
-  const ordered = state.myHandOrder.map(id => gs.myHand.find(c => c.id === id)).filter(Boolean);
+  // Exclude staged cards from visible hand
+  const ordered = state.myHandOrder
+    .map(id => gs.myHand.find(c => c.id === id))
+    .filter(c => c && !state.stagedCardIds.has(c.id));
 
   const isMobile = window.innerWidth <= 600;
   const MOBILE_ROW_MAX = 9;
@@ -197,6 +201,31 @@ export function renderMe(gs) {
   });
 
   setupHandDragDrop(hand);
+}
+
+export function renderStagedMelds(gs) {
+  // Remove any leftover container (old position, before hand slot)
+  document.getElementById('staged-melds-preview')?.remove();
+  if (state.stagedMelds.length === 0) return;
+
+  // Append into the team's own meld list (renderMelds already cleared it)
+  const list = document.getElementById(`melds-list-${gs.myTeam}`);
+  if (!list) return;
+
+  // Remove placeholder "Nenhum grupo ainda" if present
+  list.querySelector('.melds-empty')?.remove();
+
+  state.stagedMelds.forEach(action => {
+    const cards = action.cards.map(id => gs.myHand.find(c => c.id === id)).filter(Boolean);
+    const el = document.createElement('div');
+    el.className = 'meld-group-full staged-pending';
+    el.innerHTML = `
+      <div class="meld-header">
+        <span class="meld-type-label staged-label-text">Em espera</span>
+      </div>
+      <div class="meld-cards-row">${cards.map(fullCardHTML).join('')}</div>`;
+    list.appendChild(el);
+  });
 }
 
 export function renderMelds(gs) {
@@ -253,7 +282,7 @@ export function renderMelds(gs) {
       const cls = isLimpa ? 'canastra-limpa' : isSuja ? 'canastra-suja' : '';
       const badge = isLimpa ? '<span class="canastra-badge limpa">✦ Limpa</span>'
                   : isSuja  ? '<span class="canastra-badge suja">✦ Suja</span>' : '';
-      const typeLabel = meld.type === 'sequence' ? 'Sequência' : 'Grupo';
+      const typeLabel = meld.type === 'sequence' ? 'sq.' : 'gp.';
       const canAdd = isMyTurn && drawn && t === gs.myTeam;
 
       // Detect new or grown meld for highlight
@@ -263,22 +292,21 @@ export function renderMelds(gs) {
       _prevMeldCardCounts[meldKey] = meld.cards.length;
 
       const el = document.createElement('div');
-      el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}`;
+      el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}${canAdd ? ' can-add' : ''}`;
       el.innerHTML = `
         <div class="meld-header">
           <span class="meld-type-label">${typeLabel} ${meld.cards.length} cartas</span>
           ${badge}
-          ${canAdd ? `<button class="btn-add-to-meld" data-team="${t}" data-index="${mi}">+ Adicionar</button>` : ''}
         </div>
         <div class="meld-cards-row">${meld.cards.map(fullCardHTML).join('')}</div>`;
 
-      // Add button handler + drag-to-meld
+      // Click on meld to add selected cards
       if (canAdd) {
-        el.querySelector('.btn-add-to-meld').addEventListener('click', () => {
+        el.addEventListener('click', () => {
           if (state.selectedCards.length === 0) { showToast('Selecione cartas na mão primeiro.', 'error'); return; }
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...state.selectedCards] }];
           socket.emit('playMelds', { meldActions }, res => {
-            if (!res.ok) { showToast(res.msg, 'error'); return; }
+            if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
             showToast('Cartas adicionadas!', 'success', 1000);
             playDeal(); clearSelection();
           });
@@ -312,11 +340,22 @@ export function updateButtons(gs) {
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const drawn = gs.drawnThisTurn;
   const hasCanastra = gs.melds[gs.myTeam]?.some(m => m.cards.length >= 7);
+  const isStaging = state.stagedMelds.length > 0;
   const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
-  document.getElementById('btn-play-melds').disabled    = !isMyTurn || !drawn || state.selectedCards.length === 0;
-  document.getElementById('btn-discard').disabled       = !isMyTurn || !drawn;
+
+  const btnPlayMelds    = document.getElementById('btn-play-melds');
+  const btnConfirm      = document.getElementById('btn-confirm-melds');
+  const btnCancel       = document.getElementById('btn-cancel-melds');
+
+  // In staging mode: baixar still works (to add more), confirm/cancel appear
+  btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length === 0;
+  btnConfirm.classList.toggle('hidden', !isStaging);
+  btnConfirm.disabled = !isStaging;
+  btnCancel.classList.toggle('hidden', !isStaging);
+
+  document.getElementById('btn-discard').disabled = !isMyTurn || !drawn || isStaging;
   document.getElementById('btn-bater').classList.toggle('hidden', !showBater);
-  document.getElementById('btn-bater').disabled         = !showBater;
+  document.getElementById('btn-bater').disabled = !showBater;
 }
 
 export function onCardClick(cardId) {
@@ -335,6 +374,9 @@ export function resetRoundState() {
   // Clear per-round tracking so new round melds get highlight treatment
   for (const k in _canastraState) delete _canastraState[k];
   for (const k in _prevMeldCardCounts) delete _prevMeldCardCounts[k];
+  // Clear any staging state from previous round
+  state.stagedMelds = [];
+  state.stagedCardIds = new Set();
 }
 
 export function clearSelection() {
