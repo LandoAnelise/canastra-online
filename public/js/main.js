@@ -7,7 +7,7 @@ let _prevTurnIdx = -1;
 import './screens/lobby.js';
 import { renderWaiting, renderReadyScreen } from './screens/waiting.js';
 import { renderTeamSelection } from './screens/teams.js';
-import { renderGame, renderMelds, clearSelection } from './game/render.js';
+import { renderGame, renderMelds, clearSelection, resetRoundState } from './game/render.js';
 import './game/actions.js';
 import './game/discard.js';
 import './game/modals.js';
@@ -39,6 +39,7 @@ socket.on('roundStarted', ({ round }) => {
   state.myHandOrder = [];
   closeModal('modal-round');
   clearSelection();
+  resetRoundState();
 });
 
 socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {

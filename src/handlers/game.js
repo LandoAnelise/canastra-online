@@ -19,7 +19,7 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.drawFromDeck(info.seatIndex);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
-    broadcastToRoom(info.roomId, 'playerDrew', {});
+    socket.to(info.roomId).emit('playerDrew', {});
     broadcastState(game);
     if (result.deckNowEmpty) {
       broadcastToRoom(info.roomId, 'deckEmpty', { playerName: game.players[info.seatIndex]?.name });
@@ -30,7 +30,6 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.takeDiscard(info.seatIndex);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
-    broadcastToRoom(info.roomId, 'playerDrew', {});
     broadcastState(game);
   }));
 

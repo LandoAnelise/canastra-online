@@ -7,6 +7,8 @@ import { playBzz, playCanastraLimpa, playCanastraSuja, playPica } from '../sound
 const _canastraState = {};
 // Track previous hand sizes to detect pica (1 card left)
 const _prevHandSizes = {};
+// Track meld card counts to detect new/grown melds for highlight
+const _prevMeldCardCounts = {};
 
 // ─── HAND REORDER DRAG-AND-DROP ───────────────────────────────────────────────
 let dragCardId = null;
@@ -254,8 +256,14 @@ export function renderMelds(gs) {
       const typeLabel = meld.type === 'sequence' ? 'Sequência' : 'Grupo';
       const canAdd = isMyTurn && drawn && t === gs.myTeam;
 
+      // Detect new or grown meld for highlight
+      const meldKey = `${t}-${mi}`;
+      const prevCount = _prevMeldCardCounts[meldKey] ?? -1;
+      const shouldHighlight = meld.cards.length > prevCount;
+      _prevMeldCardCounts[meldKey] = meld.cards.length;
+
       const el = document.createElement('div');
-      el.className = `meld-group-full ${cls}`;
+      el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}`;
       el.innerHTML = `
         <div class="meld-header">
           <span class="meld-type-label">${typeLabel} ${meld.cards.length} cartas</span>
@@ -321,6 +329,12 @@ export function onCardClick(cardId) {
 
   renderMe(state.gameState);
   updateButtons(state.gameState);
+}
+
+export function resetRoundState() {
+  // Clear per-round tracking so new round melds get highlight treatment
+  for (const k in _canastraState) delete _canastraState[k];
+  for (const k in _prevMeldCardCounts) delete _prevMeldCardCounts[k];
 }
 
 export function clearSelection() {

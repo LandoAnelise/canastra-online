@@ -506,6 +506,12 @@
 }
 .meld-group-full.canastra-limpa { border-color: rgba(100,220,100,0.5); box-shadow: 0 0 10px rgba(100,220,100,0.14); }
 .meld-group-full.canastra-suja  { border-color: rgba(255,200,50,0.5);  box-shadow: 0 0 10px rgba(255,200,50,0.14); }
+@keyframes meld-new-flash {
+  0%   { box-shadow: 0 0 0 2px rgba(255,220,80,0.9), 0 0 16px rgba(255,220,80,0.5); background: rgba(255,220,80,0.12); }
+  60%  { box-shadow: 0 0 0 2px rgba(255,220,80,0.4), 0 0 8px rgba(255,220,80,0.2);  background: rgba(255,220,80,0.05); }
+  100% { box-shadow: none; background: transparent; }
+}
+.meld-group-full.meld-new { animation: meld-new-flash 2.5s ease-out forwards; }
 .meld-group-full.drop-target {
   border-color: var(--gold) !important;
   background: rgba(201,168,76,0.12);

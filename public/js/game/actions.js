@@ -59,6 +59,7 @@ document.getElementById('deck-pile').addEventListener('click', () => {
   window._prevHandIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
   socket.emit('drawFromDeck', {}, res => {
     if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+    playFolhaVirando();
   });
 });
 
