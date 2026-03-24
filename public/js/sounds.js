@@ -88,6 +88,16 @@ export function playPalmas() {
   playFile('palmas', '/sounds/palmas.mp3', { volume: 0.85, maxDuration: 3 });
 }
 
+// ── Chime — fim de rodada (arquivo real) ──────────────────────────────────────
+export function playChime() {
+  playFile('chime', '/sounds/chime.mp3', { volume: 0.9 });
+}
+
+// ── Thud — tentativa inválida de pescar (arquivo real) ────────────────────────
+export function playThud() {
+  playFile('thud', '/sounds/thud.mp3', { volume: 0.9 });
+}
+
 // ── Página Virando — pesca uma carta (arquivo real) ───────────────────────────
 export function playFolhaVirando() {
   playFile('pagina', '/sounds/pagina.mp3', { volume: 0.8 });
@@ -100,7 +110,7 @@ export function playPica() {
 
 // ── Bzz — ação proibida (arquivo real) ────────────────────────────────────────
 export function playBzz() {
-  playFile('bzz', '/sounds/bzz.mp3', { volume: 0.75 });
+  playFile('bzz', '/sounds/bzz.mp3', { volume: 0.75, maxDuration: 0.4 });
 }
 
 // ── Vitória — time ganhador da rodada / jogo (arquivo real) ───────────────────

@@ -733,35 +733,74 @@
       0 10px 30px rgba(0,0,0,0.85);
   }
 
-  /* Opponent top slot — compact: name+count on one line, thin card slivers below */
+  /* ── Opponent top slot ──────────────────────────── */
   .player-slot.top {
-    height: 52px;
-    max-height: 52px;
-    padding: 4px 8px 2px;
-    gap: 3px;
-    justify-content: center;
+    height: 56px;
+    max-height: 56px;
+    padding: 0 8px 3px;
+    gap: 4px;
+    justify-content: flex-start; /* fan on top, info below */
   }
+  .player-slot.top .hand-fan:not(.vertical) .back-card { border-top: none; }
+  /* Fan first (order:1), info below (order:2) */
+  .player-slot.top .hand-fan   { order: 1; }
   .player-slot.top .player-info {
-    gap: 5px;
+    order: 2;
+    flex-direction: row;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
   }
 
-  /* Opponent side slots — compact: name+count stacked, thin horizontal slivers */
-  .player-slot.left,
+  /* ── Opponent side slots ─────────────────────────── */
+  .player-slot.left {
+    width: 46px;
+    max-width: 46px;
+    padding: 4px 2px 4px 0; /* sem padding na borda externa */
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row-reverse; /* cards on left, info on right (inner/table side) */
+  }
   .player-slot.right {
     width: 46px;
     max-width: 46px;
-    padding: 6px 2px 4px;
-    gap: 4px;
+    padding: 4px 0 4px 2px; /* sem padding na borda externa */
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row; /* info on left (inner/table side), cards on right */
   }
+  /* Side info: vertical writing, rotated 90° */
   .player-slot.left .player-info,
   .player-slot.right .player-info {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2px;
+    writing-mode: vertical-lr;
+    flex-direction: row; /* in VL writing-mode, row = top-to-bottom */
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    max-height: 140px;
+    overflow: hidden;
+  }
+  .player-slot.left .player-name,
+  .player-slot.right .player-name {
+    font-size: 0.46rem;
+    letter-spacing: 0;
+    font-weight: 600;
+    overflow: hidden;
+    max-height: 60px;
+  }
+  .player-slot.left .hand-count,
+  .player-slot.right .hand-count {
+    font-size: 0.42rem;
+    padding: 0;
+    background: none;
+    border: none;
+    overflow: hidden;
+    max-height: 44px;
   }
 
-  /* Bottom (my) slot — full-width, allow hand to scroll inside */
+  /* ── Bottom (my) slot ───────────────────────────── */
   .player-slot.bottom {
     height: 148px;
     min-height: 148px;
@@ -772,27 +811,40 @@
     overflow-y: hidden;
   }
 
-  /* Player labels */
-  .player-name { font-size: 0.52rem; letter-spacing: 0.5px; }
-  .hand-count   { font-size: 0.48rem; padding: 1px 4px; }
+  /* Player labels (general) */
+  .player-name { font-size: 0.6rem; letter-spacing: 0.5px; }
+  .hand-count   { font-size: 0.56rem; padding: 1px 4px; }
 
-  /* Opponent fan — top: thin horizontal slivers (just the card top edge) */
+  /* Side player name/count override (vertical writing mode) */
+  .player-slot.left .player-name,
+  .player-slot.right .player-name { font-size: 0.58rem; }
+  .player-slot.left .hand-count,
+  .player-slot.right .hand-count  { font-size: 0.52rem; }
+
+  /* ── Opponent fans ───────────────────────────────── */
+  /* Top: horizontal fan — slightly larger cards */
   .hand-fan:not(.vertical) .back-card {
-    width: 22px;
-    height: 14px;
-    border-radius: 3px 3px 2px 2px;
-    margin-left: -8px;
+    width: 28px;
+    height: 22px;
+    border-radius: 3px;
+    margin-left: -11px;
     box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
   }
+  .hand-fan:not(.vertical) .back-card:first-child { margin-left: 0; }
 
-  /* Opponent fan — sides: thin horizontal slivers stacked */
+  /* Sides: vertical fan — mesmas dimensões do topo, giradas 90° */
   .hand-fan.vertical .back-card {
-    width: 38px;
-    height: 13px;
+    width: 22px;
+    height: 28px;
     border-radius: 3px;
-    margin-top: -4px;
+    margin-top: -11px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
   }
+  /* Remove só a borda do lado externo — cria efeito de que as cartas
+     continuam atrás da parede da mesa */
+  .player-slot.left  .hand-fan.vertical .back-card { border-left:  none; }
+  .player-slot.right .hand-fan.vertical .back-card { border-right: none; }
+  .hand-fan.vertical .back-card:first-child { margin-top: 0; }
 
   /* Decks row */
   #decks-row { gap: 14px; padding: 5px 8px; }

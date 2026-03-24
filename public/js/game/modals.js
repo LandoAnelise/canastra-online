@@ -2,14 +2,12 @@ import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, closeModal } from '../utils.js';
 import { clearSelection } from './render.js';
-import { playWin, playLose } from '../sounds.js';
+import { playWin, playLose, playChime } from '../sounds.js';
 
 export function showRoundModal(result) {
   if (result.gameOver) return; // game over modal handles it
 
-  // Play win/lose sound based on the local player's team
-  const myTeam = state.gameState?.myTeam;
-  if (myTeam === result.winningTeam) playWin(); else playLose();
+  playChime();
 
   // Header
   const winnerTeamName = (result.teamNames && result.teamNames[result.winningTeam]) || ('Dupla ' + (result.winningTeam + 1));
@@ -89,6 +87,11 @@ export function showRoundModal(result) {
     losses.insertAdjacentHTML('beforeend', chip);
   });
 
+  const isLeader = !!state.gameState?.isLeader;
+  const btnContinue = document.getElementById('btn-continue-round');
+  btnContinue.classList.toggle('hidden', !isLeader);
+  document.getElementById('round-waiting-leader').classList.toggle('hidden', isLeader);
+
   document.getElementById('modal-round').classList.remove('hidden');
 }
 
@@ -134,7 +137,7 @@ socket.on('gamePaused', ({ playerName, timeoutMs }) => {
 socket.on('gameResumed', ({ playerName }) => {
   stopPauseCountdown();
   closeModal('modal-paused');
-  showToast('\u25b6 ' + playerName + ' reconectou! Jogo retomado.', 'success', 3000);
+  showToast('\u25b6 ' + playerName + ' reconectou! Jogo retomado.', 'success', 1000);
 });
 
 socket.on('playerAbandoned', ({ playerName }) => {

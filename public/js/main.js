@@ -1,7 +1,7 @@
 import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
-import { playCampainha } from './sounds.js';
+import { playCampainha, playFolhaVirando } from './sounds.js';
 
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
@@ -35,7 +35,7 @@ socket.on('readyUpdate', ({ readyPlayers: rp, totalPlayers }) => {
 });
 
 socket.on('roundStarted', ({ round }) => {
-  showToast(`🃏 Rodada ${round} começando!`, 'success');
+  showToast(`🃏 Rodada ${round} começando!`, 'success', 1000);
   state.myHandOrder = [];
   closeModal('modal-round');
   clearSelection();
@@ -48,6 +48,8 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
   }
   // If reconnectWindowMs is set, gamePaused event handles the UI
 });
+
+socket.on('playerDrew', () => { playFolhaVirando(); });
 
 socket.on('roundEnded', (result) => { showRoundModal(result); });
 

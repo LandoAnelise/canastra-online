@@ -438,6 +438,7 @@ class Game {
 
     // Separar cartas usadas
     const usedIds = new Set();
+    const createdTypes = [];
 
     for (const action of meldActions) {
       // Resolver IDs → objetos carta da mão
@@ -456,6 +457,7 @@ class Game {
         // Sort sequence cards so wilds land in their correct positions
         const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : cards;
         melds.push({ rank: refCard.rank, suit: refCard.suit, type, cards: sortedCards });
+        createdTypes.push(type);
       } else if (action.type === 'add') {
         const meld = melds[action.meldIndex];
         if (!meld) return { ok: false, msg: 'Meld nao encontrado.' };
@@ -515,7 +517,7 @@ class Game {
       return this._autoBater(playerIndex, teamIndex);
     }
 
-    return { ok: true };
+    return { ok: true, meldTypes: createdTypes };
   }
 
   // Descartar e encerrar turno
@@ -695,6 +697,7 @@ class Game {
       myIndex: playerIndex,
       myTeam: this.players[playerIndex]?.teamIndex,
       teamNames: this.teamNames,
+      playOrder: this.playOrder,
     };
   }
 }

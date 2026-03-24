@@ -61,7 +61,7 @@ export function joinRoomByCode(code) {
     document.getElementById('waiting-room-code').textContent = code;
     history.replaceState(null, '', `?sala=${code}`);
     if (res.reconnected) {
-      showToast('✅ Reconectado com sucesso!', 'success', 3000);
+      showToast('✅ Reconectado com sucesso!', 'success', 1000);
     } else {
       showScreen('screen-waiting');
     }

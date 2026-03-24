@@ -19,6 +19,7 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.drawFromDeck(info.seatIndex);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
+    broadcastToRoom(info.roomId, 'playerDrew', {});
     broadcastState(game);
     if (result.deckNowEmpty) {
       broadcastToRoom(info.roomId, 'deckEmpty', { playerName: game.players[info.seatIndex]?.name });
@@ -29,13 +30,14 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.takeDiscard(info.seatIndex);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
+    broadcastToRoom(info.roomId, 'playerDrew', {});
     broadcastState(game);
   }));
 
   socket.on('playMelds', gameAction((game, info, { meldActions }, cb) => {
     const result = game.playMelds(info.seatIndex, meldActions);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
-    cb?.({ ok: true });
+    cb?.({ ok: true, meldTypes: result.meldTypes });
     broadcastState(game);
     if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
   }));
@@ -61,6 +63,7 @@ function registerGameHandlers(socket, io, rm) {
 
   socket.on('continueRound', gameAction((game, info, _, cb) => {
     if (game.status !== 'roundOver') return cb?.({ ok: false, msg: 'Não há rodada aguardando.' });
+    if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) return cb?.({ ok: false, msg: 'Apenas o líder da sala pode iniciar a próxima rodada.' });
     game.startRound();
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
     broadcastState(game);

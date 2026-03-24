@@ -13,14 +13,17 @@ export function renderTeamSelection(gs) {
   state.amLeader = !!gs.isLeader;
   _currentGs = gs;
 
+  const leaderName = gs.players[0]?.name || 'o líder';
   const notice = document.getElementById('teams-leader-notice');
   if (notice) {
     notice.textContent = state.amLeader
       ? '👑 Você é o líder — arraste os jogadores para montar as duplas e defina a ordem'
-      : `👑 Aguardando ${gs.players[0]?.name || 'o líder'} montar as duplas…`;
+      : `⏳ Aguardando ${leaderName} montar as duplas…`;
     notice.className = state.amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
   }
   document.getElementById('btn-confirm-teams').style.display = state.amLeader ? '' : 'none';
+  document.getElementById('teams-grid').style.display        = state.amLeader ? '' : 'none';
+  document.getElementById('teams-hint').style.display        = state.amLeader ? '' : 'none';
 
   if (state.teamsInitialized) { updateTeamChips(gs, state.amLeader); return; }
   state.teamsInitialized = true;

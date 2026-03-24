@@ -100,19 +100,14 @@ export function renderGame(gs) {
 
 function getRelativeSeats(gs) {
   const me = state.mySeatIndex;
-  const myTeam = gs.myTeam;
 
-  // Teammate goes opposite (top); opponents fill right/left in clockwise order
-  if (myTeam !== undefined && myTeam !== null) {
-    const teammate = gs.players.findIndex((p, i) => i !== me && p?.teamIndex === myTeam);
-    if (teammate !== -1) {
-      const opponents = [];
-      for (let i = 1; i <= 3; i++) {
-        const seat = (me + i) % 4;
-        if (seat !== teammate) opponents.push(seat);
-      }
-      return { top: teammate, right: opponents[0], left: opponents[1] };
-    }
+  // Use playOrder to assign positions: right = next to play, left = previous, top = partner
+  if (gs.playOrder && gs.playOrder.length === 4) {
+    const pos = gs.playOrder.indexOf(me);
+    const right = gs.playOrder[(pos + 1) % 4]; // próximo a jogar
+    const top   = gs.playOrder[(pos + 2) % 4]; // parceiro
+    const left  = gs.playOrder[(pos + 3) % 4]; // jogou antes
+    return { top, right, left };
   }
 
   // Fallback: seat order
@@ -276,7 +271,7 @@ export function renderMelds(gs) {
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...state.selectedCards] }];
           socket.emit('playMelds', { meldActions }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); return; }
-            showToast('Cartas adicionadas!', 'success');
+            showToast('Cartas adicionadas!', 'success', 1000);
             clearSelection();
           });
         });
@@ -294,7 +289,7 @@ export function renderMelds(gs) {
           if (!dragCardId) return;
           socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); return; }
-            showToast('Carta adicionada!', 'success', 1400);
+            showToast('Carta adicionada!', 'success', 1000);
             clearSelection();
           });
         });

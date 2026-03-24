@@ -17,7 +17,7 @@ function registerLobbyHandlers(socket, rm) {
 
   // ── CREATE ROOM ──
   socket.on('createRoom', ({ playerName, isPublic = false }, cb) => {
-    const name = playerName?.trim().slice(0, 20);
+    const name = playerName?.trim().slice(0, 10);
     if (!name) return cb?.({ ok: false, msg: 'Nome inválido.' });
     const roomId = generateRoomId();
     const game = getOrCreateRoom(roomId);
@@ -42,7 +42,7 @@ function registerLobbyHandlers(socket, rm) {
   socket.on('joinRoom', ({ roomId, playerName }, cb) => {
     if (!roomId || !playerName) return cb({ ok: false, msg: 'Dados inválidos.' });
 
-    const name = playerName.trim().slice(0, 20);
+    const name = playerName.trim().slice(0, 10);
     const game = getOrCreateRoom(roomId);
     const key  = reconnectKey(roomId, name);
 
