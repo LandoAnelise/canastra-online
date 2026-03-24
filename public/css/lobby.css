@@ -68,7 +68,7 @@
   transition: border-color 0.2s;
 }
 .form-group input:focus { border-color: var(--gold); }
-.form-group input::placeholder { opacity: 0.35; }
+.form-group input::placeholder { opacity: 0.35; color: #fff; }
 
 .room-row { display: flex; gap: 8px; }
 .room-row input { flex: 1; text-transform: uppercase; }
