@@ -61,13 +61,22 @@ function _wildsActingInSequence(meld) {
   const suit = naturals[0]?.suit;
   if (!suit) return wilds.length;
   const hasAce = naturals.some(c => c.rank === 'A');
-  const valFn  = r => (r === 'A' ? 1 : _RANK_VAL[r]);
+
+  // Determine if Ace should be high or low (same logic as server)
+  let aceHigh = false;
+  if (hasAce) {
+    const vLow  = naturals.map(c => (c.rank === 'A' ? 1  : _RANK_VAL[c.rank])).sort((a,b) => a-b);
+    const vHigh = naturals.map(c => (c.rank === 'A' ? 14 : _RANK_VAL[c.rank])).sort((a,b) => a-b);
+    aceHigh = (vHigh[vHigh.length-1] - vHigh[0]) < (vLow[vLow.length-1] - vLow[0]);
+  }
+  const valFn = r => (r === 'A' ? (aceHigh ? 14 : 1) : _RANK_VAL[r]);
+
   const sortedVals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
   const minVal = sortedVals[0];
   const maxVal = sortedVals[sortedVals.length - 1];
   const internalGaps = (maxVal - minVal) - (naturals.length - 1);
   const borderWilds  = wilds.length - internalGaps;
-  const minPossible  = hasAce ? 1 : 2;
+  const minPossible  = hasAce ? (aceHigh ? 2 : 1) : 2;
   const leftBorder   = Math.min(Math.max(0, borderWilds), minVal - minPossible);
   const startVal     = minVal - leftBorder;
   const endVal       = maxVal + (borderWilds - leftBorder);
