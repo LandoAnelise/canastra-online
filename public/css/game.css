@@ -852,8 +852,23 @@
   .player-slot.right .hand-fan.vertical .back-card { border-right: none; }
   .hand-fan.vertical .back-card:first-child { margin-top: 0; }
 
-  /* Decks row */
-  #decks-row { gap: 14px; padding: 5px 8px; }
+  /* Decks row — deck fixo à esquerda, lixo cresce para a direita */
+  #decks-row {
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 5px 8px;
+    overflow: hidden;
+  }
+  #deck-pile  { flex-shrink: 0; }
+  #discard-pile {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .discard-stack-row {
+    height: 68px;
+    overflow: hidden;
+  }
 
   /* Pile cards */
   .pile-card {
@@ -864,9 +879,6 @@
   .pile-card.front .card-rank { font-size: 1.1rem; }
   .pile-card.front .card-suit { font-size: 1.2rem; }
   .pile-count { font-size: 0.5rem; margin-top: 4px; }
-
-  /* Discard stack */
-  .discard-stack-row { height: 68px; }
 
   /* My hand — single row */
   #my-hand { padding: 8px 8px 3px; overflow-x: auto; }
