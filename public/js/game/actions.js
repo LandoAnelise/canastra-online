@@ -2,7 +2,7 @@ import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, autoSortHand, sortHandByRank } from '../utils.js';
 import { getDragCardId, renderMe, updateButtons, clearSelection } from './render.js';
-import { playFolhaVirando, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
+import { playFolhaVirando, playWhoosh, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
 
 function errSound(res) { if (!res.ok) playBzz(); }
 
@@ -70,6 +70,7 @@ document.getElementById('discard-pile').addEventListener('click', (e) => {
   window._prevHandIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
   socket.emit('takeDiscard', {}, res => {
     if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+    playWhoosh();
   });
 });
 

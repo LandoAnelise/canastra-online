@@ -98,6 +98,11 @@ export function playThud() {
   playFile('thud', '/sounds/thud.mp3', { volume: 0.9 });
 }
 
+// ── Whoosh — pega o lixo (arquivo real) ──────────────────────────────────────
+export function playWhoosh() {
+  playFile('whoosh', '/sounds/whoosh.mp3', { volume: 0.8 });
+}
+
 // ── Página Virando — pesca uma carta (arquivo real) ───────────────────────────
 export function playFolhaVirando() {
   playFile('pagina', '/sounds/pagina.mp3', { volume: 0.8 });

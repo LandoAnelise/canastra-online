@@ -30,6 +30,7 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.takeDiscard(info.seatIndex);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
+    socket.to(info.roomId).emit('playerTookDiscard', {});
     broadcastState(game);
   }));
 
