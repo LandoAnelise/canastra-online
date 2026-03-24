@@ -99,6 +99,40 @@ function registerLobbyHandlers(socket, rm) {
     cb({ ok: true, seatIndex: result.seatIndex, roomId, reconnected: false });
     broadcastState(game);
   });
+
+  // ── LEAVE ROOM (voluntary, pre-game only) ──
+  socket.on('leaveRoom', () => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return;
+    const game = rooms.get(info.roomId);
+    if (!game || game.status !== 'waiting') return;
+
+    const player = game.players[info.seatIndex];
+    const name = player?.name || '?';
+
+    // Remove player slot and compact the array
+    game.players.splice(info.seatIndex, 1);
+    // Fix seatIndex references for remaining players
+    game.players.forEach((p, i) => { if (p) p.seatIndex = i; });
+    // If leader left, keep seat 0 as leader
+    game.leaderSeatIndex = 0;
+
+    socket.leave(info.roomId);
+    playerRoom.delete(socket.id);
+
+    console.log(`[Room ${info.roomId}] ${name} saiu voluntariamente`);
+    const { broadcastToRoom: btr } = rm;
+    btr(info.roomId, 'playerDisconnected', { playerName: name, seatIndex: info.seatIndex });
+
+    if (game.players.length === 0) {
+      rooms.delete(info.roomId);
+    } else {
+      broadcastState(game);
+    }
+
+    const meta = roomMeta.get(info.roomId);
+    if (meta?.isPublic) broadcastPublicRooms();
+  });
 }
 
 module.exports = { registerLobbyHandlers };

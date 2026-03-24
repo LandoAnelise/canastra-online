@@ -1,6 +1,6 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { showToast } from '../utils.js';
+import { showToast, showScreen } from '../utils.js';
 
 export function renderWaiting(gs) {
   const seats = document.getElementById('waiting-seats');
@@ -60,6 +60,15 @@ export function renderReadyScreen(players) {
     btn.disabled = false;
   }
 }
+
+document.getElementById('btn-leave-waiting').addEventListener('click', () => {
+  socket.emit('leaveRoom');
+  state.myRoomId = null;
+  state.gameState = null;
+  state.teamsInitialized = false;
+  history.replaceState(null, '', '/');
+  showScreen('screen-lobby');
+});
 
 document.getElementById('btn-ready').addEventListener('click', () => {
   if (state.iAmReady) return;
