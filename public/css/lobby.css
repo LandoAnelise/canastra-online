@@ -244,16 +244,28 @@
 }
 #teams-grid {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   width: 100%;
-  justify-content: center;
+}
+#team-col-unassigned {
+  flex: 0 0 100%;
+  order: 0;
+}
+#team-col-0 {
+  flex: 0 0 calc(50% - 5px);
+  order: 1;
+  min-width: 0;
+}
+#team-col-1 {
+  flex: 0 0 calc(50% - 5px);
+  order: 1;
+  min-width: 0;
 }
 .team-column {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1;
-  min-width: 110px;
 }
 .team-col-label {
   text-align: center;
@@ -302,15 +314,7 @@
 .player-chip:active { cursor: grabbing; }
 .player-chip.dragging { opacity: 0.4; }
 .player-chip.me-chip { border-color: rgba(201,168,76,0.4); }
-.player-chip .chip-avatar {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
+
 #team-col-0 .player-chip { border-color: rgba(100,180,255,0.35); }
 #team-col-1 .player-chip { border-color: rgba(255,140,100,0.35); }
 .chip-pos {
@@ -428,35 +432,14 @@
   }
   .waiting-card h2 { font-size: 1.4rem; }
 
-  /* Teams grid: unassigned full-width on top, teams side by side below */
-  #teams-grid {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  #team-col-unassigned {
-    flex: 0 0 100%;
-    order: 0;
-  }
-  #team-col-0 {
-    flex: 0 0 calc(50% - 4px);
-    order: 1;
-    min-width: 0;
-  }
-  #team-col-1 {
-    flex: 0 0 calc(50% - 4px);
-    order: 1;
-    min-width: 0;
-  }
-
-  /* Chips: more compact, order controls below name */
+  /* Chips: more compact on mobile */
   .player-chip {
     padding: 8px 8px;
     font-size: 0.8rem;
     flex-wrap: wrap;
     gap: 6px;
   }
-  .chip-name { font-size: 0.8rem; min-width: 0; word-break: break-word; }
-  .chip-avatar { width: 24px; height: 24px; font-size: 0.68rem; }
+  .chip-name { font-size: 0.8rem; }
 
   /* Order controls: move to own row at bottom of chip */
   .chip-order-controls {

@@ -111,8 +111,7 @@ function updateTeamChips(gs, isLeader = false) {
     chip.className = `player-chip${isMe ? ' me-chip' : ''}`;
     chip.draggable = isLeader;
     chip.dataset.seat = i;
-    chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
-      <span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>`;
+    chip.innerHTML = `<span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>`;
     if (isLeader) attachDragHandlers(chip, i, gs);
     slots['-1'].appendChild(chip);
   });
@@ -137,7 +136,6 @@ function updateTeamChips(gs, isLeader = false) {
         </div>` : '';
 
       chip.innerHTML = `<span class="chip-pos">${posLabel}</span>
-        <div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
         <span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>
         ${orderControls}`;
 
