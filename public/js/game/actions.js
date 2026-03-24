@@ -2,7 +2,7 @@ import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, autoSortHand, sortHandByRank } from '../utils.js';
 import { getDragCardId, renderMe, updateButtons, clearSelection } from './render.js';
-import { playFolhaVirando, playWhoosh, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
+import { playFolhaVirando, playWhoosh, playDeal, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
 
 function errSound(res) { if (!res.ok) playBzz(); }
 
@@ -11,7 +11,8 @@ document.getElementById('btn-play-melds').addEventListener('click', () => {
   socket.emit('playMelds', { meldActions: [{ type: 'new', cards: [...state.selectedCards] }] }, res => {
     if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
     const isSeq = res.meldTypes?.includes('sequence');
-    showToast(isSeq ? 'Sequência baixada!' : 'Grupo baixado!', 'success', 1000); clearSelection();
+    showToast(isSeq ? 'Sequência baixada!' : 'Grupo baixado!', 'success', 1000);
+    playDeal(); clearSelection();
   });
 });
 

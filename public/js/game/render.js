@@ -1,7 +1,7 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
 import { autoSortHand, isRed, isWild, cardHTML, isCanastra, isCanastraLimpa, isCanastraSuja, showToast } from '../utils.js';
-import { playBzz, playCanastraLimpa, playCanastraSuja, playPica } from '../sounds.js';
+import { playBzz, playCanastraLimpa, playCanastraSuja, playPica, playDeal } from '../sounds.js';
 
 // Track canastra state per meld to detect new ones
 const _canastraState = {};
@@ -280,7 +280,7 @@ export function renderMelds(gs) {
           socket.emit('playMelds', { meldActions }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); return; }
             showToast('Cartas adicionadas!', 'success', 1000);
-            clearSelection();
+            playDeal(); clearSelection();
           });
         });
 

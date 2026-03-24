@@ -1,7 +1,7 @@
 import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
-import { playCampainha, playFolhaVirando, playWhoosh } from './sounds.js';
+import { playCampainha, playFolhaVirando, playWhoosh, playDeal } from './sounds.js';
 
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
@@ -52,6 +52,7 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
 
 socket.on('playerDrew', () => { playFolhaVirando(); });
 socket.on('playerTookDiscard', () => { playWhoosh(); });
+socket.on('playerDealt', () => { playDeal(); });
 
 socket.on('roundEnded', (result) => { showRoundModal(result); });
 

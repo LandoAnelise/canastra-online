@@ -38,6 +38,7 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.playMelds(info.seatIndex, meldActions);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true, meldTypes: result.meldTypes });
+    socket.to(info.roomId).emit('playerDealt', {});
     broadcastState(game);
     if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
   }));

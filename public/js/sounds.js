@@ -83,11 +83,6 @@ export function playCampainha() {
   });
 }
 
-// ── Palmas — rodada encerrada, primeiros 3s (arquivo real) ────────────────────
-export function playPalmas() {
-  playFile('palmas', '/sounds/palmas.mp3', { volume: 0.85, maxDuration: 3 });
-}
-
 // ── Chime — fim de rodada (arquivo real) ──────────────────────────────────────
 export function playChime() {
   playFile('chime', '/sounds/chime.mp3', { volume: 0.9 });
@@ -96,6 +91,11 @@ export function playChime() {
 // ── Thud — tentativa inválida de pescar (arquivo real) ────────────────────────
 export function playThud() {
   playFile('thud', '/sounds/thud.mp3', { volume: 0.9 });
+}
+
+// ── Deal — baixar cartas na mesa (arquivo real, primeiro segundo) ─────────────
+export function playDeal() {
+  playFile('deal', '/sounds/deal_preview.mp3', { volume: 0.85, maxDuration: 1.0 });
 }
 
 // ── Whoosh — pega o lixo (arquivo real) ──────────────────────────────────────
