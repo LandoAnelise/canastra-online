@@ -1,6 +1,6 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { showToast, closeModal } from '../utils.js';
+import { showToast, closeModal, showScreen } from '../utils.js';
 import { clearSelection } from './render.js';
 import { playWin, playLose, playChime } from '../sounds.js';
 
@@ -116,10 +116,12 @@ export function showGameOverModal(gs) {
 }
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
-  socket.emit('newGame', {}, res => {
-    if (!res.ok) showToast(res.msg, 'error');
-    else { closeModal('modal-gameover'); state.teamsInitialized = false; }
-  });
+  closeModal('modal-gameover');
+  state.teamsInitialized = false;
+  state.gameState = null;
+  state.myRoomId = null;
+  history.replaceState(null, '', '/');
+  showScreen('screen-lobby');
 });
 
 // ─── PAUSE / RECONNECT ───────────────────────────────────────────────────────
