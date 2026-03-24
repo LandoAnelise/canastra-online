@@ -6,7 +6,7 @@ import { playCampainha, playFolhaVirando } from './sounds.js';
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
 import { renderWaiting, renderReadyScreen } from './screens/waiting.js';
-import { renderTeamSelection, applyTeamDraft } from './screens/teams.js';
+import { renderTeamSelection } from './screens/teams.js';
 import { renderGame, renderMelds, clearSelection } from './game/render.js';
 import './game/actions.js';
 import './game/discard.js';
@@ -88,7 +88,6 @@ socket.on('publicRoomsUpdated', ({ rooms }) => {
   if (!panel.classList.contains('hidden')) renderPublicRooms(rooms);
 });
 
-socket.on('teamDraftChanged', (draft) => applyTeamDraft(draft));
 
 socket.on('connect', () => console.log('Conectado'));
 socket.on('disconnect', () => showToast('⚠️ Conexão perdida. Reconectando...', 'error', 8000));

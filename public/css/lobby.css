@@ -296,6 +296,8 @@
   align-items: center;
   gap: 8px;
   transition: all 0.15s;
+  min-width: 0;
+  overflow: hidden;
 }
 .player-chip:active { cursor: grabbing; }
 .player-chip.dragging { opacity: 0.4; }
@@ -318,7 +320,7 @@
   min-width: 18px;
   text-align: center;
 }
-.chip-name { flex: 1; }
+.chip-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .chip-order-controls {
   display: flex;
   flex-direction: column;

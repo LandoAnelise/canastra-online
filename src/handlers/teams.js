@@ -33,8 +33,9 @@ function registerTeamHandlers(socket, io, rm) {
     const game = rooms.get(info.roomId);
     if (!game) return;
     if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) return; // only leader
-    // Re-broadcast to everyone else in the room
-    socket.to(info.roomId).emit('teamDraftChanged', { assignments, teamOrders });
+    // Save draft on server so it's included in gameState for all players
+    game.draft = { assignments, teamOrders };
+    broadcastState(game);
   });
 
   // ── PLAYER READY ──

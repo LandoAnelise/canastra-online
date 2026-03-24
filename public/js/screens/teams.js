@@ -22,41 +22,43 @@ export function renderTeamSelection(gs) {
     notice.className = state.amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
   }
   document.getElementById('btn-confirm-teams').style.display = state.amLeader ? '' : 'none';
-  document.getElementById('teams-grid').style.display        = state.amLeader ? '' : 'none';
   document.getElementById('teams-hint').style.display        = state.amLeader ? '' : 'none';
 
-  if (state.teamsInitialized) { updateTeamChips(gs, state.amLeader); return; }
-  state.teamsInitialized = true;
-  state.teamAssignments = {};
-  teamOrders[0] = [];
-  teamOrders[1] = [];
-  gs.players.forEach((_, i) => { state.teamAssignments[i] = -1; });
+  if (!state.teamsInitialized) {
+    state.teamsInitialized = true;
+    state.teamAssignments = {};
+    teamOrders[0] = [];
+    teamOrders[1] = [];
+    gs.players.forEach((_, i) => { state.teamAssignments[i] = -1; });
 
-  if (state.amLeader) {
-    ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
-      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-      el.addEventListener('drop', e => {
-        e.preventDefault();
-        el.classList.remove('drag-over');
-        if (state.dragSeat === null) return;
-        performDrop(id, gs);
+    if (state.amLeader) {
+      ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+        el.addEventListener('drop', e => {
+          e.preventDefault();
+          el.classList.remove('drag-over');
+          if (state.dragSeat === null) return;
+          performDrop(id, gs);
+        });
       });
-    });
+    }
   }
+
+  // Non-leaders: always sync from the server draft included in gameState
+  if (!state.amLeader && gs.draft) {
+    state.teamAssignments = { ...gs.draft.assignments };
+    teamOrders[0] = [...(gs.draft.teamOrders[0] ?? [])];
+    teamOrders[1] = [...(gs.draft.teamOrders[1] ?? [])];
+  }
+
+  // Don't re-render chips while leader is actively dragging (avoids destroying chip mid-drag)
+  if (state.amLeader && state.dragSeat !== null) return;
 
   updateTeamChips(gs, state.amLeader);
 }
 
-// Apply a draft broadcasted from the leader
-export function applyTeamDraft({ assignments, teamOrders: to }) {
-  if (!_currentGs || state.amLeader) return;
-  state.teamAssignments = assignments;
-  teamOrders[0] = to[0] ?? [];
-  teamOrders[1] = to[1] ?? [];
-  updateTeamChips(_currentGs, false);
-}
 
 function broadcastDraft() {
   if (!state.amLeader) return;
@@ -110,7 +112,7 @@ function updateTeamChips(gs, isLeader = false) {
     chip.draggable = isLeader;
     chip.dataset.seat = i;
     chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
-      <span>${p.name}${isMe ? ' (você)' : ''}</span>`;
+      <span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>`;
     if (isLeader) attachDragHandlers(chip, i, gs);
     slots['-1'].appendChild(chip);
   });

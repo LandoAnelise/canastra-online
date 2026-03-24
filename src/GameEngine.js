@@ -299,6 +299,7 @@ class Game {
     this.teamNames = ['Dupla 1', 'Dupla 2'];
     this.teamOrders = [[], []]; // teamOrders[t] = [seatIndex, seatIndex] em ordem
     this.playOrder = [0, 1, 2, 3]; // ordem intercalada: T0P0, T1P0, T0P1, T1P1
+    this.draft = null; // draft preview while leader arranges teams
     this.round = 0;
 
     // round state
@@ -698,6 +699,7 @@ class Game {
       myTeam: this.players[playerIndex]?.teamIndex,
       teamNames: this.teamNames,
       playOrder: this.playOrder,
+      draft: this.draft,
     };
   }
 }
