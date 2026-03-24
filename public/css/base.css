@@ -2,6 +2,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  color-scheme: light;
   --felt: #1a6b3a;
   --felt-dark: #114d28;
   --felt-light: #238c4e;
