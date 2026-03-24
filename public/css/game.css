@@ -867,8 +867,15 @@
   }
   .discard-stack-row {
     height: 68px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.35) transparent;
   }
+  .discard-stack-row::-webkit-scrollbar { display: block; height: 4px; }
+  .discard-stack-row::-webkit-scrollbar-track { background: transparent; }
+  .discard-stack-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 2px; }
 
   /* Pile cards */
   .pile-card {
@@ -941,8 +948,17 @@
   .discard-stack-row .meld-card          { margin-left: -18px !important; }
   .discard-stack-row .meld-card:first-child { margin-left: 0 !important; }
 
-  /* Melds area */
-  .melds-group { padding: 4px 6px; gap: 3px; }
+  /* Melds area — scroll sempre visível */
+  .melds-group {
+    padding: 4px 6px;
+    gap: 3px;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201,168,76,0.5) rgba(255,255,255,0.06);
+  }
+  .melds-group::-webkit-scrollbar { display: block; width: 4px; }
+  .melds-group::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 2px; }
+  .melds-group::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.5); border-radius: 2px; }
   .melds-label { font-size: 0.55rem; padding: 2px 0 4px; }
   .meld-group-full { padding: 4px 6px; gap: 3px; }
   .meld-type-label { font-size: 0.55rem; }
