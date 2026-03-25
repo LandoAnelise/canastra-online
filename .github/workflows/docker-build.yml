@@ -19,7 +19,7 @@ jobs:
       - name: Resolve image tag
         shell: bash
         run: |
-          if [[ "${{ gitub.ref }}" == refs/tags/* ]]; then
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             tag_name="${{ github.ref }}"
             tag_name="${tag_name#refs/tags/}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
