@@ -50,13 +50,3 @@ jobs:
         with:
           push: true
           tags: '${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAG_NAME }}'
-
-      # Update Docker Hub description with the README.md content
-      # https://github.com/peter-evans/dockerhub-description
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v5
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ env.DOCKERHUB_REPOSITORY }}
-          readme-filepath: ./README.md
