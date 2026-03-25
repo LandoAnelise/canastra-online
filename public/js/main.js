@@ -62,6 +62,7 @@ socket.on('deckEmpty', ({ playerName }) => {
 
 socket.on('gameState', (gs) => {
   state.gameState = gs;
+  if (gs.myIndex !== undefined) state.mySeatIndex = gs.myIndex;
   // Campainha quando passa a ser minha vez
   if (gs.status === 'playing' && gs.currentPlayerIndex === state.mySeatIndex && _prevTurnIdx !== state.mySeatIndex) {
     playCampainha();

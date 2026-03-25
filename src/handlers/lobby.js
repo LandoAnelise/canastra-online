@@ -112,9 +112,15 @@ function registerLobbyHandlers(socket, rm) {
 
     // Remove player slot and compact the array
     game.players.splice(info.seatIndex, 1);
-    // Fix seatIndex references for remaining players
-    game.players.forEach((p, i) => { if (p) p.seatIndex = i; });
-    // If leader left, keep seat 0 as leader
+    // Fix seatIndex for remaining players and update playerRoom entries
+    game.players.forEach((p, i) => {
+      if (p) {
+        p.seatIndex = i;
+        const entry = playerRoom.get(p.id);
+        if (entry) entry.seatIndex = i;
+      }
+    });
+    // Seat 0 is always the leader
     game.leaderSeatIndex = 0;
 
     socket.leave(info.roomId);

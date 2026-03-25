@@ -49,7 +49,13 @@ function registerDisconnectHandler(socket, io, rm) {
         } else {
           // Game not started yet — free the slot immediately
           game.players.splice(info.seatIndex, 1);
-          game.players.forEach((p, i) => { if (p) p.seatIndex = i; });
+          game.players.forEach((p, i) => {
+            if (p) {
+              p.seatIndex = i;
+              const entry = playerRoom.get(p.id);
+              if (entry) entry.seatIndex = i;
+            }
+          });
           game.leaderSeatIndex = 0;
 
           broadcastToRoom(info.roomId, 'playerDisconnected', {
