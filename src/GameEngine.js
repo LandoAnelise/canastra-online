@@ -104,6 +104,8 @@ function _testSeq(naturals, wilds, valFn, minPossible, maxPossible) {
 
 // Sequencia: 3+ cartas consecutivas do mesmo naipe
 // As pode ser baixo (A=1: A-2-3) ou alto (A=14: Q-K-A)
+// Regra: no maximo 1 coringa atuando como substituto por sequencia.
+// Um 2 do mesmo naipe ocupando a posicao do rank 2 e natural (nao conta como atuando).
 function isValidSequence(cards) {
   if (cards.length < 3) return false;
   const naturals = cards.filter(c => !isWild(c));
@@ -113,23 +115,55 @@ function isValidSequence(cards) {
   const suit = naturals[0].suit;
   if (!naturals.every(c => c.suit === suit)) return false;
 
+  // Conta quantos 2s estao atuando como coringas (substituindo outro rank)
+  // para uma dada funcao de valor e minimo possivel do range.
+  const actingWilds = (valFn, minPossible) => {
+    if (wilds.length === 0) return 0;
+    const vals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
+    const minVal = vals[0], maxVal = vals[vals.length-1];
+    const internalGaps = (maxVal - minVal) - (naturals.length - 1);
+    const borderWilds  = wilds.length - internalGaps;
+    const leftBorder   = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+    const startVal     = minVal - leftBorder;
+    const endVal       = maxVal + (borderWilds - leftBorder);
+    // Um 2 do mesmo naipe que cai no slot do rank 2 e natural (nao e coringa)
+    const rank2InRange = startVal <= 2 && 2 <= endVal;
+    const suitedWilds  = wilds.filter(c => c.suit === suit).length;
+    const naturalCount = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+    return Math.max(0, wilds.length - naturalCount);
+  };
+
   const hasAce = naturals.some(c => c.rank === 'A');
 
   if (hasAce) {
-    // A baixo: A=1, 2=2 ... K=13, range 1..13
     const valLow  = r => RANK_VAL[r];
-    // A alto: A=14, 2=2 ... K=13, range 2..14
     const valHigh = r => r === 'A' ? 14 : RANK_VAL[r];
-    return _testSeq(naturals, wilds, valLow,  1, 13) ||
-           _testSeq(naturals, wilds, valHigh, 2, 14);
+    const validLow  = _testSeq(naturals, wilds, valLow,  1, 13);
+    const validHigh = _testSeq(naturals, wilds, valHigh, 2, 14);
+    if (!validLow && !validHigh) return false;
+    // Usar o arranjo com menos coringas atuando
+    const awLow  = validLow  ? actingWilds(valLow,  1) : Infinity;
+    const awHigh = validHigh ? actingWilds(valHigh, 2) : Infinity;
+    return Math.min(awLow, awHigh) <= 1;
   }
+
   // Sem As: 2=2 ... K=13
-  return _testSeq(naturals, wilds, r => RANK_VAL[r], 2, 13);
+  if (!_testSeq(naturals, wilds, r => RANK_VAL[r], 2, 13)) return false;
+  return actingWilds(r => RANK_VAL[r], 2) <= 1;
 }
 
 // Valida qualquer tipo de meld (grupo ou sequencia)
 function isValidGroup(cards) {
   return isValidTripletGroup(cards) || isValidSequence(cards);
+}
+
+// Ordena as cartas de um grupo colocando coringas no meio
+function sortGroupCards(cards) {
+  const naturals = cards.filter(c => !isWild(c));
+  const wilds    = cards.filter(c => isWild(c));
+  if (wilds.length === 0) return cards;
+  const mid = Math.ceil(naturals.length / 2);
+  return [...naturals.slice(0, mid), ...wilds, ...naturals.slice(mid)];
 }
 
 // Ordena as cartas de uma sequencia colocando coringas nos slots que eles preenchem
@@ -180,6 +214,9 @@ function sortSequenceCards(cards) {
   const startVal = minVal - leftBorder;
 
   // Preencher slots
+  // Para o slot do rank 2, preferir um 2 do mesmo naipe (torna-o natural).
+  const suit = naturals[0]?.suit;
+  const wildsArr = [...wilds]; // copia mutavel
   const result = [];
   let ni = 0; // indice em sortedNaturals
   for (let slot = 0; slot < totalSlots; slot++) {
@@ -187,7 +224,15 @@ function sortSequenceCards(cards) {
     if (ni < sortedNaturals.length && val(sortedNaturals[ni].rank) === slotVal) {
       result.push(sortedNaturals[ni++]);
     } else {
-      result.push(wilds.shift() || sortedNaturals[ni++]); // usar coringa disponivel
+      // Para o slot do rank 2, preferir um coringa do mesmo naipe (2 natural)
+      if (slotVal === 2 && suit) {
+        const suitedIdx = wildsArr.findIndex(c => c.suit === suit);
+        if (suitedIdx !== -1) {
+          result.push(wildsArr.splice(suitedIdx, 1)[0]);
+          continue;
+        }
+      }
+      result.push(wildsArr.shift());
     }
   }
   return result;
@@ -455,8 +500,8 @@ class Game {
         if (!type) return { ok: false, msg: 'Combinacao invalida. Use grupo (mesmo rank) ou sequencia (mesmo naipe, ranks consecutivos), com naturais sendo maioria.' };
         const refCard = cards.find(c => c.rank !== '2') || cards[0];
         cards.forEach(c => usedIds.add(c.id));
-        // Sort sequence cards so wilds land in their correct positions
-        const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : cards;
+        // Sort cards so wilds land in the right position
+        const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : sortGroupCards(cards);
         melds.push({ rank: refCard.rank, suit: refCard.suit, type, cards: sortedCards });
         createdTypes.push(type);
       } else if (action.type === 'add') {
@@ -466,10 +511,8 @@ class Game {
         const newType = meldType(newCards);
         if (!newType || newType !== meld.type) return { ok: false, msg: 'Adição inválida' };
         cards.forEach(c => usedIds.add(c.id));
-        // Sort cards so sequence stays in order
-        if (newType === 'sequence') {
-          newCards = sortSequenceCards(newCards);
-        }
+        // Sort cards so wilds land in the right position
+        newCards = newType === 'sequence' ? sortSequenceCards(newCards) : sortGroupCards(newCards);
         meld.cards = newCards;
       }
     }

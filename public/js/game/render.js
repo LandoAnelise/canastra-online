@@ -291,28 +291,64 @@ export function renderMelds(gs) {
       const shouldHighlight = meld.cards.length > prevCount;
       _prevMeldCardCounts[meldKey] = meld.cards.length;
 
+      const isMobileView = window.matchMedia('(max-width: 600px)').matches;
+      const shouldStack  = isMobileView && meld.cards.length > 4;
+
+      // Build card HTML — tag cards for CSS stacking
+      const cardsHTML = meld.cards.map((card, ci, arr) => {
+        let extra = '';
+        if (shouldStack) {
+          if (ci === arr.length - 1) {
+            // Last card: if previous is wild, keep 18px of it visible; otherwise sliver
+            extra = isWild(arr[ci - 1]) ? 'stack-after-visible' : 'stack-last';
+          } else if (ci > 0 && (ci === 1 || isWild(arr[ci - 1]))) {
+            extra = 'stack-after-visible'; // after first card or wild: -26px (shows 18px of prev)
+          }
+          // wild cards and other middle cards: next card controls their visibility
+        }
+        return fullCardHTML(card, extra);
+      }).join('');
+
       const el = document.createElement('div');
-      el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}${canAdd ? ' can-add' : ''}`;
+      el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}${canAdd || shouldStack ? ' can-add' : ''}`;
       el.innerHTML = `
         <div class="meld-header">
           <span class="meld-type-label">${typeLabel} ${meld.cards.length} cartas</span>
           ${badge}
         </div>
-        <div class="meld-cards-row">${meld.cards.map(fullCardHTML).join('')}</div>`;
+        <div class="meld-cards-row${shouldStack ? ' stacked' : ''}">${cardsHTML}</div>`;
 
-      // Click on meld to add selected cards
-      if (canAdd) {
-        el.addEventListener('click', () => {
-          if (state.selectedCards.length === 0) { showToast('Selecione cartas na mão primeiro.', 'error'); return; }
+      // Unified click: expand stacked OR add selected cards
+      el.addEventListener('click', () => {
+        // Priority 1: add cards if eligible
+        if (canAdd && state.selectedCards.length > 0) {
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...state.selectedCards] }];
           socket.emit('playMelds', { meldActions }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
             showToast('Cartas adicionadas!', 'success', 1000);
             playDeal(); clearSelection();
           });
-        });
+          return;
+        }
+        // Priority 2: expand stacked meld
+        if (shouldStack) {
+          const row = el.querySelector('.meld-cards-row');
+          if (row.classList.contains('expanded')) return;
+          row.classList.add('expanded');
+          el.classList.add('meld-stack-expanded');
+          clearTimeout(el._expandTimer);
+          el._expandTimer = setTimeout(() => {
+            row.classList.remove('expanded');
+            el.classList.remove('meld-stack-expanded');
+          }, 1500);
+          return;
+        }
+        // Priority 3: inform user to select cards
+        if (canAdd) showToast('Selecione cartas na mão primeiro.', 'error');
+      });
 
-        // Drag a card from hand directly onto this meld
+      // Drag-to-meld (desktop only, canAdd)
+      if (canAdd) {
         el.addEventListener('dragover', e => {
           if (!dragCardId) return;
           e.preventDefault();
@@ -332,6 +368,14 @@ export function renderMelds(gs) {
       }
 
       list.appendChild(el);
+    });
+  }
+
+  // Mobile: scroll new/updated meld into view
+  if (window.matchMedia('(max-width: 600px)').matches) {
+    requestAnimationFrame(() => {
+      const newMeld = document.querySelector('.meld-group-full.meld-new');
+      if (newMeld) newMeld.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
 }
@@ -419,14 +463,14 @@ function setupHandDragDrop(container) {
 
 const FACE_GLYPH = { 'K': '♚', 'Q': '♛', 'J': '♞' };
 
-function fullCardHTML(card) {
+function fullCardHTML(card, extraClass = '', extraStyle = '') {
   const red = isRed(card.suit) ? 'red' : '';
   const wild = isWild(card) ? 'wild' : '';
   const glyph = FACE_GLYPH[card.rank];
   const face = glyph
     ? `<span class="meld-face">${glyph}</span>`
     : `<span class="meld-face-suit">${card.suit}</span>`;
-  return `<div class="meld-card ${red} ${wild}">
+  return `<div class="meld-card ${red} ${wild} ${extraClass}" ${extraStyle}>
     <span class="card-rank">${card.rank}</span>
     <span class="card-suit">${card.suit}</span>
     ${face}

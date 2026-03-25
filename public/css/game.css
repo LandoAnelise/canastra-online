@@ -975,6 +975,27 @@
   .meld-type-label { font-size: 0.5rem; }
   .canastra-badge  { font-size: 0.5rem; padding: 1px 5px; }
 
+  /* ── Card stacking on mobile ──────────────────────────────────── */
+  .meld-cards-row .meld-card { transition: margin-left 0.2s ease; }
+  .meld-cards-row.stacked { overflow: visible; }
+
+  /* Stacked: middle cards show only a sliver (6px visible) */
+  .meld-cards-row.stacked .meld-card                        { margin-left: -38px; }
+  .meld-cards-row.stacked .meld-card:first-child            { margin-left: 0; }
+  /* Card after first or after a wild: ~18px visible */
+  .meld-cards-row.stacked .meld-card.stack-after-visible    { margin-left: -26px; }
+  /* Last card: same sliver before it, but fully visible itself (-38px default applies) */
+
+  /* Expanded: back to normal mobile overlap */
+  .meld-cards-row.stacked.expanded .meld-card               { margin-left: -26px; }
+  .meld-cards-row.stacked.expanded .meld-card:first-child   { margin-left: 0; }
+
+  /* Expanded meld floats above siblings */
+  .meld-group-full.meld-stack-expanded {
+    position: relative;
+    z-index: 10;
+  }
+
   /* Turn banner */
   #turn-banner {
     top: 48px;

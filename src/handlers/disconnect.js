@@ -47,11 +47,22 @@ function registerDisconnectHandler(socket, io, rm) {
             reconnectWindowMs: RECONNECT_TIMEOUT_MS,
           });
         } else {
-          // Game not started yet — just notify
+          // Game not started yet — free the slot immediately
+          game.players.splice(info.seatIndex, 1);
+          game.players.forEach((p, i) => { if (p) p.seatIndex = i; });
+          game.leaderSeatIndex = 0;
+
           broadcastToRoom(info.roomId, 'playerDisconnected', {
             playerName: name,
             seatIndex: info.seatIndex,
           });
+
+          if (game.players.length === 0) {
+            rooms.delete(info.roomId);
+          } else {
+            const { broadcastState } = rm;
+            broadcastState(game);
+          }
         }
       }
       const meta2 = roomMeta.get(info.roomId);

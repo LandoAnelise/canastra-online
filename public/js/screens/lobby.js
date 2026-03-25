@@ -2,6 +2,18 @@ import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, showScreen } from '../utils.js';
 
+// Auto-refresh interval for the browse tab
+let _browseInterval = null;
+function startBrowseRefresh() {
+  loadPublicRooms();
+  clearInterval(_browseInterval);
+  _browseInterval = setInterval(loadPublicRooms, 5000);
+}
+function stopBrowseRefresh() {
+  clearInterval(_browseInterval);
+  _browseInterval = null;
+}
+
 // Tab switching
 document.querySelectorAll('.lobby-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -9,7 +21,8 @@ document.querySelectorAll('.lobby-tab').forEach(tab => {
     document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
     tab.classList.add('active');
     document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
-    if (tab.dataset.tab === 'browse') loadPublicRooms();
+    if (tab.dataset.tab === 'browse') startBrowseRefresh();
+    else stopBrowseRefresh();
   });
 });
 
@@ -36,6 +49,7 @@ document.getElementById('btn-create').addEventListener('click', () => {
     state.mySeatIndex = res.seatIndex;
     document.getElementById('waiting-room-code').textContent = res.roomId;
     history.replaceState(null, '', `?sala=${res.roomId}`);
+    stopBrowseRefresh();
     showScreen('screen-waiting');
   });
 });
@@ -60,6 +74,7 @@ export function joinRoomByCode(code) {
     state.mySeatIndex = res.seatIndex;
     document.getElementById('waiting-room-code').textContent = code;
     history.replaceState(null, '', `?sala=${code}`);
+    stopBrowseRefresh();
     if (res.reconnected) {
       showToast('✅ Reconectado com sucesso!', 'success', 1000);
     } else {
