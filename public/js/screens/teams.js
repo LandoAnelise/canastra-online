@@ -18,7 +18,7 @@ export function renderTeamSelection(gs) {
   if (notice) {
     notice.textContent = state.amLeader
       ? '👑 Você é o líder — arraste os jogadores para montar as duplas e defina a ordem'
-      : `⏳ Aguardando ${leaderName} montar as duplas…`;
+      : `⏳ Aguardando o líder montar as duplas…`;
     notice.className = state.amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
   }
   document.getElementById('btn-confirm-teams').style.display = state.amLeader ? '' : 'none';
