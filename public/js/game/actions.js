@@ -40,8 +40,10 @@ function cancelStaging() {
 }
 
 document.getElementById('btn-play-melds').addEventListener('click', () => {
-  if (state.selectedCards.length < 3) { showToast('Selecione pelo menos 3 cartas.', 'error'); playBzz(); return; }
   const gs = state.gameState;
+  if (gs?.currentPlayerIndex !== state.mySeatIndex) { showToast('Aguarde seu turno para jogar.', 'error'); playBzz(); return; }
+  if (!gs?.drawnThisTurn) { showToast('Compre ou junte da mesa antes de jogar.', 'error'); playBzz(); return; }
+  if (state.selectedCards.length < 3) { showToast('Selecione pelo menos 3 cartas.', 'error'); playBzz(); return; }
   if (isInBuraco(gs)) {
     // Stage the meld instead of submitting
     const action = { type: 'new', cards: [...state.selectedCards] };

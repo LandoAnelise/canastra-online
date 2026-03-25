@@ -320,8 +320,13 @@ export function renderMelds(gs) {
 
       // Unified click: expand stacked OR add selected cards
       el.addEventListener('click', () => {
-        // Priority 1: add cards if eligible
-        if (canAdd && state.selectedCards.length > 0) {
+        // Priority 1: add cards — always intercept if cards are selected
+        if (state.selectedCards.length > 0) {
+          const gs = state.gameState;
+          const nowMyTurn = gs?.currentPlayerIndex === state.mySeatIndex;
+          const nowDrawn  = gs?.drawnThisTurn;
+          if (!nowMyTurn) { showToast('Aguarde seu turno para jogar.', 'error'); playBzz(); return; }
+          if (!nowDrawn)  { showToast('Compre ou junte da mesa antes de jogar.', 'error'); playBzz(); return; }
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...state.selectedCards] }];
           socket.emit('playMelds', { meldActions }, res => {
             if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
@@ -392,7 +397,7 @@ export function updateButtons(gs) {
   const btnCancel       = document.getElementById('btn-cancel-melds');
 
   // In staging mode: baixar still works (to add more), confirm/cancel appear
-  btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length === 0;
+  btnPlayMelds.disabled = state.selectedCards.length < 3;
   btnConfirm.classList.toggle('hidden', !isStaging);
   btnConfirm.disabled = !isStaging;
   btnCancel.classList.toggle('hidden', !isStaging);
@@ -403,13 +408,9 @@ export function updateButtons(gs) {
 }
 
 export function onCardClick(cardId) {
-  if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || !state.gameState.drawnThisTurn) {
-    showToast('Não é sua vez ou você ainda não comprou.', 'error'); playBzz(); return;
-  }
   state.selectedCards = state.selectedCards.includes(cardId)
     ? state.selectedCards.filter(id => id !== cardId)
     : [...state.selectedCards, cardId];
-
   renderMe(state.gameState);
   updateButtons(state.gameState);
 }
