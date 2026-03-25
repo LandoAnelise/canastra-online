@@ -37,24 +37,6 @@ npm start
 
 O servidor sobe em `http://localhost:3000`
 
-### 3. Para desenvolvimento (auto-reload)
-
-```bash
-npm run dev
-```
-
----
-
-## Como jogar
-
-1. Abra `http://SEU_IP:3000` no navegador
-2. Digite seu nome e um **código de sala** (ex: `FAMILIA01`)
-3. Compartilhe o código com os outros 3 jogadores
-4. O jogo começa automaticamente quando os 4 entrarem
-
-**Dica:** você pode passar o link `http://SEU_IP:3000?sala=CODIGODANOME` direto para os outros!
-
----
 
 ## Estrutura do projeto
 
@@ -70,20 +52,6 @@ canastra/
     │   └── style.css      # Estilos
     └── js/
         └── game.js        # Lógica do cliente
-```
-
----
-
-## Customizar porta
-
-```bash
-PORT=8080 npm start
-```
-
-## Hospedagem com PM2 (recomendado para servidor)
-
-```bash
-npm install -g pm2
 pm2 start server.js --name canastra
 pm2 save
 pm2 startup
