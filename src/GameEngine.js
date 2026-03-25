@@ -497,7 +497,7 @@ class Game {
 
       if (action.type === 'new') {
         const type = meldType(cards);
-        if (!type) return { ok: false, msg: 'Combinacao invalida. Use grupo (mesmo rank) ou sequencia (mesmo naipe, ranks consecutivos), com naturais sendo maioria.' };
+        if (!type) return { ok: false, msg: 'Combinação inválida.' };
         const refCard = cards.find(c => c.rank !== '2') || cards[0];
         cards.forEach(c => usedIds.add(c.id));
         // Sort cards so wilds land in the right position
@@ -506,7 +506,7 @@ class Game {
         createdTypes.push(type);
       } else if (action.type === 'add') {
         const meld = melds[action.meldIndex];
-        if (!meld) return { ok: false, msg: 'Meld nao encontrado.' };
+        if (!meld) return { ok: false, msg: 'Jogo não encontrado.' };
         let newCards = [...meld.cards, ...cards];
         const newType = meldType(newCards);
         if (!newType || newType !== meld.type) return { ok: false, msg: 'Adição inválida' };
@@ -535,7 +535,7 @@ class Game {
         if (newMeldsPoints < 100) {
           return {
             ok: false,
-            msg: `Sua dupla está no buraco (${teamScore} pts). A primeira baixa precisa somar pelo menos 100 pontos com bônus de canastra (atual: ${newMeldsPoints} pts).`,
+            msg: `A primeira baixa no buraco precisa somar pelo menos 100 pontos.`,
           };
         }
       }
