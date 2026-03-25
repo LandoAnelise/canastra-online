@@ -212,7 +212,6 @@ socket.on('playerJoined', ({ playerName, totalPlayers }) => {
 });
 
 socket.on('teamsAssigned', ({ players }) => {
-  teamsInitialized = false; // allow re-setup when teams change
   readyPlayers = new Set();
   iAmReady = false;
   document.getElementById('ready-room-code').textContent = myRoomId;
@@ -329,7 +328,7 @@ function renderTeamSelection(state) {
   if (notice) {
     notice.textContent = amLeader
       ? '👑 Você é o líder — arraste os jogadores para montar as duplas'
-      : `👑 Aguardando ${state.players[0]?.name || 'o líder'} montar as duplas…`;
+      : '👑 Aguardando o líder montar as duplas…';
     notice.className = amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
   }
   document.getElementById('btn-confirm-teams').style.display = amLeader ? '' : 'none';

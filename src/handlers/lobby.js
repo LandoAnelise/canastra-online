@@ -124,13 +124,14 @@ function registerLobbyHandlers(socket, rm) {
     const { broadcastToRoom: btr } = rm;
     btr(info.roomId, 'playerDisconnected', { playerName: name, seatIndex: info.seatIndex });
 
+    const meta = roomMeta.get(info.roomId);
     if (game.players.length === 0) {
       rooms.delete(info.roomId);
+      roomMeta.delete(info.roomId);
     } else {
       broadcastState(game);
     }
 
-    const meta = roomMeta.get(info.roomId);
     if (meta?.isPublic) broadcastPublicRooms();
   });
 }

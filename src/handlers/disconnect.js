@@ -59,6 +59,7 @@ function registerDisconnectHandler(socket, io, rm) {
 
           if (game.players.length === 0) {
             rooms.delete(info.roomId);
+            roomMeta.delete(info.roomId);
           } else {
             const { broadcastState } = rm;
             broadcastState(game);
