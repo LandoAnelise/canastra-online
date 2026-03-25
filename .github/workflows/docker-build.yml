@@ -1,50 +1,62 @@
-name: Docker Build & Push
+name: Docker Build And Publish
 
 on:
+  schedule:
+    - cron: '0 1 1 * *' # Run at 01:00 on the 1st of every month
   push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch: # Allow manual triggering of the workflow
+
+env:
+  DOCKERHUB_REPOSITORY: 'gabriellando/canastra-online'
 
 jobs:
   build:
-    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout source code
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Set up Docker Buildx (BuildKit)
-      - name: Set up Docker Buildx
+      - name: Resolve image tag
+        shell: bash
+        run: |
+          if [[ "${{ gitub.ref }}" == refs/tags/* ]]; then
+            tag_name="${{ github.ref }}"
+            tag_name="${tag_name#refs/tags/}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            tag_name="latest"
+          else
+            tag_name="dev"
+          fi
+
+          echo "TAG_NAME=$tag_name" >> "$GITHUB_ENV"
+
+      # Workaround: https://github.com/docker/build-push-action/issues/461
+      - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Log in to Docker Hub (only on push events — skipped on PRs)
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # Login against a Docker registry except on PR
+      # https://github.com/docker/login-action
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Derive short SHA tag (first 7 chars)
-      - name: Set short SHA
-        id: vars
-        run: echo "sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
-      # 5. Build (and push only on main push)
-      - name: Build and Push
-        uses: docker/build-push-action@v5
+      # Build and push Docker image with Buildx (don't push on PR)
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/canastra-online:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/canastra-online:${{ steps.vars.outputs.sha_short }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          push: true
+          tags: '${{ env.DOCKERHUB_REPOSITORY }}:${{ env.TAG_NAME }}'
+
+      # Update Docker Hub description with the README.md content
+      # https://github.com/peter-evans/dockerhub-description
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
+          readme-filepath: ./README.md
