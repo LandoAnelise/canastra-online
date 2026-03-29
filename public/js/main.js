@@ -1,7 +1,7 @@
 import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
-import { playCampainha, playFolhaVirando, playWhoosh, playDeal } from './sounds.js';
+import { playCampainha, playFolhaVirando, playWhoosh, playDeal, playBzz } from './sounds.js';
 
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
@@ -71,6 +71,11 @@ socket.on('roundEnded', (result) => {
 
 socket.on('deckEmpty', ({ playerName }) => {
   showToast(`⚠️ Monte acabou! ${playerName} joga sua última mão e a rodada encerra.`, 'error', 5000);
+});
+
+socket.on('stagingPenalty', ({ playerName, teamName }) => {
+  showToast(`⚠️ ${playerName} (${teamName}) tentou baixar com pontos insuficientes! Penalidade: agora precisam de 150 pts.`, 'error', 6000);
+  playBzz();
 });
 
 socket.on('gameState', (gs) => {

@@ -13,6 +13,4 @@ export const state = {
   teamAssignments: {},
   dragSeat: null,
   teamsInitialized: false,
-  stagedMelds: [],       // [{type:'new'|'add', cards:[...], meldIndex?}] during buraco first-meld staging
-  stagedCardIds: new Set(), // card ids currently staged (removed from visible hand)
 };
