@@ -579,6 +579,7 @@ class Game {
 
   // Descartar e encerrar turno
   discard_(playerIndex, cardId) {
+    if (this.status !== 'playing') return { ok: false, msg: 'A rodada já foi encerrada.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de descartar.' };
 
@@ -622,6 +623,7 @@ class Game {
 
   // Bater (encerrar rodada)
   bater(playerIndex, discardCardId = null) {
+    if (this.status !== 'playing') return { ok: false, msg: 'A rodada já foi encerrada.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de bater.' };
 
