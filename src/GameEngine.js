@@ -14,6 +14,7 @@ const CARD_POINTS = {
 const CLEAN_CANASTA_POINTS = 200;
 const DIRTY_CANASTA_POINTS = 100;
 const BATER_BONUS = 50;
+const BATER_LIMPA_BONUS = 100; // batida na mesma rodada que baixou pela primeira vez
 const WIN_SCORE = 2000;
 const FIRST_MELD_MIN_SCORE_THRESHOLD = 1000; // se tiver menos de 1000, pode baixar qualquer coisa
 
@@ -346,6 +347,8 @@ class Game {
     this.playOrder = [0, 1, 2, 3]; // ordem intercalada: T0P0, T1P0, T0P1, T1P1
     this.draft = null; // draft preview while leader arranges teams
     this.round = 0;
+    this.testMode = false;
+    this.botSeats = new Set();
 
     // round state
     this.deck = [];
@@ -355,6 +358,11 @@ class Game {
     this.currentPlayerIndex = 0;
     this.drawnThisTurn = false; // se já comprou/pegou neste turno
     this.hasFirstMeld = [false, false]; // se a dupla já baixou pela primeira vez
+  }
+
+  setTestScores(s0, s1) {
+    this.scores[0] = Math.max(0, Math.min(1990, parseInt(s0) || 0));
+    this.scores[1] = Math.max(0, Math.min(1990, parseInt(s1) || 0));
   }
 
   // ── SETUP ──
@@ -415,6 +423,8 @@ class Game {
     this.hands = [[], [], [], []];
     this.melds = [[], []];
     this.hasFirstMeld = [false, false];
+    this.hasPlayedMelds = [false, false, false, false]; // por jogador: se já baixou em algum turno anterior
+    this._turnStartedNeverPlayed = false; // snapshot: o jogador atual nunca havia baixado ao iniciar este turno
     this.drawnThisTurn = false;
 
     // Distribuir 13 cartas para cada jogador
@@ -447,6 +457,7 @@ class Game {
     const card = this.deck.pop();
     this.hands[playerIndex].push(card);
     this.drawnThisTurn = true;
+    this._turnStartedNeverPlayed = !this.hasPlayedMelds[playerIndex];
     if (this.deck.length === 0) this.deckEmptyLastDrawer = playerIndex;
     return { ok: true, card, deckNowEmpty: this.deck.length === 0 };
   }
@@ -469,6 +480,7 @@ class Game {
     this.discard = [];
     this.hands[playerIndex] = [...hand, ...pile];
     this.drawnThisTurn = true;
+    this._turnStartedNeverPlayed = !this.hasPlayedMelds[playerIndex];
     return { ok: true, cards: pile };
   }
 
@@ -555,10 +567,11 @@ class Game {
     // Aplicar
     this.melds[teamIndex] = melds;
     this.hands[playerIndex] = remainingHand;
+    this.hasPlayedMelds[playerIndex] = true;
 
     // Baixou todas as cartas e tem canastra → bater automático
     if (remainingHand.length === 0 && hasCanastraAfter) {
-      return this._autoBater(playerIndex, teamIndex);
+      return this._autoBater(playerIndex, teamIndex, this._turnStartedNeverPlayed);
     }
 
     return { ok: true, meldTypes: createdTypes };
@@ -589,7 +602,7 @@ class Game {
         return { ok: false, msg: 'Sua dupla precisa ter pelo menos 1 canastra para descartar a última carta.' };
       }
       this.discard.push(card);
-      return this._autoBater(playerIndex, teamIndex);
+      return this._autoBater(playerIndex, teamIndex, this._turnStartedNeverPlayed);
     }
 
     this.discard.push(card);
@@ -627,22 +640,25 @@ class Game {
       this.discard.push(card);
     }
 
+    // Batida limpa: mão vazia e nunca havia baixado antes deste turno
+    const baterLimpa = this.hands[playerIndex].length === 0 && this._turnStartedNeverPlayed;
     this._batterIndex = playerIndex;
-    return this._endRound(teamIndex);
+    return this._endRound(teamIndex, false, baterLimpa);
   }
 
   // ── ROUND END ──
-  _autoBater(playerIndex, teamIndex) {
+  _autoBater(playerIndex, teamIndex, baterLimpa = false) {
     this._batterIndex = playerIndex;
-    return { autoBater: true, ...this._endRound(teamIndex) };
+    return { autoBater: true, ...this._endRound(teamIndex, false, baterLimpa) };
   }
 
-  _endRound(winningTeam, noBaterBonus = false) {
+  _endRound(winningTeam, noBaterBonus = false, baterLimpa = false) {
+    const baterBonus = baterLimpa ? BATER_LIMPA_BONUS : BATER_BONUS;
     const roundPoints = [0, 0];
 
     for (let t = 0; t < 2; t++) {
       roundPoints[t] += calcTablePoints(this.melds[t]);
-      if (t === winningTeam && !noBaterBonus) roundPoints[t] += BATER_BONUS;
+      if (t === winningTeam && !noBaterBonus) roundPoints[t] += baterBonus;
     }
 
     // Subtrair cartas na mão de todos os jogadores que não bateram,
@@ -679,7 +695,7 @@ class Game {
         canastrasLimpas,
         canastrasSujas,
         canastrasBonus: canastrasLimpas * CLEAN_CANASTA_POINTS + canastrasSujas * DIRTY_CANASTA_POINTS,
-        baterBonus: (t === winningTeam && !noBaterBonus) ? BATER_BONUS : 0,
+        baterBonus: (t === winningTeam && !noBaterBonus) ? baterBonus : 0,
       };
     });
 
@@ -743,6 +759,9 @@ class Game {
       teamNames: this.teamNames,
       playOrder: this.playOrder,
       draft: this.draft,
+      testMode: this.testMode,
+      botSeats: this.testMode ? [...this.botSeats] : undefined,
+      allHands: this.testMode ? this.hands : undefined,
     };
   }
 }

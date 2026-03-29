@@ -850,7 +850,7 @@ function showRoundModal(result) {
         <span class="bl-val bonus">+${d.canastrasSujas * 100}</span>
       </div>` : ''}
       ${d.baterBonus > 0 ? `<div class="breakdown-line">
-        <span class="bl-label">Bônus bater</span>
+        <span class="bl-label">${d.baterBonus >= 100 ? 'Batida limpa' : 'Bônus bater'}</span>
         <span class="bl-val bonus">+${d.baterBonus}</span>
       </div>` : ''}`;
 
