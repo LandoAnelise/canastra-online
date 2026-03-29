@@ -5,7 +5,7 @@ import { clearSelection } from './render.js';
 import { playWin, playLose, playChime } from '../sounds.js';
 
 export function showRoundModal(result) {
-  if (result.gameOver) return; // game over modal handles it
+  if (result.gameOver) { showGameOverModal(result); return; }
 
   playChime();
 
@@ -100,16 +100,87 @@ document.getElementById('btn-continue-round').addEventListener('click', () => {
   });
 });
 
-export function showGameOverModal(gs) {
-  const winner = gs.scores[0] >= 2000 ? 0 : 1;
-  const tNames = gs.teamNames || ['Dupla 1', 'Dupla 2'];
+export function showGameOverModal(result) {
+  const winner = result.winnerTeam ?? (result.scores[0] >= 2000 ? 0 : 1);
+  const tNames = result.teamNames || ['Dupla 1', 'Dupla 2'];
+  const hasBreakdown = Array.isArray(result.teamMeldDetails);
 
-  // Play win/lose sound based on the local player's team
-  if (gs.myTeam === winner) playWin(); else playLose();
+  if ((result.myTeam ?? state.gameState?.myTeam) === winner) playWin(); else playLose();
+
   document.getElementById('modal-go-title').textContent = tNames[winner] + ' venceram! 🎉';
-  document.getElementById('modal-go-body').innerHTML =
-    '<div class="score-row' + (winner === 0 ? ' winner' : '') + '"><span class="label">' + tNames[0] + '</span><span class="value">' + gs.scores[0] + ' pts</span></div>' +
-    '<div class="score-row' + (winner === 1 ? ' winner' : '') + '"><span class="label">' + tNames[1] + '</span><span class="value">' + gs.scores[1] + ' pts</span></div>';
+
+  // Per-team breakdown (reuse same logic as round modal)
+  for (let t = 0; t < 2; t++) {
+    const d = hasBreakdown ? result.teamMeldDetails[t] : null;
+    document.getElementById('go-team-name-' + t).textContent = tNames[t];
+
+    const col = document.getElementById('go-team-col-' + t);
+    col.className = 'round-team-col' + (t === winner ? ' winner' : ' loser');
+
+    const bd = document.getElementById('go-breakdown-' + t);
+    if (d) {
+      bd.innerHTML =
+        '<div class="breakdown-line">' +
+          '<span class="bl-label">Cartas na mesa</span>' +
+          '<span class="bl-val positive">+' + d.cardsPoints + '</span>' +
+        '</div>' +
+        (d.canastrasLimpas > 0 ?
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">Canastra' + (d.canastrasLimpas > 1 ? 's' : '') + ' limpa' + (d.canastrasLimpas > 1 ? 's' : '') + ' \xd7' + d.canastrasLimpas + '</span>' +
+            '<span class="bl-val bonus">+' + (d.canastrasLimpas * 200) + '</span>' +
+          '</div>' : '') +
+        (d.canastrasSujas > 0 ?
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">Canastra' + (d.canastrasSujas > 1 ? 's' : '') + ' suja' + (d.canastrasSujas > 1 ? 's' : '') + ' \xd7' + d.canastrasSujas + '</span>' +
+            '<span class="bl-val bonus">+' + (d.canastrasSujas * 100) + '</span>' +
+          '</div>' : '') +
+        (d.baterBonus > 0 ?
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' +
+            '<span class="bl-val bonus">+' + d.baterBonus + '</span>' +
+          '</div>' : '');
+
+      const teamLosses = (result.playerHandLoss || [])
+        .filter(p => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
+      teamLosses.forEach(p => {
+        bd.insertAdjacentHTML('beforeend',
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">M\xe3o de ' + p.playerName + '</span>' +
+            '<span class="bl-val negative">\u2212' + p.handPoints + '</span>' +
+          '</div>');
+      });
+
+      bd.insertAdjacentHTML('beforeend', '<hr class="breakdown-sep">');
+
+      const roundPts = result.roundPoints[t];
+      document.getElementById('go-subtotal-' + t).innerHTML =
+        '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' +
+        '<span style="color:' + (roundPts >= 0 ? '#6de89a' : '#e74c3c') + ';font-weight:700">' + (roundPts >= 0 ? '+' : '') + roundPts + '</span>';
+    } else {
+      bd.innerHTML = '';
+      document.getElementById('go-subtotal-' + t).innerHTML = '';
+    }
+
+    document.getElementById('go-total-' + t).innerHTML =
+      '<span class="total-label">Total geral</span>' +
+      '<span class="total-val">' + result.scores[t] + '</span>';
+  }
+
+  // Player chips
+  const losses = document.getElementById('go-hand-losses');
+  losses.innerHTML = '';
+  if (result.playerHandLoss?.length) {
+    losses.innerHTML = '<span style="font-size:0.7rem;opacity:0.4;margin-right:4px">M\xe3os:</span>';
+    result.playerHandLoss.forEach(p => {
+      const chip = p.isBatter
+        ? '<span class="hand-loss-chip safe">\u2705 ' + p.playerName + ' bateu</span>'
+        : p.handPoints > 0
+          ? '<span class="hand-loss-chip lost">' + p.playerName + ' \u2212' + p.handPoints + '</span>'
+          : '<span class="hand-loss-chip safe">' + p.playerName + ' m\xe3o vazia</span>';
+      losses.insertAdjacentHTML('beforeend', chip);
+    });
+  }
+
   document.getElementById('modal-gameover').classList.remove('hidden');
 }
 

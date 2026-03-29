@@ -50,6 +50,7 @@ export function renderGame(gs) {
   renderMe(gs);
 
   document.getElementById('deck-count').textContent = `${gs.deckSize} cartas`;
+  document.getElementById('deck-pile').querySelector('.pile-card')?.classList.toggle('hidden', gs.deckSize === 0);
   document.getElementById('discard-count').textContent = `${gs.discardSize} no lixo`;
   const discardStack = document.getElementById('discard-stack');
   const btnExpand = document.getElementById('btn-expand-discard');
@@ -89,8 +90,8 @@ export function renderGame(gs) {
   if (slot) document.getElementById(`player-${slot}`)?.classList.add('active-turn');
 
   updateButtons(gs);
-  if (gs.status === 'finished') {
-    // Import lazily to avoid circular dependency
+  if (gs.status === 'finished' && !window._roundEndedPending) {
+    // Import lazily to avoid circular dependency (só ao reconectar — roundEnded cuida do caso normal)
     import('./modals.js').then(m => m.showGameOverModal(gs));
   }
 }
