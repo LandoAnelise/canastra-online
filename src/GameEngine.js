@@ -602,6 +602,31 @@ class Game {
     return { ok: true };
   }
 
+  // Adicionar cartas a um meld já em espera (antes de confirmar)
+  addToStagedMeld(playerIndex, stagedMeldIdx, cardIds) {
+    if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
+    if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de jogar.' };
+
+    const staged = this.stagedMelds[playerIndex];
+    const entry = staged[stagedMeldIdx];
+    if (!entry) return { ok: false, msg: 'Jogo em espera não encontrado.' };
+
+    const hand = this.hands[playerIndex];
+    const cards = cardIds.map(id => hand.find(c => c.id === id));
+    if (cards.some(c => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
+
+    const combined = [...entry.cards, ...cards];
+    const newType = meldType(combined);
+    if (!newType || newType !== entry.type) return { ok: false, msg: 'Adição inválida.' };
+
+    const sortedCombined = newType === 'sequence' ? sortSequenceCards(combined) : combined;
+    const usedIds = new Set(cardIds);
+    this.hands[playerIndex] = hand.filter(c => !usedIds.has(c.id));
+    staged[stagedMeldIdx] = { ...entry, cards: sortedCombined };
+
+    return { ok: true };
+  }
+
   // Confirmar cartas em espera: valida pontos e commita (ou penaliza e devolve à mão)
   confirmStagedMelds(playerIndex) {
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
