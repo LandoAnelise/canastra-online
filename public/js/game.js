@@ -906,7 +906,7 @@ document.getElementById('btn-continue-round').addEventListener('click', () => {
 
 function showGameOverModal(state) {
   const winner = state.scores[0] >= 2000 ? 0 : 1;
-  document.getElementById('modal-go-title').textContent = `Dupla ${winner + 1} venceu! 🎉`;
+  document.getElementById('modal-go-title').textContent = `Dupla ${winner + 1} venceram! 🎉`;
   document.getElementById('modal-go-body').innerHTML = `
     <div class="score-row winner"><span class="label">Dupla 1</span><span class="value">${state.scores[0]} pts</span></div>
     <div class="score-row winner"><span class="label">Dupla 2</span><span class="value">${state.scores[1]} pts</span></div>`;
