@@ -106,7 +106,7 @@ export function showGameOverModal(gs) {
 
   // Play win/lose sound based on the local player's team
   if (gs.myTeam === winner) playWin(); else playLose();
-  document.getElementById('modal-go-title').textContent = tNames[winner] + ' venceu! 🎉';
+  document.getElementById('modal-go-title').textContent = tNames[winner] + ' venceram! 🎉';
   document.getElementById('modal-go-body').innerHTML =
     '<div class="score-row' + (winner === 0 ? ' winner' : '') + '"><span class="label">' + tNames[0] + '</span><span class="value">' + gs.scores[0] + ' pts</span></div>' +
     '<div class="score-row' + (winner === 1 ? ' winner' : '') + '"><span class="label">' + tNames[1] + '</span><span class="value">' + gs.scores[1] + ' pts</span></div>';

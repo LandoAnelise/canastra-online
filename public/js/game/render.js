@@ -59,14 +59,8 @@ export function renderGame(gs) {
     const OVERLAP_PX  = 34; // fixed overlap — always the same distance between cards
     const displayCards = gs.discardPile.slice(-COMPACT_MAX);
     displayCards.forEach((card, i) => {
-      const red = isRed(card.suit) ? 'red' : '';
-      const wild = isWild(card) ? 'wild' : '';
       const ml = i === 0 ? '' : `style="margin-left:-${OVERLAP_PX}px"`;
-      discardStack.insertAdjacentHTML('beforeend',
-        `<div class="meld-card ${red} ${wild}" ${ml}>
-          <span class="card-rank">${card.rank}</span>
-          <span class="card-suit">${card.suit}</span>
-        </div>`);
+      discardStack.insertAdjacentHTML('beforeend', fullCardHTML(card, '', ml));
     });
   }
   // Show/hide expand button
