@@ -51,6 +51,13 @@ function registerGameHandlers(socket, io, rm) {
     broadcastState(game);
   }));
 
+  socket.on('addToStagedMeld', gameAction((game, info, { stagedMeldIdx, cardIds }, cb) => {
+    const result = game.addToStagedMeld(info.seatIndex, stagedMeldIdx, cardIds);
+    if (!result.ok) return cb?.({ ok: false, msg: result.msg });
+    cb?.({ ok: true });
+    broadcastState(game);
+  }));
+
   socket.on('confirmStagedMelds', gameAction((game, info, _, cb) => {
     const result = game.confirmStagedMelds(info.seatIndex);
     if (!result.ok) {

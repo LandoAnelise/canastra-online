@@ -263,15 +263,28 @@ export function renderMelds(gs) {
           ? '<span class="canastra-badge suja" title="Penalidade: precisam de 150 pts">⚠ 150 pts</span>'
           : '';
 
-        playerStaged.forEach(meld => {
+        playerStaged.forEach((meld, smi) => {
+          const isMyStaged = seatIdx === gs.myIndex;
+          const canAddToStaged = isMyStaged && isMyTurn && drawn;
           const el = document.createElement('div');
-          el.className = 'meld-group-full staged-pending';
+          el.className = 'meld-group-full staged-pending' + (canAddToStaged ? ' can-add' : '');
           el.innerHTML = `
             <div class="meld-header">
               <span class="meld-type-label staged-label-text">${stagingLabel}</span>
               ${penaltyBadge}
             </div>
             <div class="meld-cards-row">${meld.cards.map(c => fullCardHTML(c)).join('')}</div>`;
+
+          if (canAddToStaged) {
+            el.addEventListener('click', () => {
+              if (state.selectedCards.length === 0) return;
+              socket.emit('addToStagedMeld', { stagedMeldIdx: smi, cardIds: [...state.selectedCards] }, res => {
+                if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+                clearSelection();
+              });
+            });
+          }
+
           list.appendChild(el);
         });
       });
