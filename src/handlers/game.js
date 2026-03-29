@@ -72,6 +72,37 @@ function registerGameHandlers(socket, io, rm) {
     broadcastState(game);
   }));
 
+  socket.on('stageMeld', gameAction((game, info, { cardIds }, cb) => {
+    const result = game.stageMeld(info.seatIndex, cardIds);
+    if (!result.ok) return cb?.({ ok: false, msg: result.msg });
+    cb?.({ ok: true });
+    socket.to(info.roomId).emit('playerDealt', {});
+    broadcastState(game);
+  }));
+
+  socket.on('confirmStagedMelds', gameAction((game, info, _, cb) => {
+    const result = game.confirmStagedMelds(info.seatIndex);
+    if (!result.ok) {
+      if (result.penalized) {
+        const p = game.players[info.seatIndex];
+        broadcastToRoom(info.roomId, 'stagingPenalty', {
+          playerName: p.name,
+          teamName: game.teamNames[p.teamIndex],
+        });
+      }
+      cb?.({ ok: false, msg: result.msg, penalized: result.penalized });
+      broadcastState(game);
+      return;
+    }
+    if (result.autoBater || result.deckEndRound) {
+      broadcastToRoom(info.roomId, 'roundEnded', result);
+    } else {
+      socket.to(info.roomId).emit('playerDealt', {});
+    }
+    broadcastState(game);
+    cb?.({ ok: true, meldTypes: result.meldTypes });
+  }));
+
   socket.on('discard', gameAction((game, info, { cardId }, cb) => {
     const result = game.discard_(info.seatIndex, cardId);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });

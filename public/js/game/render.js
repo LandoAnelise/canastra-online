@@ -72,7 +72,6 @@ export function renderGame(gs) {
   }
 
   renderMelds(gs);
-  renderStagedMelds(gs);
 
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const currentName = gs.players[gs.currentPlayerIndex]?.name || '?';
@@ -149,10 +148,10 @@ export function renderMe(gs) {
     }
   }
 
-  // Exclude staged cards from visible hand
+  // Staged cards are excluded by the server (not in myHand); just map the hand order
   const ordered = state.myHandOrder
     .map(id => gs.myHand.find(c => c.id === id))
-    .filter(c => c && !state.stagedCardIds.has(c.id));
+    .filter(Boolean);
 
   const isMobile = window.innerWidth <= 600;
   const MOBILE_ROW_MAX = 9;
@@ -198,29 +197,8 @@ export function renderMe(gs) {
   setupHandDragDrop(hand);
 }
 
-export function renderStagedMelds(gs) {
-  // Remove any leftover container (old position, before hand slot)
-  document.getElementById('staged-melds-preview')?.remove();
-  if (state.stagedMelds.length === 0) return;
-
-  // Append into the team's own meld list (renderMelds already cleared it)
-  const list = document.getElementById(`melds-list-${gs.myTeam}`);
-  if (!list) return;
-
-  // Remove placeholder "Nenhum grupo ainda" if present
-  list.querySelector('.melds-empty')?.remove();
-
-  state.stagedMelds.forEach(action => {
-    const cards = action.cards.map(id => gs.myHand.find(c => c.id === id)).filter(Boolean);
-    const el = document.createElement('div');
-    el.className = 'meld-group-full staged-pending';
-    el.innerHTML = `
-      <div class="meld-header">
-        <span class="meld-type-label staged-label-text">Em espera</span>
-      </div>
-      <div class="meld-cards-row">${cards.map(fullCardHTML).join('')}</div>`;
-    list.appendChild(el);
-  });
+export function renderStagedMelds() {
+  // No-op: staged melds are now rendered inside renderMelds() using server state (gs.stagedMelds)
 }
 
 export function renderMelds(gs) {
@@ -266,7 +244,40 @@ export function renderMelds(gs) {
     const list = document.getElementById(`melds-list-${t}`);
     list.innerHTML = '';
 
-    if (gs.melds[t].length === 0) {
+    // Staged melds (em espera — not yet committed): visible to all players
+    let hasStagedForTeam = false;
+    if (gs.stagedMelds) {
+      gs.players.forEach((p, seatIdx) => {
+        if (p.teamIndex !== t) return;
+        const playerStaged = gs.stagedMelds[seatIdx] || [];
+        if (playerStaged.length === 0) return;
+
+        hasStagedForTeam = true;
+
+        const stagingLabel = seatIdx === gs.myIndex
+          ? 'Em espera'
+          : `Em espera — ${gs.players[seatIdx].name}`;
+
+        const penalty = gs.firstMeldPenalty?.[t];
+        const penaltyBadge = penalty
+          ? '<span class="canastra-badge suja" title="Penalidade: precisam de 150 pts">⚠ 150 pts</span>'
+          : '';
+
+        playerStaged.forEach(meld => {
+          const el = document.createElement('div');
+          el.className = 'meld-group-full staged-pending';
+          el.innerHTML = `
+            <div class="meld-header">
+              <span class="meld-type-label staged-label-text">${stagingLabel}</span>
+              ${penaltyBadge}
+            </div>
+            <div class="meld-cards-row">${meld.cards.map(c => fullCardHTML(c)).join('')}</div>`;
+          list.appendChild(el);
+        });
+      });
+    }
+
+    if (gs.melds[t].length === 0 && !hasStagedForTeam) {
       list.innerHTML = '<span class="melds-empty">Nenhum grupo ainda</span>';
       continue;
     }
@@ -384,18 +395,18 @@ export function updateButtons(gs) {
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const drawn = gs.drawnThisTurn;
   const hasCanastra = gs.melds[gs.myTeam]?.some(m => m.cards.length >= 7);
-  const isStaging = state.stagedMelds.length > 0;
+  const isStaging = (gs.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
   const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
 
-  const btnPlayMelds    = document.getElementById('btn-play-melds');
-  const btnConfirm      = document.getElementById('btn-confirm-melds');
-  const btnCancel       = document.getElementById('btn-cancel-melds');
+  const btnPlayMelds = document.getElementById('btn-play-melds');
+  const btnConfirm   = document.getElementById('btn-confirm-melds');
+  const btnCancel    = document.getElementById('btn-cancel-melds');
 
-  // In staging mode: baixar still works (to add more), confirm/cancel appear
-  btnPlayMelds.disabled = state.selectedCards.length < 3;
+  // During staging: "Baixar" stays active (add more melds), "Confirmar" appears, "Cancelar" hidden
+  btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length < 3;
   btnConfirm.classList.toggle('hidden', !isStaging);
   btnConfirm.disabled = !isStaging;
-  btnCancel.classList.toggle('hidden', !isStaging);
+  btnCancel.classList.add('hidden'); // cancel removed — staging is server-side and irreversible
 
   document.getElementById('btn-discard').disabled = !isMyTurn || !drawn || isStaging;
   document.getElementById('btn-bater').classList.toggle('hidden', !showBater);
@@ -414,9 +425,6 @@ export function resetRoundState() {
   // Clear per-round tracking so new round melds get highlight treatment
   for (const k in _canastraState) delete _canastraState[k];
   for (const k in _prevMeldCardCounts) delete _prevMeldCardCounts[k];
-  // Clear any staging state from previous round
-  state.stagedMelds = [];
-  state.stagedCardIds = new Set();
 }
 
 export function clearSelection() {
