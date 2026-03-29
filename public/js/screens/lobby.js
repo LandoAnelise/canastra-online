@@ -54,6 +54,28 @@ document.getElementById('btn-create').addEventListener('click', () => {
   });
 });
 
+// Test Room toggle
+document.getElementById('btn-toggle-test-room').addEventListener('click', () => {
+  document.getElementById('test-room-panel').classList.toggle('hidden');
+});
+
+// Create Test Room
+document.getElementById('btn-create-test').addEventListener('click', () => {
+  const name = document.getElementById('input-name').value.trim();
+  if (!name) { showToast('Digite seu nome!', 'error'); return; }
+  const s0 = parseInt(document.getElementById('test-score-0').value) || 0;
+  const s1 = parseInt(document.getElementById('test-score-1').value) || 0;
+  state.myName = name;
+  socket.emit('createRoom', { playerName: name, testMode: true, testScores: [s0, s1] }, (res) => {
+    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    state.myRoomId = res.roomId;
+    state.mySeatIndex = res.seatIndex;
+    history.replaceState(null, '', `?sala=${res.roomId}`);
+    stopBrowseRefresh();
+    showScreen('screen-game');
+  });
+});
+
 // Random room code generator (for join-by-code tab)
 document.getElementById('btn-random-room').addEventListener('click', () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

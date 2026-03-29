@@ -81,6 +81,25 @@
 
     <button id="btn-show-rules" class="btn-ghost" style="text-align:center;margin-top:4px">📋 Ver regras do jogo</button>
     <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
+
+    <!-- Sala de Teste -->
+    <div class="dev-room-section">
+      <button id="btn-toggle-test-room" class="btn-dev-toggle">🧪 Sala de Teste (dev)</button>
+      <div id="test-room-panel" class="test-room-panel hidden">
+        <p class="test-room-hint">Jogue sozinho com 3 bots. Defina a pontuação inicial para testar regras do buraco.</p>
+        <div class="test-scores-row">
+          <div class="test-score-field">
+            <label>Dupla 1</label>
+            <input type="number" id="test-score-0" value="0" min="0" max="1990" step="50" />
+          </div>
+          <div class="test-score-field">
+            <label>Dupla 2</label>
+            <input type="number" id="test-score-1" value="0" min="0" max="1990" step="50" />
+          </div>
+        </div>
+        <button id="btn-create-test" class="btn-primary">Criar Sala de Teste</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -242,6 +261,31 @@
   <!-- Turn indicator -->
   <div id="turn-banner" class="hidden"></div>
 
+  <!-- DEV Panel (apenas em sala de teste) -->
+  <div id="dev-panel" class="dev-panel hidden">
+    <button id="dev-panel-toggle" class="dev-panel-toggle">🧪 DEV</button>
+    <div id="dev-panel-body" class="dev-panel-body hidden">
+      <div class="dev-section">
+        <div class="dev-section-title">Ajustar Pontuação</div>
+        <div class="dev-score-row">
+          <label>Dupla 1</label>
+          <input type="number" id="dev-score-0" min="0" max="1990" step="50" />
+        </div>
+        <div class="dev-score-row">
+          <label>Dupla 2</label>
+          <input type="number" id="dev-score-1" min="0" max="1990" step="50" />
+        </div>
+        <button id="dev-apply-scores" class="dev-btn">Aplicar</button>
+      </div>
+      <div class="dev-section">
+        <div class="dev-section-title">Visibilidade</div>
+        <label class="dev-toggle-label">
+          <input type="checkbox" id="dev-show-hands" />
+          Ver todas as mãos
+        </label>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -366,5 +410,6 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/js/main.js"></script>
+<script type="module" src="/js/game/dev.js"></script>
 </body>
 </html>
