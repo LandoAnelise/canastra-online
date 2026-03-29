@@ -54,7 +54,13 @@ socket.on('playerDrew', () => { playFolhaVirando(); });
 socket.on('playerTookDiscard', () => { playWhoosh(); });
 socket.on('playerDealt', () => { playDeal(); });
 
-socket.on('roundEnded', (result) => { showRoundModal(result); });
+socket.on('roundEnded', (result) => {
+  window._roundEndedPending = true;
+  setTimeout(() => {
+    window._roundEndedPending = false;
+    showRoundModal(result);
+  }, 5000);
+});
 
 socket.on('deckEmpty', ({ playerName }) => {
   showToast(`⚠️ Monte acabou! ${playerName} joga sua última mão e a rodada encerra.`, 'error', 5000);
