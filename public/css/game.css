@@ -871,11 +871,13 @@
   .player-slot.right .hand-fan.vertical .back-card { border-right: none; }
   .hand-fan.vertical .back-card:first-child { margin-top: 0; }
 
-  /* Decks row — centralizado entre as mesas */
+  /* Decks row — monte fixo à esquerda no mobile */
   #decks-row {
     gap: 10px;
     padding: 5px 8px;
+    justify-content: flex-start;
   }
+  #deck-pile { flex-shrink: 0; order: -1; }
   .discard-stack-row {
     height: 68px;
     overflow-x: auto;
