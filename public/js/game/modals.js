@@ -44,7 +44,7 @@ export function showRoundModal(result) {
         '</div>' : '') +
       (d.baterBonus > 0 ?
         '<div class="breakdown-line">' +
-          '<span class="bl-label">B\xf4nus bater</span>' +
+          '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' +
           '<span class="bl-val bonus">+' + d.baterBonus + '</span>' +
         '</div>' : '');
 
