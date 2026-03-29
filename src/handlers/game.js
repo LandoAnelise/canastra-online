@@ -39,24 +39,24 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true, meldTypes: result.meldTypes });
     socket.to(info.roomId).emit('playerDealt', {});
-    broadcastState(game);
     if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
+    broadcastState(game);
   }));
 
   socket.on('discard', gameAction((game, info, { cardId }, cb) => {
     const result = game.discard_(info.seatIndex, cardId);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
-    broadcastState(game);
     if (result.autoBater || result.deckEndRound) broadcastToRoom(info.roomId, 'roundEnded', result);
+    broadcastState(game);
   }));
 
   socket.on('bater', gameAction((game, info, { discardCardId = null } = {}, cb) => {
     const result = game.bater(info.seatIndex, discardCardId);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
 
-    broadcastState(game);
     broadcastToRoom(info.roomId, 'roundEnded', result);
+    broadcastState(game);
     cb?.({ ok: true, result });
 
     // Next round only starts when someone clicks "Continuar"
