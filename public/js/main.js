@@ -40,6 +40,11 @@ socket.on('roundStarted', ({ round }) => {
   closeModal('modal-round');
   clearSelection();
   resetRoundState();
+  // Restaurar botões/pilhas que foram ocultados pelo roundEnded
+  ['btn-play-melds', 'btn-discard', 'deck-pile', 'discard-pile'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.disabled = false; el.classList.remove('hidden'); }
+  });
 });
 
 socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {

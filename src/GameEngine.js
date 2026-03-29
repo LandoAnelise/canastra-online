@@ -160,11 +160,7 @@ function isValidGroup(cards) {
 
 // Ordena as cartas de um grupo colocando coringas no meio
 function sortGroupCards(cards) {
-  const naturals = cards.filter(c => !isWild(c));
-  const wilds    = cards.filter(c => isWild(c));
-  if (wilds.length === 0) return cards;
-  const mid = Math.ceil(naturals.length / 2);
-  return [...naturals.slice(0, mid), ...wilds, ...naturals.slice(mid)];
+  return cards; // coringas ficam na posição em que foram jogados
 }
 
 // Ordena as cartas de uma sequencia colocando coringas nos slots que eles preenchem
