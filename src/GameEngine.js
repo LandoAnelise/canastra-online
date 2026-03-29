@@ -358,6 +358,8 @@ class Game {
     this.currentPlayerIndex = 0;
     this.drawnThisTurn = false; // se já comprou/pegou neste turno
     this.hasFirstMeld = [false, false]; // se a dupla já baixou pela primeira vez
+    this.stagedMelds = [[], [], [], []];
+    this.firstMeldPenalty = [false, false];
   }
 
   setTestScores(s0, s1) {
@@ -426,6 +428,8 @@ class Game {
     this.hasPlayedMelds = [false, false, false, false]; // por jogador: se já baixou em algum turno anterior
     this._turnStartedNeverPlayed = false; // snapshot: o jogador atual nunca havia baixado ao iniciar este turno
     this.drawnThisTurn = false;
+    this.stagedMelds = [[], [], [], []]; // cartas em espera por jogador (buraco — ainda não confirmadas)
+    this.firstMeldPenalty = [false, false]; // dupla recebeu penalidade por tentar baixar com pontos insuficientes
 
     // Distribuir 13 cartas para cada jogador
     for (let i = 0; i < 13; i++) {
@@ -575,6 +579,93 @@ class Game {
     }
 
     return { ok: true, meldTypes: createdTypes };
+  }
+
+  // Colocar cartas em espera (buraco — primeira baixa): remove da mão, aguarda confirmação
+  stageMeld(playerIndex, cardIds) {
+    if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
+    if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de baixar.' };
+
+    const teamIndex = this.players[playerIndex].teamIndex;
+    if (this.hasFirstMeld[teamIndex]) return { ok: false, msg: 'Sua dupla já baixou. Use o botão Baixar normalmente.' };
+
+    const hand = this.hands[playerIndex];
+    const cards = cardIds.map(id => hand.find(c => c.id === id));
+    if (cards.some(c => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
+    if (cards.length < 3) return { ok: false, msg: 'Selecione pelo menos 3 cartas.' };
+
+    const type = meldType(cards);
+    if (!type) return { ok: false, msg: 'Combinação inválida.' };
+
+    const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : sortGroupCards(cards);
+
+    const usedIds = new Set(cardIds);
+    this.hands[playerIndex] = hand.filter(c => !usedIds.has(c.id));
+    this.stagedMelds[playerIndex].push({ cards: sortedCards, type });
+
+    return { ok: true };
+  }
+
+  // Confirmar cartas em espera: valida pontos e commita (ou penaliza e devolve à mão)
+  confirmStagedMelds(playerIndex) {
+    if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
+    if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de confirmar.' };
+
+    const staged = this.stagedMelds[playerIndex];
+    if (staged.length === 0) return { ok: false, msg: 'Nenhuma carta em espera para confirmar.' };
+
+    const teamIndex = this.players[playerIndex].teamIndex;
+    const alreadyPenalized = this.firstMeldPenalty[teamIndex];
+    const required = alreadyPenalized ? 150 : 100;
+
+    const totalPoints = staged.reduce((sum, m) => {
+      let pts = meldBasePoints(m.cards);
+      if (isCanastraLimpa(m)) pts += CLEAN_CANASTA_POINTS;
+      else if (isCanastraSuja(m)) pts += DIRTY_CANASTA_POINTS;
+      return sum + pts;
+    }, 0);
+
+    if (totalPoints < required) {
+      // Devolver cartas à mão
+      const allCards = staged.flatMap(m => m.cards);
+      this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
+      this.stagedMelds[playerIndex] = [];
+
+      if (!alreadyPenalized) {
+        this.firstMeldPenalty[teamIndex] = true;
+      }
+
+      return {
+        ok: false,
+        penalized: !alreadyPenalized,
+        totalPoints,
+        required,
+        msg: `Os jogos somam apenas ${totalPoints} pts — mínimo é ${required} pts.${!alreadyPenalized ? ' Penalidade: agora precisam de 150 pts.' : ''}`,
+      };
+    }
+
+    // Verificar regra de mão mínima antes de commitar
+    const newMelds = [...this.melds[teamIndex], ...staged];
+    const hasCanastraAfter = newMelds.some(m => isCanastra(m));
+    if (this.hands[playerIndex].length < 2 && !hasCanastraAfter) {
+      const allCards = staged.flatMap(m => m.cards);
+      this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
+      this.stagedMelds[playerIndex] = [];
+      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+    }
+
+    // Commitar
+    this.melds[teamIndex] = newMelds;
+    this.stagedMelds[playerIndex] = [];
+    this.hasFirstMeld[teamIndex] = true;
+    this.hasPlayedMelds[playerIndex] = true;
+
+    // Auto-bater se ficou sem cartas e tem canastra
+    if (this.hands[playerIndex].length === 0 && hasCanastraAfter) {
+      return this._autoBater(playerIndex, teamIndex, this._turnStartedNeverPlayed);
+    }
+
+    return { ok: true, meldTypes: staged.map(m => m.type) };
   }
 
   // Descartar e encerrar turno
@@ -761,6 +852,8 @@ class Game {
       teamNames: this.teamNames,
       playOrder: this.playOrder,
       draft: this.draft,
+      stagedMelds: this.stagedMelds,
+      firstMeldPenalty: this.firstMeldPenalty,
       testMode: this.testMode,
       botSeats: this.testMode ? [...this.botSeats] : undefined,
       allHands: this.testMode ? this.hands : undefined,

@@ -1,42 +1,11 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, autoSortHand, sortHandByRank } from '../utils.js';
-import { getDragCardId, renderMe, updateButtons, clearSelection, renderStagedMelds, renderMelds } from './render.js';
+import { getDragCardId, renderMe, updateButtons, clearSelection } from './render.js';
 import { playFolhaVirando, playWhoosh, playDeal, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
-
-function errSound(res) { if (!res.ok) playBzz(); }
 
 function isInBuraco(gs) {
   return gs && !gs.hasFirstMeld[gs.myTeam] && gs.scores[gs.myTeam] >= 1000;
-}
-
-function commitStagedMelds() {
-  const meldActions = state.stagedMelds.slice();
-  socket.emit('playMelds', { meldActions }, res => {
-    if (!res.ok) {
-      // Return cards to hand — cancel staging
-      cancelStaging();
-      showToast(res.msg || 'Os jogos juntos não somam >= 100 pts', 'error');
-      playBzz();
-      return;
-    }
-    const isSeq = res.meldTypes?.includes('sequence');
-    showToast(isSeq ? 'Sequência baixada!' : 'Grupo baixado!', 'success', 1000);
-    playDeal();
-    state.stagedMelds = [];
-    state.stagedCardIds = new Set();
-    clearSelection();
-  });
-}
-
-function cancelStaging() {
-  state.stagedMelds = [];
-  state.stagedCardIds = new Set();
-  clearSelection();
-  if (state.gameState) {
-    renderMelds(state.gameState);
-    renderStagedMelds(state.gameState);
-  }
 }
 
 document.getElementById('btn-play-melds').addEventListener('click', () => {
@@ -45,15 +14,11 @@ document.getElementById('btn-play-melds').addEventListener('click', () => {
   if (!gs?.drawnThisTurn) { showToast('Compre ou junte da mesa antes de jogar.', 'error'); playBzz(); return; }
   if (state.selectedCards.length < 3) { showToast('Selecione pelo menos 3 cartas.', 'error'); playBzz(); return; }
   if (isInBuraco(gs)) {
-    // Stage the meld instead of submitting
-    const action = { type: 'new', cards: [...state.selectedCards] };
-    state.stagedMelds.push(action);
-    state.selectedCards.forEach(id => state.stagedCardIds.add(id));
-    state.selectedCards = [];
-    renderMe(gs);
-    renderMelds(gs);
-    renderStagedMelds(gs);
-    updateButtons(gs);
+    // Staging é feito no servidor — emite stageMeld
+    socket.emit('stageMeld', { cardIds: [...state.selectedCards] }, res => {
+      if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+      clearSelection();
+    });
     return;
   }
   socket.emit('playMelds', { meldActions: [{ type: 'new', cards: [...state.selectedCards] }] }, res => {
@@ -65,12 +30,19 @@ document.getElementById('btn-play-melds').addEventListener('click', () => {
 });
 
 document.getElementById('btn-confirm-melds').addEventListener('click', () => {
-  if (state.stagedMelds.length === 0) return;
-  commitStagedMelds();
-});
-
-document.getElementById('btn-cancel-melds').addEventListener('click', () => {
-  cancelStaging();
+  const gs = state.gameState;
+  const hasStagedMelds = (gs?.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
+  if (!hasStagedMelds) return;
+  socket.emit('confirmStagedMelds', {}, res => {
+    if (!res.ok) {
+      showToast(res.msg || 'Pontos insuficientes.', 'error', res.penalized ? 6000 : 3000);
+      playBzz();
+      return;
+    }
+    const isSeq = res.meldTypes?.includes('sequence');
+    showToast(isSeq ? 'Sequência baixada!' : 'Grupo baixado!', 'success', 1000);
+    playDeal();
+  });
 });
 
 document.getElementById('btn-discard').addEventListener('click', () => {
