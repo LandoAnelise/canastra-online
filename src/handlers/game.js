@@ -1,5 +1,34 @@
 'use strict';
 
+// Executa turnos dos bots enquanto for a vez deles
+function runBotTurns(game, roomId, rm) {
+  if (!game.testMode || game.status !== 'playing') return;
+  if (!game.botSeats.has(game.currentPlayerIndex)) return;
+
+  setTimeout(() => {
+    if (!game.testMode || game.status !== 'playing') return;
+    const botIdx = game.currentPlayerIndex;
+    if (!game.botSeats.has(botIdx)) return;
+
+    const drawResult = game.drawFromDeck(botIdx);
+    if (!drawResult.ok) return;
+
+    // Descarta a carta de menor valor (evita curingas e ás)
+    const RANK_PTS = { '3': 1, '4': 1, '5': 1, '6': 1, '7': 2, '8': 2, '9': 2, '10': 2, 'J': 2, 'Q': 2, 'K': 2, '2': 3, 'A': 4 };
+    const hand = game.hands[botIdx];
+    const card = [...hand].sort((a, b) => (RANK_PTS[a.rank] || 1) - (RANK_PTS[b.rank] || 1))[0];
+
+    const discardResult = game.discard_(botIdx, card.id);
+    rm.broadcastState(game);
+
+    if (discardResult.autoBater || discardResult.deckEndRound) {
+      rm.broadcastToRoom(roomId, 'roundEnded', discardResult);
+      return;
+    }
+    if (discardResult.ok) runBotTurns(game, roomId, rm);
+  }, 500);
+}
+
 function registerGameHandlers(socket, io, rm) {
   const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
 
@@ -48,7 +77,11 @@ function registerGameHandlers(socket, io, rm) {
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
     broadcastState(game);
-    if (result.autoBater || result.deckEndRound) broadcastToRoom(info.roomId, 'roundEnded', result);
+    if (result.autoBater || result.deckEndRound) {
+      broadcastToRoom(info.roomId, 'roundEnded', result);
+    } else {
+      runBotTurns(game, info.roomId, rm);
+    }
   }));
 
   socket.on('bater', gameAction((game, info, { discardCardId = null } = {}, cb) => {
@@ -69,7 +102,19 @@ function registerGameHandlers(socket, io, rm) {
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
     broadcastState(game);
     cb?.({ ok: true });
+    runBotTurns(game, info.roomId, rm);
   }));
+
+  // ── DEV: ajustar pontos em sala de teste ──
+  socket.on('setTestScores', (data, cb) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
+    const game = rooms.get(info.roomId);
+    if (!game?.testMode) return cb?.({ ok: false, msg: 'Apenas em sala de teste.' });
+    game.setTestScores(data.s0, data.s1);
+    broadcastState(game);
+    cb?.({ ok: true });
+  });
 
   socket.on('getDiscardPile', (_, cb) => {
     const info = playerRoom.get(socket.id);

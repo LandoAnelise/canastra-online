@@ -1026,3 +1026,141 @@
     padding-bottom: 72px;
   }
 }
+
+/* ── DEV: Sala de Teste (lobby) ─────────────────────────────────────────── */
+.dev-room-section {
+  margin-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding-top: 12px;
+}
+.btn-dev-toggle {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.55);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-dev-toggle:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
+.test-room-panel {
+  margin-top: 12px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.test-room-hint { font-size: 0.8rem; opacity: 0.65; margin: 0; text-align: center; }
+.test-scores-row { display: flex; gap: 12px; }
+.test-score-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.test-score-field label { font-size: 0.78rem; opacity: 0.7; }
+.test-score-field input {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: center;
+}
+
+/* ── DEV Panel (in-game) ────────────────────────────────────────────────── */
+.dev-panel {
+  position: fixed;
+  bottom: 80px;
+  right: 8px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.dev-panel-toggle {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,220,80,0.5);
+  color: rgba(255,220,80,0.9);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+.dev-panel-body {
+  background: #1a1a2e;
+  border: 1px solid rgba(255,220,80,0.3);
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 190px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.dev-section-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 6px;
+}
+.dev-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.dev-score-row label { font-size: 0.8rem; opacity: 0.7; flex: 1; }
+.dev-score-row input {
+  width: 70px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.dev-btn {
+  width: 100%;
+  background: rgba(255,220,80,0.15);
+  border: 1px solid rgba(255,220,80,0.4);
+  color: rgba(255,220,80,0.9);
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 2px;
+}
+.dev-btn:hover { background: rgba(255,220,80,0.25); }
+.dev-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+/* ── DEV: mini-cards para ver mãos dos bots ─────────────────────────────── */
+.dev-hand-overlay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+  pointer-events: none;
+}
+.dev-mini-card {
+  background: #fffdf7;
+  border: 1px solid #d4c8b0;
+  border-radius: 3px;
+  padding: 1px 3px;
+  font-size: 0.6rem;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+.dev-mini-card.red { color: #c0392b; }
