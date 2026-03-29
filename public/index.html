@@ -295,11 +295,34 @@
 
 <!-- ══════════ GAME OVER MODAL ══════════ -->
 <div id="modal-gameover" class="modal hidden">
-  <div class="modal-box">
-    <div class="trophy">🏆</div>
-    <h2 id="modal-go-title">Jogo Encerrado!</h2>
-    <div id="modal-go-body"></div>
-    <button id="btn-new-game" class="btn-primary">Voltar para a Tela Inicial</button>
+  <div class="modal-box round-modal-box">
+    <div class="round-modal-header">
+      <div class="round-winner-badge" id="modal-go-title">Jogo Encerrado!</div>
+      <div class="round-number">Resultado Final</div>
+    </div>
+
+    <div class="round-scores-grid">
+      <!-- Team 0 -->
+      <div class="round-team-col" id="go-team-col-0">
+        <div class="round-team-name" id="go-team-name-0">Dupla 1</div>
+        <div class="round-breakdown" id="go-breakdown-0"></div>
+        <div class="round-team-subtotal" id="go-subtotal-0"></div>
+        <div class="round-team-total" id="go-total-0"></div>
+      </div>
+      <!-- Divider -->
+      <div class="round-divider">VS</div>
+      <!-- Team 1 -->
+      <div class="round-team-col" id="go-team-col-1">
+        <div class="round-team-name" id="go-team-name-1">Dupla 2</div>
+        <div class="round-breakdown" id="go-breakdown-1"></div>
+        <div class="round-team-subtotal" id="go-subtotal-1"></div>
+        <div class="round-team-total" id="go-total-1"></div>
+      </div>
+    </div>
+
+    <div class="round-hand-losses" id="go-hand-losses"></div>
+
+    <button id="btn-new-game" class="btn-primary round-continue-btn">Voltar para a Tela Inicial</button>
   </div>
 </div>
 
