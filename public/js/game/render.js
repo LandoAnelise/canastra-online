@@ -300,17 +300,27 @@ export function renderMelds(gs) {
       const isMobileView = window.matchMedia('(max-width: 600px)').matches;
       const shouldStack  = isMobileView && meld.cards.length > 4;
 
+      // Um 2 é coringa ATUANDO se substitui outro rank (não é natural na sequência/grupo)
+      const isActingWild = (c) => {
+        if (!isWild(c)) return false;
+        if (meld.type === 'group') return meld.cards.some(n => !isWild(n)); // grupo de não-2s
+        const seqSuit = meld.cards.find(n => !isWild(n))?.suit;
+        return !seqSuit || c.suit !== seqSuit; // 2 de naipe diferente = coringa na sequência
+      };
+
       // Build card HTML — tag cards for CSS stacking
       const cardsHTML = meld.cards.map((card, ci, arr) => {
         let extra = '';
         if (shouldStack) {
+          const prevActing  = ci >= 1 && isActingWild(arr[ci - 1]);
+          const prev2Acting = ci >= 2 && isActingWild(arr[ci - 2]);
+          // stack-after-visible (-26px) → mostra 18px da carta anterior
+          const needsVisible = ci === 1 || prevActing || prev2Acting || isActingWild(card);
           if (ci === arr.length - 1) {
-            // Last card: if previous is wild, keep 18px of it visible; otherwise sliver
-            extra = isWild(arr[ci - 1]) ? 'stack-after-visible' : 'stack-last';
-          } else if (ci > 0 && (ci === 1 || isWild(arr[ci - 1]))) {
-            extra = 'stack-after-visible'; // after first card or wild: -26px (shows 18px of prev)
+            extra = needsVisible ? 'stack-after-visible' : 'stack-last';
+          } else if (ci > 0 && needsVisible) {
+            extra = 'stack-after-visible';
           }
-          // wild cards and other middle cards: next card controls their visibility
         }
         return fullCardHTML(card, extra);
       }).join('');
