@@ -60,18 +60,18 @@ socket.on('playerTookDiscard', () => { playWhoosh(); });
 socket.on('playerDealt', () => { playDeal(); });
 
 socket.on('roundEnded', (result) => {
-  // Desabilita todos os botões de ação imediatamente — rodada encerrada
+  // Desabilita todos os botões de ação imediatamente — rodada encerrada (mas mantém visíveis)
   ['btn-play-melds', 'btn-confirm-melds', 'btn-cancel-melds', 'btn-discard', 'btn-bater',
    'deck-pile', 'discard-pile'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.disabled = true; el.classList.add('hidden'); }
+    if (el) { el.disabled = true; }
   });
 
   window._roundEndedPending = true;
   setTimeout(() => {
     window._roundEndedPending = false;
     showRoundModal(result);
-  }, 5000);
+  }, 2500);
 });
 
 socket.on('deckEmpty', ({ playerName }) => {
