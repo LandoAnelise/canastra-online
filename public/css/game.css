@@ -785,7 +785,7 @@
       "left center right"
       "bottom bottom bottom";
     grid-template-columns: 46px 1fr 46px;
-    grid-template-rows: 52px minmax(0, 1fr) 148px;
+    grid-template-rows: 36px minmax(0, 1fr) 124px;
     margin: 5px;
     border-radius: 28px;
     box-shadow:
@@ -864,11 +864,12 @@
 
   /* ── Bottom (my) slot ───────────────────────────── */
   .player-slot.bottom {
-    height: 148px;
-    min-height: 148px;
-    max-height: 148px;
-    padding: 5px 6px 4px;
-    gap: 3px;
+    height: 124px;
+    min-height: 124px;
+    max-height: 124px;
+    padding: 0 6px 4px;
+    gap: 2px;
+    justify-content: flex-end;
     overflow-x: hidden;
     overflow-y: hidden;
   }
@@ -938,7 +939,7 @@
   .pile-count { font-size: 0.5rem; margin-top: 4px; }
 
   /* My hand — single row */
-  #my-hand { padding: 8px 8px 3px; overflow-x: auto; }
+  #my-hand { padding: 3px 8px 3px; overflow-x: auto; }
   .my-card {
     width: 56px;
     height: 80px;
@@ -972,12 +973,12 @@
   }
   /* Expand slot and grid row to fit two rows */
   #table-area.has-two-rows {
-    grid-template-rows: 80px minmax(0, 1fr) 168px;
+    grid-template-rows: 80px minmax(0, 1fr) 144px;
   }
   .player-slot.bottom.two-rows {
-    height: 168px;
-    min-height: 168px;
-    max-height: 168px;
+    height: 144px;
+    min-height: 144px;
+    max-height: 144px;
     overflow: visible;
   }
 
@@ -1068,7 +1069,7 @@
 
   /* Push table up so fixed action bar doesn't cover the hand */
   #screen-game {
-    padding-bottom: 72px;
+    padding-bottom: calc(42px + env(safe-area-inset-bottom, 6px));
   }
 }
 
