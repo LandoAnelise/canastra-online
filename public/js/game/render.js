@@ -455,6 +455,82 @@ export function clearSelection() {
 }
 
 function setupHandDragDrop(container) {
+  // ── Pointer Events — funciona em Safari, Firefox, Chrome (todos os browsers) ─
+  // Registra uma vez no container via event delegation
+  if (!container._pointerDragInit) {
+    container._pointerDragInit = true;
+    let pd = null; // estado do drag por pointer
+
+    container.addEventListener('pointerdown', e => {
+      const card = e.target.closest('.my-card');
+      if (!card) return;
+      pd = { id: card.dataset.id, el: card, pointerId: e.pointerId,
+             startX: e.clientX, startY: e.clientY, captured: false };
+    });
+
+    container.addEventListener('pointermove', e => {
+      if (!pd) return;
+      const dx = Math.abs(e.clientX - pd.startX);
+      const dy = Math.abs(e.clientY - pd.startY);
+
+      if (!pd.captured) {
+        if (dx > 8 && dx > dy * 1.5) {
+          // Movimento horizontal dominante → captura para reordenar
+          pd.el.setPointerCapture(pd.pointerId);
+          pd.captured = true;
+          pd.el.style.opacity = '0.4';
+          dragCardId = pd.id;
+        } else if (dy > 10) {
+          pd = null; // scroll vertical → cancela
+        }
+        return;
+      }
+
+      // Destaca carta alvo sob o ponteiro
+      const cards = [...container.querySelectorAll('.my-card')];
+      cards.forEach(c => c.classList.remove('drag-over-card'));
+      const target = cards.find(c => {
+        if (c === pd.el) return false;
+        const r = c.getBoundingClientRect();
+        return e.clientX >= r.left && e.clientX <= r.right &&
+               e.clientY >= r.top - 20  && e.clientY <= r.bottom + 20;
+      });
+      if (target) target.classList.add('drag-over-card');
+    });
+
+    const finishPointerDrag = () => {
+      if (!pd || !pd.captured) { pd = null; return; }
+      const { id, el } = pd;
+      pd = null;
+      el.style.opacity = '';
+      dragCardId = null;
+
+      const cards = [...container.querySelectorAll('.my-card')];
+      const target = cards.find(c => c.classList.contains('drag-over-card'));
+      cards.forEach(c => c.classList.remove('drag-over-card'));
+
+      if (target && id !== target.dataset.id) {
+        const from = state.myHandOrder.indexOf(id);
+        const to   = state.myHandOrder.indexOf(target.dataset.id);
+        if (from !== -1 && to !== -1) {
+          state.myHandOrder.splice(from, 1);
+          state.myHandOrder.splice(to, 0, id);
+          if (state.gameState) renderMe(state.gameState);
+        }
+      }
+    };
+
+    container.addEventListener('pointerup', finishPointerDrag);
+    // pointercancel dispara quando HTML5 drag começa (Chrome) — deixa ele assumir
+    container.addEventListener('pointercancel', () => {
+      if (!pd) return;
+      pd.el.style.opacity = '';
+      container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+      pd = null;
+    });
+  }
+
+  // ── HTML5 Drag — fallback para Chrome (desktop/Android) e drag para lixo/melds
   container.querySelectorAll('.my-card').forEach(el => {
     el.addEventListener('dragstart', e => {
       dragCardId = el.dataset.id;
