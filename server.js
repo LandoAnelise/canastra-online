@@ -14,7 +14,19 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  lastModified: true,
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.html')) {
+      // HTML nunca fica em cache — força revalidação a cada acesso
+      res.setHeader('Cache-Control', 'no-cache');
+    } else {
+      // CSS/JS/imagens: revalida (usa ETag/Last-Modified, não baixa de novo se não mudou)
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
 
 const rm = createRoomManager(io);
 
