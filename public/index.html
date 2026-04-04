@@ -484,6 +484,11 @@
 <!-- Toast -->
 <div id="toast" class="hidden"></div>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/js/main.js"></script>
 <script type="module" src="/js/game/dev.js"></script>
