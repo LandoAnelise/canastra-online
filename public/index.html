@@ -313,12 +313,22 @@
 
 </div>
 
+<!-- ══════════ GAME ABANDONED MODAL ══════════ -->
+<div id="modal-abandoned" class="modal hidden">
+  <div class="modal-box small" style="text-align:center">
+    <div style="font-size:2rem;margin-bottom:4px">🏳️</div>
+    <h3>Jogo encerrado</h3>
+    <p class="modal-hint" id="modal-abandoned-msg" style="margin:8px 0 20px"></p>
+    <button id="btn-abandoned-menu" class="btn-primary" style="width:100%">Menu Inicial</button>
+  </div>
+</div>
+
 <!-- ══════════ LEAVE GAME MODAL ══════════ -->
 <div id="modal-leave" class="modal hidden">
   <div class="modal-box small" style="text-align:center">
     <div style="font-size:2rem;margin-bottom:4px">↩</div>
     <h3>Sair da partida?</h3>
-    <p class="modal-hint" style="margin:8px 0 20px">Você será removido do jogo.<br>Sua equipe ficará sem você.</p>
+    <p class="modal-hint" style="margin:8px 0 20px">Você quer mesmo desistir?<br>O jogo será encerrado caso você saia.</p>
     <div style="display:flex;gap:10px">
       <button id="btn-leave-cancel" class="btn-action" style="flex:1">Cancelar</button>
       <button id="btn-leave-confirm" class="btn-action" style="flex:1;background:rgba(160,40,40,0.35);border-color:rgba(200,80,80,0.5)">Sair</button>
