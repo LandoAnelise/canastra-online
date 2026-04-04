@@ -101,6 +101,7 @@ socket.on('stagingPenalty', ({ playerName, teamName }) => {
 });
 
 socket.on('gameState', (gs) => {
+  const prevStatus = state.gameState?.status;
   state.gameState = gs;
   if (gs.myIndex !== undefined) state.mySeatIndex = gs.myIndex;
   // Campainha quando passa a ser minha vez
@@ -108,6 +109,21 @@ socket.on('gameState', (gs) => {
     playCampainha();
   }
   _prevTurnIdx = gs.currentPlayerIndex;
+
+  if (gs.status === 'finished') {
+    // Garante que renderGame não mostra o modal imediatamente —
+    // pode chegar antes do roundEnded por diferença de caminho no Socket.IO
+    if (!window._roundEndedPending) {
+      if (prevStatus === 'finished') {
+        // Reconexão a partida já encerrada — mostra modal direto
+        showGameOverModal(gs);
+      } else {
+        // Race condition: gameState chegou antes do roundEnded
+        // roundEnded vai disparar em seguida e cuidar do delay de 2,5s
+        window._roundEndedPending = true;
+      }
+    }
+  }
 
   if (gs.status === 'waiting') {
     renderWaiting(gs);
