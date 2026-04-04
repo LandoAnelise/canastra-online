@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fundo feltro verde -->
+  <rect width="512" height="512" rx="96" fill="#114d28"/>
+  <!-- Moldura dourada -->
+  <rect x="18" y="18" width="476" height="476" rx="80" fill="none" stroke="#c9a84c" stroke-width="12"/>
+
+  <!-- Carta central (branca, inclinada levemente) -->
+  <g transform="translate(256,256) rotate(-8)">
+    <rect x="-72" y="-96" width="144" height="192" rx="16" fill="#fffdf7" stroke="#d4c8b0" stroke-width="3"/>
+    <!-- Naipe copas (vermelho) no centro -->
+    <text x="0" y="18" text-anchor="middle" font-size="88" fill="#c0392b">♥</text>
+    <!-- Rank topo esquerdo -->
+    <text x="-56" y="-62" font-size="32" font-weight="700" fill="#c0392b" font-family="serif">A</text>
+    <text x="-56" y="-34" font-size="20" fill="#c0392b" font-family="serif">♥</text>
+  </g>
+
+  <!-- Carta atrás (azul, inclinada para outro lado) -->
+  <g transform="translate(256,256) rotate(10)">
+    <rect x="-68" y="-92" width="136" height="184" rx="14" fill="#1a3a8c" stroke="#4a6adc" stroke-width="3"/>
+    <!-- Padrão losango no verso -->
+    <path d="M0,-60 L20,-30 L0,0 L-20,-30 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="translate(0,-10)"/>
+    <path d="M0,-20 L20,10 L0,40 L-20,10 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2" transform="translate(0,-10)"/>
+  </g>
+
+  <!-- Re-renderiza carta da frente por cima -->
+  <g transform="translate(256,256) rotate(-8)">
+    <rect x="-72" y="-96" width="144" height="192" rx="16" fill="#fffdf7" stroke="#d4c8b0" stroke-width="3"/>
+    <text x="0" y="18" text-anchor="middle" font-size="88" fill="#c0392b">♥</text>
+    <text x="-56" y="-62" font-size="32" font-weight="700" fill="#c0392b" font-family="serif">A</text>
+    <text x="-56" y="-34" font-size="20" fill="#c0392b" font-family="serif">♥</text>
+  </g>
+</svg>
