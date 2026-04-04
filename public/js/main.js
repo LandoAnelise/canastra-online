@@ -119,3 +119,24 @@ socket.on('publicRoomsUpdated', ({ rooms }) => {
 socket.on('connect', () => console.log('Conectado'));
 socket.on('disconnect', () => showToast('⚠️ Conexão perdida. Reconectando...', 'error', 8000));
 socket.on('connect_error', () => showToast('Erro de conexão.', 'error', 5000));
+
+// ── Escala proporcional para telas menores que o design mínimo ────────────────
+const DESIGN_MIN_W = 360; // largura mínima de referência (px)
+function applyMobileScale() {
+  const game = document.getElementById('screen-game');
+  if (!game) return;
+  const vw = window.innerWidth;
+  if (vw < DESIGN_MIN_W) {
+    const scale = vw / DESIGN_MIN_W;
+    game.style.transformOrigin = 'top left';
+    game.style.transform = `scale(${scale})`;
+    game.style.width = DESIGN_MIN_W + 'px';
+    game.style.height = (window.innerHeight / scale) + 'px';
+  } else {
+    game.style.transform = '';
+    game.style.width = '';
+    game.style.height = '';
+  }
+}
+window.addEventListener('resize', applyMobileScale);
+applyMobileScale();
