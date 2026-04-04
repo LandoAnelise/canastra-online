@@ -124,11 +124,13 @@ document.getElementById('btn-leave-cancel').addEventListener('click', () => {
 });
 document.getElementById('btn-leave-confirm').addEventListener('click', () => {
   document.getElementById('modal-leave').classList.add('hidden');
-  clearSession();
-  state.gameState = null;
-  state.myRoomId  = null;
-  history.replaceState(null, '', '/');
-  showScreen('screen-lobby');
+  socket.emit('leaveGame', {}, () => {
+    clearSession();
+    state.gameState = null;
+    state.myRoomId  = null;
+    history.replaceState(null, '', '/');
+    showScreen('screen-lobby');
+  });
 });
 
 // ── Clique no monte ───────────────────────────────────────────────────────────

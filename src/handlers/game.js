@@ -117,6 +117,21 @@ function registerGameHandlers(socket, io, rm) {
     cb?.({ ok: true, cards: game.discard });
   });
 
+  socket.on('leaveGame', (_, cb) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: true });
+    const game = rooms.get(info.roomId);
+    const playerName = game?.players[info.seatIndex]?.name || 'Jogador';
+
+    // Notifica apenas os OUTROS jogadores (socket.to exclui o remetente)
+    socket.to(info.roomId).emit('gameAbandoned', { playerName });
+
+    // Remove a sala — jogo encerrado definitivamente
+    rooms.delete(info.roomId);
+    playerRoom.delete(socket.id);
+    cb?.({ ok: true });
+  });
+
   socket.on('newGame', (_, cb) => {
     const info = playerRoom.get(socket.id);
     if (!info) return cb?.({ ok: false, msg: 'Você não está em uma sala.' });

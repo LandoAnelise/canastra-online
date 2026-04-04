@@ -56,6 +56,22 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
   // If reconnectWindowMs is set, gamePaused event handles the UI
 });
 
+socket.on('gameAbandoned', ({ playerName }) => {
+  const msg = document.getElementById('modal-abandoned-msg');
+  if (msg) msg.textContent = `${playerName} desistiu da partida. O jogo foi finalizado.`;
+  document.getElementById('modal-abandoned').classList.remove('hidden');
+  clearSession();
+  state.teamsInitialized = false;
+  state.gameState = null;
+  state.myRoomId  = null;
+});
+
+document.getElementById('btn-abandoned-menu').addEventListener('click', () => {
+  document.getElementById('modal-abandoned').classList.add('hidden');
+  history.replaceState(null, '', '/');
+  showScreen('screen-lobby');
+});
+
 socket.on('playerDrew', () => { playFolhaVirando(); });
 socket.on('playerTookDiscard', () => { playWhoosh(); });
 socket.on('playerDealt', () => { playDeal(); });
