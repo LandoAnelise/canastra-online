@@ -455,53 +455,64 @@ export function clearSelection() {
 }
 
 function setupHandDragDrop(container) {
-  // ── Pointer Events — funciona em Safari, Firefox, Chrome (todos os browsers) ─
-  // Registra uma vez no container via event delegation
+  // ── Touch Events — reordenação tátil (mobile: iOS Safari, Android Chrome) ────
+  // Registra uma vez no container via event delegation.
+  // Usa Touch Events em vez de Pointer Events para evitar conflitos com o
+  // scroll handler do iOS Safari (que disparava pointercancel cedo demais).
+  // touchmove é registrado como non-passive para poder chamar preventDefault()
+  // apenas quando confirmado gesto horizontal — scroll vertical continua funcionando.
   if (!container._pointerDragInit) {
     container._pointerDragInit = true;
-    let pd = null; // estado do drag por pointer
+    let td = null; // estado do drag por touch
 
-    container.addEventListener('pointerdown', e => {
+    container.addEventListener('touchstart', e => {
       const card = e.target.closest('.my-card');
       if (!card) return;
-      pd = { id: card.dataset.id, el: card, pointerId: e.pointerId,
-             startX: e.clientX, startY: e.clientY, captured: false };
-    });
+      const touch = e.touches[0];
+      td = { id: card.dataset.id, el: card, touchId: touch.identifier,
+             startX: touch.clientX, startY: touch.clientY, captured: false };
+    }, { passive: true });
 
-    container.addEventListener('pointermove', e => {
-      if (!pd) return;
-      const dx = Math.abs(e.clientX - pd.startX);
-      const dy = Math.abs(e.clientY - pd.startY);
+    container.addEventListener('touchmove', e => {
+      if (!td) return;
+      const touch = [...e.touches].find(t => t.identifier === td.touchId);
+      if (!touch) return;
+      const dx = Math.abs(touch.clientX - td.startX);
+      const dy = Math.abs(touch.clientY - td.startY);
 
-      if (!pd.captured) {
+      if (!td.captured) {
         if (dx > 8 && dx > dy * 1.5) {
-          // Movimento horizontal dominante → captura para reordenar
-          pd.el.setPointerCapture(pd.pointerId);
-          pd.captured = true;
-          pd.el.style.opacity = '0.4';
-          dragCardId = pd.id;
+          // Gesto horizontal dominante → inicia reordenação
+          td.captured = true;
+          td.el.style.opacity = '0.4';
+          dragCardId = td.id;
         } else if (dy > 10) {
-          pd = null; // scroll vertical → cancela
+          td = null; // scroll vertical → cancela drag
+          return;
+        } else {
+          return; // aguarda decisão
         }
-        return;
       }
 
-      // Destaca carta alvo sob o ponteiro
+      // Bloqueamos scroll apenas após confirmar gesto horizontal
+      e.preventDefault();
+
+      // Destaca carta alvo sob o dedo
       const cards = [...container.querySelectorAll('.my-card')];
       cards.forEach(c => c.classList.remove('drag-over-card'));
       const target = cards.find(c => {
-        if (c === pd.el) return false;
+        if (c === td.el) return false;
         const r = c.getBoundingClientRect();
-        return e.clientX >= r.left && e.clientX <= r.right &&
-               e.clientY >= r.top - 20  && e.clientY <= r.bottom + 20;
+        return touch.clientX >= r.left && touch.clientX <= r.right &&
+               touch.clientY >= r.top - 20 && touch.clientY <= r.bottom + 20;
       });
       if (target) target.classList.add('drag-over-card');
-    });
+    }, { passive: false });
 
-    const finishPointerDrag = () => {
-      if (!pd || !pd.captured) { pd = null; return; }
-      const { id, el } = pd;
-      pd = null;
+    const finishTouchDrag = () => {
+      if (!td || !td.captured) { td = null; return; }
+      const { id, el } = td;
+      td = null;
       el.style.opacity = '';
       dragCardId = null;
 
@@ -520,13 +531,13 @@ function setupHandDragDrop(container) {
       }
     };
 
-    container.addEventListener('pointerup', finishPointerDrag);
-    // pointercancel dispara quando HTML5 drag começa (Chrome) — deixa ele assumir
-    container.addEventListener('pointercancel', () => {
-      if (!pd) return;
-      pd.el.style.opacity = '';
+    container.addEventListener('touchend', finishTouchDrag);
+    container.addEventListener('touchcancel', () => {
+      if (!td) return;
+      td.el.style.opacity = '';
       container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
-      pd = null;
+      dragCardId = null;
+      td = null;
     });
   }
 
