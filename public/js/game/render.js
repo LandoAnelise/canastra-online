@@ -89,10 +89,6 @@ export function renderGame(gs) {
   if (slot) document.getElementById(`player-${slot}`)?.classList.add('active-turn');
 
   updateButtons(gs);
-  if (gs.status === 'finished' && !window._roundEndedPending) {
-    // Import lazily to avoid circular dependency (só ao reconectar — roundEnded cuida do caso normal)
-    import('./modals.js').then(m => m.showGameOverModal(gs));
-  }
 }
 
 function getRelativeSeats(gs) {
