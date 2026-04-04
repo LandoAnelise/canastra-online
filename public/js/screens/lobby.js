@@ -1,6 +1,7 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
 import { showToast, showScreen } from '../utils.js';
+import { saveSession } from '../session.js';
 
 // Auto-refresh interval for the browse tab
 let _browseInterval = null;
@@ -47,6 +48,7 @@ document.getElementById('btn-create').addEventListener('click', () => {
     if (!res.ok) { showToast(res.msg, 'error'); return; }
     state.myRoomId = res.roomId;
     state.mySeatIndex = res.seatIndex;
+    saveSession(res.roomId, name);
     document.getElementById('waiting-room-code').textContent = res.roomId;
     history.replaceState(null, '', `?sala=${res.roomId}`);
     stopBrowseRefresh();
@@ -72,6 +74,7 @@ export function joinRoomByCode(code) {
   socket.emit('joinRoom', { roomId: code, playerName: name }, (res) => {
     if (!res.ok) { showToast(res.msg, 'error'); return; }
     state.mySeatIndex = res.seatIndex;
+    saveSession(code, name);
     document.getElementById('waiting-room-code').textContent = code;
     history.replaceState(null, '', `?sala=${code}`);
     stopBrowseRefresh();
@@ -96,6 +99,13 @@ document.getElementById('input-name').addEventListener('keydown', e => {
 document.getElementById('input-room').addEventListener('keydown', e => {
   if (e.key === 'Enter') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
 });
+
+// Pré-preenche o nome salvo na sessão anterior
+const _savedSession = (() => { try { return JSON.parse(localStorage.getItem('canastra_session')); } catch { return null; } })();
+if (_savedSession?.playerName) {
+  const ni = document.getElementById('input-name');
+  if (ni && !ni.value) ni.value = _savedSession.playerName;
+}
 
 // Auto-join from URL param — switch to join tab and pre-fill
 const urlParams = new URLSearchParams(window.location.search);
