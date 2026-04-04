@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { showToast, closeModal, showScreen } from '../utils.js';
 import { clearSelection } from './render.js';
 import { playWin, playLose, playChime } from '../sounds.js';
+import { clearSession } from '../session.js';
 
 export function showRoundModal(result) {
   if (result.gameOver) { showGameOverModal(result); return; }
@@ -186,6 +187,7 @@ export function showGameOverModal(result) {
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
   closeModal('modal-gameover');
+  clearSession();
   state.teamsInitialized = false;
   state.gameState = null;
   state.myRoomId = null;

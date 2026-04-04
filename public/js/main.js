@@ -2,6 +2,7 @@ import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
 import { playCampainha, playFolhaVirando, playWhoosh, playDeal, playBzz } from './sounds.js';
+import { loadSession, clearSession } from './session.js';
 
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
@@ -116,7 +117,41 @@ socket.on('publicRoomsUpdated', ({ rooms }) => {
 });
 
 
-socket.on('connect', () => console.log('Conectado'));
+// ── Auto-reconexão ao carregar a página ───────────────────────────────────────
+let _autoReconnectDone = false;
+socket.on('connect', () => {
+  console.log('Conectado');
+  if (_autoReconnectDone) return;
+  _autoReconnectDone = true;
+
+  const session = loadSession();
+  if (!session) return;
+
+  showToast('Reconectando à partida...', 'info', 3000);
+  socket.emit('joinRoom', { roomId: session.roomId, playerName: session.playerName }, (res) => {
+    if (!res.ok) {
+      clearSession();
+      showToast('Sessão expirada. Entre novamente.', 'error', 3000);
+      return;
+    }
+    state.myName    = session.playerName;
+    state.myRoomId  = session.roomId;
+    state.mySeatIndex = res.seatIndex;
+    // Preenche o nome no campo do lobby caso o jogador volte ao lobby depois
+    const nameInput = document.getElementById('input-name');
+    if (nameInput && !nameInput.value) nameInput.value = session.playerName;
+
+    if (res.reconnected) {
+      showToast('✅ Reconectado!', 'success', 1500);
+      // gameState chegará em seguida e renderizará o jogo automaticamente
+    } else {
+      // Estava em sala de espera — volta para a tela de espera
+      document.getElementById('waiting-room-code').textContent = session.roomId;
+      showScreen('screen-waiting');
+    }
+  });
+});
+
 socket.on('disconnect', () => showToast('⚠️ Conexão perdida. Reconectando...', 'error', 8000));
 socket.on('connect_error', () => showToast('Erro de conexão.', 'error', 5000));
 
