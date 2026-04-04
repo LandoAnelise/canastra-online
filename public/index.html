@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="color-scheme" content="light" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Canastra Online</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -140,12 +140,18 @@
       <span class="score-value" id="val-score-0">0</span>
     </div>
     <div id="game-status-label">Rodada 1</div>
-    <button id="btn-mute" class="btn-mute" title="Mutar/desmutar sons">🔊</button>
+    <div class="topbar-right-group">
+      <button id="btn-fullscreen" class="btn-topbar-icon" title="Tela cheia">⛶</button>
+      <button id="btn-mute" class="btn-mute" title="Mutar/desmutar sons">🔊</button>
+      <button id="btn-hide-topbar" class="btn-topbar-icon" title="Esconder barra">▲</button>
+    </div>
     <div id="score-team1" class="score-block right">
       <span class="score-label" id="score-label-1">Dupla 2</span>
       <span class="score-value" id="val-score-1">0</span>
     </div>
   </div>
+  <!-- Tab para restaurar topbar quando escondido -->
+  <div id="topbar-reveal" title="Mostrar barra">▾ placar</div>
 
   <!-- Players around table -->
   <div id="table-area">

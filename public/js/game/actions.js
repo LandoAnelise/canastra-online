@@ -83,6 +83,29 @@ btnMute.addEventListener('click', () => {
   btnMute.textContent = muted ? '🔇' : '🔊';
 });
 
+// ── Botão tela cheia ──────────────────────────────────────────────────────────
+const btnFullscreen = document.getElementById('btn-fullscreen');
+function updateFullscreenIcon() {
+  btnFullscreen.textContent = document.fullscreenElement ? '⊡' : '⛶';
+}
+btnFullscreen.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen();
+  }
+});
+document.addEventListener('fullscreenchange', updateFullscreenIcon);
+
+// ── Botão esconder/mostrar topbar ─────────────────────────────────────────────
+const screenGame = document.getElementById('screen-game');
+document.getElementById('btn-hide-topbar').addEventListener('click', () => {
+  screenGame.classList.add('topbar-hidden');
+});
+document.getElementById('topbar-reveal').addEventListener('click', () => {
+  screenGame.classList.remove('topbar-hidden');
+});
+
 // ── Clique no monte ───────────────────────────────────────────────────────────
 document.getElementById('deck-pile').addEventListener('click', () => {
   if (window._roundEndedPending) return;
