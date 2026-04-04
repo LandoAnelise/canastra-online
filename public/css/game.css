@@ -24,16 +24,28 @@
   z-index: 5;
 }
 .score-block { display: flex; flex-direction: row; align-items: center; gap: 10px; }
-.topbar-right-group {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 4px;
-  align-items: center;
+
+/* ── PAINEL DE CONTROLES ─────────────────────────────────────── */
+/* Desktop: botões embutidos no lado direito do topbar, aba oculta */
+#game-side-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 200;
 }
-.btn-mute, .btn-topbar-icon {
+#side-panel-tab { display: none; }
+#side-panel-open { display: none; }
+#side-panel-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  height: 54px; /* mesma altura do topbar */
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+}
+.btn-side-icon {
   background: none;
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 8px;
@@ -43,37 +55,10 @@
   line-height: 1;
   padding: 4px 8px;
   transition: background 0.15s, border-color 0.15s;
-}
-.btn-mute:hover, .btn-topbar-icon:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
-
-/* Tab para revelar topbar escondido */
-#topbar-reveal {
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  background: #0f0c18;
-  border: 1px solid rgba(201,168,76,0.3);
-  border-top: none;
-  border-radius: 0 0 10px 10px;
-  padding: 3px 16px 5px;
-  cursor: pointer;
-  color: rgba(245,240,232,0.55);
-  font-size: 0.65rem;
-  letter-spacing: 0.5px;
   white-space: nowrap;
 }
-/* Estado: topbar escondido */
-.topbar-hidden #game-topbar {
-  height: 0 !important;
-  overflow: hidden;
-  border-bottom: none;
-}
-.topbar-hidden #topbar-reveal {
-  display: block;
-}
+.btn-side-icon:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
+.btn-side-leave { color: rgba(255,100,100,0.85); }
 .score-block.right { flex-direction: row-reverse; }
 .score-label {
   font-size: 0.58rem;
@@ -769,14 +754,86 @@
   #game-topbar {
     height: 42px;
     gap: 10px;
-    padding: 0 100px 0 8px;
+    padding: 0 12px;
   }
   .score-block { gap: 5px; }
   .score-value { font-size: 1.15rem; }
   .score-label { font-size: 0.5rem; letter-spacing: 0.8px; max-width: 90px; }
   #game-status-label { font-size: 0.68rem; }
-  .btn-mute, .btn-topbar-icon { font-size: 0.85rem; padding: 3px 5px; }
-  .topbar-right-group { right: 6px; gap: 3px; }
+  /* Mobile: painel recolhível */
+  #side-panel-open {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    background: #0f0c18;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-right: none;
+    border-top: none;
+    border-radius: 0 0 0 10px;
+    color: var(--gold);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    line-height: 1;
+    padding: 3px 10px 5px;
+    transition: background 0.15s;
+    white-space: nowrap;
+    z-index: 201;
+  }
+  #side-panel-open:hover { background: rgba(255,255,255,0.06); }
+  /* Botão "Placar" some quando painel está aberto */
+  #screen-game:not(.ui-closed) #side-panel-open { display: none; }
+  #side-panel-content {
+    position: fixed;
+    top: 42px;
+    right: 0;
+    height: auto;
+    flex-direction: column;
+    gap: 6px;
+    background: #0f0c18;
+    border: 1px solid rgba(201,168,76,0.25);
+    border-right: none;
+    border-top: none;
+    border-radius: 0 0 0 12px;
+    padding: 8px 10px 6px;
+    align-items: stretch;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    transform-origin: top right;
+  }
+  .btn-side-icon { font-size: 0.9rem; padding: 5px 8px; }
+  /* Botão fechar no final do painel */
+  #side-panel-tab {
+    display: block;
+    background: none;
+    border: none;
+    border-top: 1px solid rgba(201,168,76,0.2);
+    border-radius: 0;
+    color: var(--gold);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    line-height: 1;
+    padding: 6px 2px 2px;
+    text-align: center;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  #side-panel-tab:hover { opacity: 0.7; }
+  /* Painel fechado */
+  .ui-closed #side-panel-content {
+    transform: scaleY(0);
+    opacity: 0;
+    pointer-events: none;
+  }
+  /* Topbar escondido quando painel fechado */
+  .ui-closed #game-topbar {
+    height: 0 !important;
+    overflow: hidden;
+    border-bottom: none;
+  }
 
   /* Table grid — side columns narrower, top row shorter, bottom full-width */
   #table-area {

@@ -166,25 +166,29 @@
 <!-- ══════════ GAME ══════════ -->
 <div id="screen-game" class="screen">
 
-  <!-- Top bar -->
+  <!-- Top bar — apenas placar -->
   <div id="game-topbar">
     <div id="score-team0" class="score-block">
       <span class="score-label" id="score-label-0">Dupla 1</span>
       <span class="score-value" id="val-score-0">0</span>
     </div>
     <div id="game-status-label">Rodada 1</div>
-    <div class="topbar-right-group">
-      <button id="btn-fullscreen" class="btn-topbar-icon" title="Tela cheia">⛶</button>
-      <button id="btn-mute" class="btn-mute" title="Mutar/desmutar sons">🔊</button>
-      <button id="btn-hide-topbar" class="btn-topbar-icon" title="Esconder barra">▲</button>
-    </div>
     <div id="score-team1" class="score-block right">
       <span class="score-label" id="score-label-1">Dupla 2</span>
       <span class="score-value" id="val-score-1">0</span>
     </div>
   </div>
-  <!-- Tab para restaurar topbar quando escondido -->
-  <div id="topbar-reveal" title="Mostrar barra">▾ placar</div>
+
+  <!-- Painel de controles (desktop: fixo no topbar; mobile: aba recolhível) -->
+  <div id="game-side-panel">
+    <button id="side-panel-open">Placar ▾</button>
+    <div id="side-panel-content">
+      <button id="btn-mute" class="btn-side-icon" title="Mutar/desmutar sons">🔊</button>
+      <button id="btn-fullscreen" class="btn-side-icon" title="Tela cheia">⛶</button>
+      <button id="btn-leave-game" class="btn-side-icon btn-side-leave" title="Sair da partida">↩</button>
+      <button id="side-panel-tab" class="btn-side-close">Fechar ▴</button>
+    </div>
+  </div>
 
   <!-- Players around table -->
   <div id="table-area">
@@ -307,6 +311,19 @@
     </div>
   </div>
 
+</div>
+
+<!-- ══════════ LEAVE GAME MODAL ══════════ -->
+<div id="modal-leave" class="modal hidden">
+  <div class="modal-box small" style="text-align:center">
+    <div style="font-size:2rem;margin-bottom:4px">↩</div>
+    <h3>Sair da partida?</h3>
+    <p class="modal-hint" style="margin:8px 0 20px">Você será removido do jogo.<br>Sua equipe ficará sem você.</p>
+    <div style="display:flex;gap:10px">
+      <button id="btn-leave-cancel" class="btn-action" style="flex:1">Cancelar</button>
+      <button id="btn-leave-confirm" class="btn-action" style="flex:1;background:rgba(160,40,40,0.35);border-color:rgba(200,80,80,0.5)">Sair</button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ PAUSED MODAL ══════════ -->

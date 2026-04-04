@@ -1,8 +1,9 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { showToast, autoSortHand, sortHandByRank } from '../utils.js';
+import { showToast, autoSortHand, sortHandByRank, showScreen } from '../utils.js';
 import { getDragCardId, renderMe, updateButtons, clearSelection } from './render.js';
 import { playFolhaVirando, playWhoosh, playDeal, playBzz, playThud, isMuted, toggleMute } from '../sounds.js';
+import { clearSession } from '../session.js';
 
 function isInBuraco(gs) {
   return gs && !gs.hasFirstMeld[gs.myTeam] && gs.scores[gs.myTeam] >= 1000;
@@ -97,13 +98,37 @@ btnFullscreen.addEventListener('click', () => {
 });
 document.addEventListener('fullscreenchange', updateFullscreenIcon);
 
-// ── Botão esconder/mostrar topbar ─────────────────────────────────────────────
+// ── Painel lateral — só no mobile ────────────────────────────────────────────
 const screenGame = document.getElementById('screen-game');
-document.getElementById('btn-hide-topbar').addEventListener('click', () => {
-  screenGame.classList.add('topbar-hidden');
+const isMobileLayout = () => window.matchMedia('(max-width: 600px)').matches;
+
+// Mobile: começa fechado por padrão
+if (isMobileLayout()) {
+  screenGame.classList.add('ui-closed');
+}
+
+function toggleSidePanel() {
+  if (!isMobileLayout()) return;
+  screenGame.classList.toggle('ui-closed');
+}
+
+document.getElementById('side-panel-open').addEventListener('click', toggleSidePanel);
+document.getElementById('side-panel-tab').addEventListener('click', toggleSidePanel);
+
+// ── Botão sair da partida ─────────────────────────────────────────────────────
+document.getElementById('btn-leave-game').addEventListener('click', () => {
+  document.getElementById('modal-leave').classList.remove('hidden');
 });
-document.getElementById('topbar-reveal').addEventListener('click', () => {
-  screenGame.classList.remove('topbar-hidden');
+document.getElementById('btn-leave-cancel').addEventListener('click', () => {
+  document.getElementById('modal-leave').classList.add('hidden');
+});
+document.getElementById('btn-leave-confirm').addEventListener('click', () => {
+  document.getElementById('modal-leave').classList.add('hidden');
+  clearSession();
+  state.gameState = null;
+  state.myRoomId  = null;
+  history.replaceState(null, '', '/');
+  showScreen('screen-lobby');
 });
 
 // ── Clique no monte ───────────────────────────────────────────────────────────
