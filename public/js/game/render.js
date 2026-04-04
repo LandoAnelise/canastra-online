@@ -313,12 +313,10 @@ export function renderMelds(gs) {
       const isMobileView = window.matchMedia('(max-width: 600px)').matches;
       const shouldStack  = isMobileView && meld.cards.length > 4;
 
-      // Um 2 é coringa ATUANDO se substitui outro rank (não é natural na sequência/grupo)
+      // Um 2 é coringa ATUANDO se aparece ao lado de cartas não-coringa (independente do naipe)
       const isActingWild = (c) => {
         if (!isWild(c)) return false;
-        if (meld.type === 'group') return meld.cards.some(n => !isWild(n)); // grupo de não-2s
-        const seqSuit = meld.cards.find(n => !isWild(n))?.suit;
-        return !seqSuit || c.suit !== seqSuit; // 2 de naipe diferente = coringa na sequência
+        return meld.cards.some(n => !isWild(n));
       };
 
       // Build card HTML — tag cards for CSS stacking

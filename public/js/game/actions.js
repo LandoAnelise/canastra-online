@@ -85,6 +85,7 @@ btnMute.addEventListener('click', () => {
 
 // ── Clique no monte ───────────────────────────────────────────────────────────
 document.getElementById('deck-pile').addEventListener('click', () => {
+  if (window._roundEndedPending) return;
   if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || state.gameState.drawnThisTurn) { playThud(); return; }
   window._prevHandIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
   socket.emit('drawFromDeck', {}, res => {
@@ -95,6 +96,7 @@ document.getElementById('deck-pile').addEventListener('click', () => {
 
 document.getElementById('discard-pile').addEventListener('click', (e) => {
   if (e.target.id === 'btn-expand-discard') return;
+  if (window._roundEndedPending) return;
   if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || state.gameState.drawnThisTurn) { playThud(); return; }
   if (!state.gameState.discardTop) { showToast('O lixo está vazio.', 'error'); playBzz(); return; }
   window._prevHandIds = new Set(state.gameState?.myHand?.map(c => c.id) || []);
