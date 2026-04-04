@@ -25,10 +25,11 @@ html, body {
   background: var(--felt-dark);
   color: var(--cream);
   overflow: hidden;
+  touch-action: manipulation; /* evita double-tap zoom no mobile */
 }
 
 /* ── SCREENS ──────────────────────────────────────────────────── */
-.screen { display: none; width: 100vw; height: 100vh; }
+.screen { display: none; width: 100vw; height: 100vh; height: 100dvh; } /* dvh: ajusta com barra do browser */
 .screen.active { display: flex; align-items: center; justify-content: center; }
 
 /* ── BUTTONS ──────────────────────────────────────────────────── */
