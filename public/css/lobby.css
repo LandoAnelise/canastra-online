@@ -426,6 +426,28 @@
 
 /* ── MOBILE ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  /* Lobby card — padding e gaps menores para caber na tela */
+  .lobby-card {
+    padding: 22px 18px;
+    gap: 12px;
+    width: 96vw;
+    border-radius: 14px;
+  }
+  .lobby-logo { gap: 10px; margin-bottom: 0; }
+  .lobby-logo h1 { font-size: 1.8rem; }
+  .logo-suit { font-size: 1.4rem; }
+  .lobby-sub { font-size: 0.72rem; }
+  .form-group input { padding: 9px 12px; font-size: 0.9rem; }
+  .form-group label { font-size: 0.7rem; }
+  .lobby-tabs { padding: 3px; }
+  .lobby-tab { padding: 6px 4px; font-size: 0.72rem; }
+  .lobby-panel { gap: 9px; }
+  .room-type-btn { padding: 10px 6px; }
+  .rt-name { font-size: 0.8rem; }
+  .rt-desc { font-size: 0.65rem; }
+  .public-rooms-list { max-height: 130px; }
+  .lobby-hint { font-size: 0.7rem; }
+
   .waiting-card {
     padding: 24px 14px;
     gap: 14px;
