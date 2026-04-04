@@ -30,7 +30,7 @@ document.getElementById('btn-play-melds').addEventListener('click', () => {
   });
 });
 
-document.getElementById('btn-confirm-melds').addEventListener('click', () => {
+function doConfirmMelds() {
   const gs = state.gameState;
   const hasStagedMelds = (gs?.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
   if (!hasStagedMelds) return;
@@ -44,6 +44,22 @@ document.getElementById('btn-confirm-melds').addEventListener('click', () => {
     showToast(isSeq ? 'Sequência baixada!' : 'Grupo baixado!', 'success', 1000);
     playDeal();
   });
+}
+
+document.getElementById('btn-confirm-melds').addEventListener('click', () => {
+  const gs = state.gameState;
+  const hasStagedMelds = (gs?.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
+  if (!hasStagedMelds) return;
+  document.getElementById('modal-confirm-melds').classList.remove('hidden');
+});
+
+document.getElementById('btn-confirm-melds-cancel').addEventListener('click', () => {
+  document.getElementById('modal-confirm-melds').classList.add('hidden');
+});
+
+document.getElementById('btn-confirm-melds-ok').addEventListener('click', () => {
+  document.getElementById('modal-confirm-melds').classList.add('hidden');
+  doConfirmMelds();
 });
 
 document.getElementById('btn-discard').addEventListener('click', () => {
