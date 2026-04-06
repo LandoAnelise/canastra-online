@@ -1,5 +1,7 @@
 'use strict';
 
+const { runBotTurns } = require('../BotAI');
+
 function registerTeamHandlers(socket, io, rm) {
   const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
 
@@ -17,12 +19,17 @@ function registerTeamHandlers(socket, io, rm) {
     const result = game.assignTeams(teams, teamOrders);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
 
+    // Bots são marcados como prontos automaticamente
     game.readyPlayers = new Set();
+    if (game.botSeats) {
+      for (const seat of game.botSeats) game.readyPlayers.add(seat);
+    }
+
     cb?.({ ok: true });
     broadcastState(game);
     broadcastToRoom(info.roomId, 'teamsAssigned', {
-      players: game.players.map(p => ({ name: p.name, teamIndex: p.teamIndex })),
-      readyPlayers: [],
+      players:      game.players.map(p => ({ name: p.name, teamIndex: p.teamIndex })),
+      readyPlayers: [...game.readyPlayers],
     });
   });
 
@@ -54,7 +61,7 @@ function registerTeamHandlers(socket, io, rm) {
     });
     cb?.({ ok: true });
 
-    if (game.readyPlayers.size === 4) {
+    if (game.readyPlayers.size === game.players.length) {
       const { roomMeta, broadcastPublicRooms } = rm;
       const meta4 = roomMeta.get(info.roomId);
       if (meta4?.isPublic) broadcastPublicRooms();
@@ -62,6 +69,7 @@ function registerTeamHandlers(socket, io, rm) {
         game.startRound();
         broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
         broadcastState(game);
+        runBotTurns(game, info.roomId, rm);
       }, 800);
     }
   });

@@ -1,5 +1,7 @@
 'use strict';
 
+const { runBotTurns } = require('../BotAI');
+
 function registerDisconnectHandler(socket, io, rm) {
   const {
     rooms,
@@ -11,6 +13,7 @@ function registerDisconnectHandler(socket, io, rm) {
     broadcastToRoom,
     broadcastPublicRooms,
     pauseGame,
+    broadcastState,
   } = rm;
 
   // ── DISCONNECT ──
@@ -23,22 +26,67 @@ function registerDisconnectHandler(socket, io, rm) {
         const name   = player?.name || '?';
         console.log(`[-] ${name} desconectou da sala ${info.roomId}`);
 
-        if (game.status === 'playing') {
-          // Register reconnection slot with 5-min timer
+        if (game.status === 'playing' || game.status === 'roundOver') {
+          // Registra slot de reconexão com timer de 5 min
           const key = reconnectKey(info.roomId, name);
           const timer = setTimeout(() => {
-            // Time expired — remove slot and notify room
             reconnectSlots.delete(key);
-            console.log(`[Room ${info.roomId}] ⏰ Tempo esgotado para ${name}`);
-            broadcastToRoom(info.roomId, 'playerAbandoned', { playerName: name });
-            // Optionally clean up the room if everyone left
-            const allGone = game.players.every(p => !io.sockets.sockets.get(p.id));
-            if (allGone) rooms.delete(info.roomId);
+
+            // Verifica se o jogo ainda existe
+            if (!rooms.has(info.roomId)) return;
+
+            // Se não restam humanos, encerra o jogo
+            const remainingHumans = game.players.filter(
+              (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+            );
+            if (remainingHumans.length === 0) {
+              console.log(`[Room ${info.roomId}] Todos os jogadores saíram — encerrando sala`);
+              broadcastToRoom(info.roomId, 'gameAbandoned', { playerName: name });
+              rooms.delete(info.roomId);
+              roomMeta.delete(info.roomId);
+              return;
+            }
+
+            // ── Substitui por bot ──
+            console.log(`[Room ${info.roomId}] 🤖 ${name} substituído por bot`);
+            game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
+            game.botSeats = game.botSeats || new Set();
+            game.botSeats.add(info.seatIndex);
+            game.botDifficulty = game.botDifficulty || 'medium';
+            game.paused = false;
+
+            // Transfere liderança se o líder foi substituído
+            if (game.leaderSeatIndex === info.seatIndex) {
+              const nextHuman = game.players.findIndex(
+                (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+              );
+              if (nextHuman !== -1) game.leaderSeatIndex = nextHuman;
+            }
+
+            broadcastToRoom(info.roomId, 'gameResumed', { playerName: `${name} (Bot)` });
+            broadcastState(game);
+
+            // Se era a vez do bot, inicia os turnos
+            if (game.status === 'playing' && game.currentPlayerIndex === info.seatIndex) {
+              runBotTurns(game, info.roomId, rm, game.botDifficulty);
+            }
+
+            // Se a rodada estava esperando "Continuar" e o líder era o bot, auto-continua
+            if (game.status === 'roundOver' && game.leaderSeatIndex === info.seatIndex) {
+              setTimeout(() => {
+                if (game.status !== 'roundOver') return;
+                game.startRound();
+                broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+                broadcastState(game);
+                runBotTurns(game, info.roomId, rm, game.botDifficulty);
+              }, 3000);
+            }
+
           }, RECONNECT_TIMEOUT_MS);
 
           reconnectSlots.set(key, { seatIndex: info.seatIndex, disconnectTimer: timer });
 
-          // Pause the game and notify remaining players
+          // Pausa o jogo e notifica os demais
           pauseGame(game, info.roomId, name);
 
           broadcastToRoom(info.roomId, 'playerDisconnected', {
@@ -47,7 +95,7 @@ function registerDisconnectHandler(socket, io, rm) {
             reconnectWindowMs: RECONNECT_TIMEOUT_MS,
           });
         } else {
-          // Game not started yet — free the slot immediately
+          // Jogo ainda não começou — libera o slot imediatamente
           game.players.splice(info.seatIndex, 1);
           game.players.forEach((p, i) => {
             if (p) {
@@ -67,7 +115,6 @@ function registerDisconnectHandler(socket, io, rm) {
             rooms.delete(info.roomId);
             roomMeta.delete(info.roomId);
           } else {
-            const { broadcastState } = rm;
             broadcastState(game);
           }
         }

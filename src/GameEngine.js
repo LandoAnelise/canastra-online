@@ -79,6 +79,8 @@ function isValidTripletGroup(cards) {
   if (naturals.length === 0) return false;
   const rank = naturals[0].rank;
   if (!naturals.every(c => c.rank === rank)) return false;
+  // Máximo 1 coringa por grupo misto
+  if (wilds.length > 1) return false;
   // Coringas nao podem ser maioria
   if (wilds.length >= naturals.length) return false;
   return true;
@@ -876,7 +878,7 @@ class Game {
       stagedMelds: this.stagedMelds,
       firstMeldPenalty: this.firstMeldPenalty,
       testMode: this.testMode,
-      botSeats: this.testMode ? [...this.botSeats] : undefined,
+      botSeats: this.botSeats ? [...this.botSeats] : [],
       allHands: this.testMode ? this.hands : undefined,
     };
   }

@@ -107,11 +107,12 @@ function updateTeamChips(gs, isLeader = false) {
   gs.players.forEach((p, i) => {
     if ((state.teamAssignments[i] ?? -1) !== -1) return;
     const isMe = i === state.mySeatIndex;
+    const isBot = gs.botSeats?.includes(i);
     const chip = document.createElement('div');
     chip.className = `player-chip${isMe ? ' me-chip' : ''}`;
     chip.draggable = isLeader;
     chip.dataset.seat = i;
-    chip.innerHTML = `<span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>`;
+    chip.innerHTML = `<span class="chip-name">${isBot ? '🤖 ' : ''}${p.name}${isMe ? ' (você)' : ''}</span>`;
     if (isLeader) attachDragHandlers(chip, i, gs);
     slots['-1'].appendChild(chip);
   });
@@ -123,6 +124,7 @@ function updateTeamChips(gs, isLeader = false) {
       const p = gs.players[seatIdx];
       if (!p) return;
       const isMe = seatIdx === state.mySeatIndex;
+      const isBot = gs.botSeats?.includes(seatIdx);
       const chip = document.createElement('div');
       chip.className = `player-chip${isMe ? ' me-chip' : ''}`;
       chip.draggable = isLeader;
@@ -136,7 +138,7 @@ function updateTeamChips(gs, isLeader = false) {
         </div>` : '';
 
       chip.innerHTML = `<span class="chip-pos">${posLabel}</span>
-        <span class="chip-name">${p.name}${isMe ? ' (você)' : ''}</span>
+        <span class="chip-name">${isBot ? '🤖 ' : ''}${p.name}${isMe ? ' (você)' : ''}</span>
         ${orderControls}`;
 
       if (isLeader) {

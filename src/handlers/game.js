@@ -1,5 +1,7 @@
 'use strict';
 
+const { runBotTurns } = require('../BotAI');
+
 function registerGameHandlers(socket, io, rm) {
   const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
 
@@ -121,15 +123,77 @@ function registerGameHandlers(socket, io, rm) {
     const info = playerRoom.get(socket.id);
     if (!info) return cb?.({ ok: true });
     const game = rooms.get(info.roomId);
+    const { roomMeta, broadcastPublicRooms } = rm;
     const playerName = game?.players[info.seatIndex]?.name || 'Jogador';
 
-    // Notifica apenas os OUTROS jogadores (socket.to exclui o remetente)
-    socket.to(info.roomId).emit('gameAbandoned', { playerName });
-
-    // Remove a sala — jogo encerrado definitivamente
-    rooms.delete(info.roomId);
+    // Remove o socket da sala e do mapa imediatamente
+    socket.leave(info.roomId);
     playerRoom.delete(socket.id);
     cb?.({ ok: true });
+
+    if (!game) return;
+
+    // Se o jogo ainda não começou (não deveria chegar aqui, mas por segurança)
+    if (game.status !== 'playing' && game.status !== 'roundOver') {
+      rooms.delete(info.roomId);
+      roomMeta.delete(info.roomId);
+      socket.to(info.roomId).emit('gameAbandoned', { playerName });
+      return;
+    }
+
+    // Verifica se ainda há humanos além do que saiu
+    game.botSeats = game.botSeats || new Set();
+    const remainingHumans = game.players.filter(
+      (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+    );
+
+    if (remainingHumans.length === 0) {
+      // Nenhum humano restante — encerra a sala
+      console.log(`[Room ${info.roomId}] Último humano saiu — encerrando sala`);
+      broadcastToRoom(info.roomId, 'gameAbandoned', { playerName });
+      rooms.delete(info.roomId);
+      roomMeta.delete(info.roomId);
+      const meta = roomMeta.get(info.roomId);
+      if (meta?.isPublic) broadcastPublicRooms();
+      return;
+    }
+
+    // ── Substitui pelo bot hard ──
+    console.log(`[Room ${info.roomId}] 🤖 ${playerName} saiu voluntariamente — bot hard assume assento ${info.seatIndex}`);
+    game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
+    game.botSeats.add(info.seatIndex);
+    game.botDifficulty = 'hard';
+    game.paused = false;
+
+    // Transfere liderança se o jogador que saiu era o líder
+    if (game.leaderSeatIndex === info.seatIndex) {
+      const nextHuman = game.players.findIndex(
+        (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+      );
+      if (nextHuman !== -1) game.leaderSeatIndex = nextHuman;
+    }
+
+    broadcastToRoom(info.roomId, 'playerReplacedByBot', { playerName, seatIndex: info.seatIndex });
+    broadcastState(game);
+
+    // Inicia turno do bot se for a vez dele
+    if (game.status === 'playing' && game.currentPlayerIndex === info.seatIndex) {
+      runBotTurns(game, info.roomId, rm, 'hard');
+    }
+
+    // Se a rodada estava em roundOver e o líder era o que saiu, auto-continua
+    if (game.status === 'roundOver' && game.leaderSeatIndex === info.seatIndex) {
+      setTimeout(() => {
+        if (game.status !== 'roundOver') return;
+        game.startRound();
+        broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
+        broadcastState(game);
+        runBotTurns(game, info.roomId, rm, 'hard');
+      }, 3000);
+    }
+
+    const meta = roomMeta.get(info.roomId);
+    if (meta?.isPublic) broadcastPublicRooms();
   });
 
   socket.on('newGame', (_, cb) => {
@@ -146,6 +210,7 @@ function registerGameHandlers(socket, io, rm) {
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
     broadcastState(game);
     cb?.({ ok: true });
+    runBotTurns(game, info.roomId, rm);
   });
 }
 

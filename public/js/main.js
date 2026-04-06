@@ -72,6 +72,10 @@ document.getElementById('btn-abandoned-menu').addEventListener('click', () => {
   showScreen('screen-lobby');
 });
 
+socket.on('playerReplacedByBot', ({ playerName }) => {
+  showToast(`🤖 ${playerName} saiu — bot assumiu o lugar.`, 'info', 4000);
+});
+
 socket.on('playerDrew', () => { playFolhaVirando(); });
 socket.on('playerTookDiscard', () => { playWhoosh(); });
 socket.on('playerDealt', () => { playDeal(); });
