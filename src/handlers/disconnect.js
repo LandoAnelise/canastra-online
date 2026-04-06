@@ -35,6 +35,9 @@ function registerDisconnectHandler(socket, io, rm) {
             // Verifica se o jogo ainda existe
             if (!rooms.has(info.roomId)) return;
 
+            // Garante que botSeats existe antes de qualquer verificação
+            game.botSeats = game.botSeats || new Set();
+
             // Se não restam humanos, encerra o jogo
             const remainingHumans = game.players.filter(
               (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
@@ -50,7 +53,6 @@ function registerDisconnectHandler(socket, io, rm) {
             // ── Substitui por bot ──
             console.log(`[Room ${info.roomId}] 🤖 ${name} substituído por bot`);
             game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
-            game.botSeats = game.botSeats || new Set();
             game.botSeats.add(info.seatIndex);
             game.botDifficulty = game.botDifficulty || 'medium';
             game.paused = false;
