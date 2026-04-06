@@ -150,34 +150,52 @@ export function renderMe(gs) {
     .filter(Boolean);
 
   const isMobile = window.innerWidth <= 600;
-  const MOBILE_ROW_MAX = 9;
-  const needsTwoRows = isMobile && ordered.length > MOBILE_ROW_MAX;
 
-  // Sync two-row state on slot and table grid
+  // slot/tableArea needed for width measurement and class/style updates
   const slot = hand.closest('.player-slot');
   const tableArea = document.getElementById('table-area');
-  if (needsTwoRows) {
-    hand.setAttribute('data-rows', '2');
-    slot?.classList.add('two-rows');
-    tableArea?.classList.add('has-two-rows');
+
+  // Calculate how many cards fit per row based on slot width.
+  // Do NOT use hand.clientWidth — after innerHTML='' with flex-column+align-start it collapses to ~0.
+  const CARD_STEP = 26; // each card after the first adds 26px (width 56 - margin-left 30)
+  const slotW  = slot ? slot.clientWidth : window.innerWidth;
+  const availW = isMobile ? Math.max(280, slotW - 16) : Infinity; // 16 = hand's 2×8px padding
+  const perRow = isMobile ? Math.floor((availW - 30) / CARD_STEP) : Infinity;
+  const numRows = (isMobile && ordered.length > 0) ? Math.ceil(ordered.length / perRow) : 1;
+  const needsMultiRows = numRows > 1;
+
+  // Heights: single-row slot = 124px; each extra row adds 38px (card 80 - overlap 42)
+  const SLOT_H_BASE = 124, ROW_ADD = 38;
+  const slotH = needsMultiRows ? SLOT_H_BASE + (numRows - 1) * ROW_ADD : SLOT_H_BASE;
+  if (needsMultiRows) {
+    hand.setAttribute('data-rows', String(numRows));
+    slot?.classList.add('multi-rows');
+    tableArea?.classList.add('has-multi-rows');
+    if (slot) {
+      slot.style.height = slot.style.minHeight = slot.style.maxHeight = slotH + 'px';
+      slot.style.overflow = 'visible';
+    }
+    if (tableArea) tableArea.style.gridTemplateRows = `80px minmax(0, 1fr) ${slotH}px`;
   } else {
     hand.setAttribute('data-rows', '1');
-    slot?.classList.remove('two-rows');
-    tableArea?.classList.remove('has-two-rows');
+    slot?.classList.remove('multi-rows');
+    tableArea?.classList.remove('has-multi-rows');
+    if (slot) { slot.style.height = slot.style.minHeight = slot.style.maxHeight = slot.style.overflow = ''; }
+    if (tableArea) tableArea.style.gridTemplateRows = '';
   }
 
-  if (needsTwoRows) {
-    const mid = Math.ceil(ordered.length / 2);
-    [ordered.slice(0, mid), ordered.slice(mid)].forEach((rowCards, ri) => {
+  if (needsMultiRows) {
+    for (let r = 0; r < numRows; r++) {
+      const rowCards = ordered.slice(r * perRow, (r + 1) * perRow);
       const rowEl = document.createElement('div');
-      rowEl.className = `hand-row hand-row-${ri + 1}`;
+      rowEl.className = `hand-row hand-row-${r + 1}`;
       rowCards.forEach(card => {
         const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
         const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
         rowEl.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
       });
       hand.appendChild(rowEl);
-    });
+    }
   } else {
     ordered.forEach(card => {
       const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
@@ -189,6 +207,48 @@ export function renderMe(gs) {
   hand.querySelectorAll('.my-card').forEach(el => {
     el.addEventListener('click', () => onCardClick(el.dataset.id));
   });
+
+  // Mobile arrow navigation: when exactly one card is selected, show ᐊ ᐅ buttons
+  if (isMobile && state.selectedCards.length === 1) {
+    const selId = state.selectedCards[0];
+    const selEl = hand.querySelector(`.my-card[data-id="${selId}"]`);
+    if (selEl) {
+      const idx = state.myHandOrder.indexOf(selId);
+
+      const last = state.myHandOrder.length - 1;
+
+      // Left arrow: always shown. Moves left normally; wraps to last position when at index 0.
+      const btnL = document.createElement('button');
+      btnL.className = 'card-move-arrow card-move-left';
+      btnL.textContent = 'ᐊ';
+      btnL.addEventListener('click', e => {
+        e.stopPropagation();
+        state.myHandOrder.splice(idx, 1);
+        state.myHandOrder.splice(idx > 0 ? idx - 1 : last, 0, selId);
+        renderMe(state.gameState);
+      });
+      selEl.appendChild(btnL);
+
+      // Right arrow: always shown. Appended to #my-hand to escape the card's stacking context.
+      // Moves right normally; wraps to first position when at last index.
+      const btnR = document.createElement('button');
+      btnR.className = 'card-move-arrow card-move-right-float';
+      btnR.textContent = 'ᐅ';
+      btnR.addEventListener('click', e => {
+        e.stopPropagation();
+        state.myHandOrder.splice(idx, 1);
+        state.myHandOrder.splice(idx < last ? idx + 1 : 0, 0, selId);
+        renderMe(state.gameState);
+      });
+      hand.appendChild(btnR);
+      requestAnimationFrame(() => {
+        const handRect = hand.getBoundingClientRect();
+        const cardRect = selEl.getBoundingClientRect();
+        btnR.style.left = (cardRect.right - handRect.left + hand.scrollLeft - 10) + 'px';
+        btnR.style.top  = (cardRect.top  - handRect.top  + cardRect.height / 2 - 10) + 'px';
+      });
+    }
+  }
 
   setupHandDragDrop(hand);
 }
