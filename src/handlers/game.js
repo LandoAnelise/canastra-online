@@ -87,7 +87,11 @@ function registerGameHandlers(socket, io, rm) {
     const result = game.discard_(info.seatIndex, cardId);
     if (!result.ok) return cb?.({ ok: false, msg: result.msg });
     cb?.({ ok: true });
-    if (result.autoBater || result.deckEndRound) broadcastToRoom(info.roomId, 'roundEnded', result);
+    if (result.autoBater || result.deckEndRound) {
+      broadcastToRoom(info.roomId, 'roundEnded', result);
+    } else {
+      runBotTurns(game, info.roomId, rm);
+    }
     broadcastState(game);
   }));
 
@@ -109,6 +113,7 @@ function registerGameHandlers(socket, io, rm) {
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
     broadcastState(game);
     cb?.({ ok: true });
+    runBotTurns(game, info.roomId, rm);
   }));
 
   socket.on('getDiscardPile', (_, cb) => {
