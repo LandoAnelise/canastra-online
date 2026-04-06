@@ -929,8 +929,8 @@
     padding: 0 6px 4px;
     gap: 2px;
     justify-content: flex-end;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    overflow: visible;
+    clip-path: inset(-18px 0 0 0); /* allow 18px top overflow for selected cards (translateY -14px) */
   }
 
   /* Player labels (general) */
@@ -998,7 +998,7 @@
   .pile-count { font-size: 0.5rem; margin-top: 4px; }
 
   /* My hand — single row */
-  #my-hand { padding: 3px 8px 3px; overflow-x: auto; }
+  #my-hand { padding: 3px 8px 3px; overflow: visible; position: relative; z-index: 1; }
   .my-card {
     width: 56px;
     height: 80px;
@@ -1011,8 +1011,8 @@
   .card-face      { font-size: 1.9rem; bottom: 5px; right: 4px; }
   .card-face-suit { font-size: 2.2rem; bottom: 3px; right: 3px; }
 
-  /* My hand — two rows (> 9 cards on mobile) */
-  #my-hand[data-rows="2"] {
+  /* My hand — multi-row (cards exceed what fits in one row) */
+  #my-hand[data-rows]:not([data-rows="1"]) {
     flex-direction: column;
     align-items: flex-start;
     overflow: visible;
@@ -1025,21 +1025,43 @@
     gap: 0;
   }
   .hand-row .my-card:first-child { margin-left: 0; }
-  .hand-row-2 {
+  /* Each row after the first overlaps the previous by 42px */
+  .hand-row + .hand-row {
     margin-top: -42px;
     position: relative;
-    z-index: 2;
   }
-  /* Expand slot and grid row to fit two rows */
-  #table-area.has-two-rows {
-    grid-template-rows: 80px minmax(0, 1fr) 144px;
+  /* Increasing z-index so later rows appear in front of earlier ones */
+  .hand-row-2 { z-index: 2; }
+  .hand-row-3 { z-index: 3; }
+  .hand-row-4 { z-index: 4; }
+  .hand-row-5 { z-index: 5; }
+  /* Slot and grid heights are set dynamically via inline styles in render.js */
+  .player-slot.bottom.multi-rows { overflow: visible; }
+
+  /* Arrow navigation for card reordering (single card selected) */
+  .card-move-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: rgba(10, 10, 25, 0.88);
+    color: var(--gold);
+    border: 1.5px solid var(--gold);
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    z-index: 20;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    line-height: 1;
   }
-  .player-slot.bottom.two-rows {
-    height: 144px;
-    min-height: 144px;
-    max-height: 144px;
-    overflow: visible;
-  }
+  .card-move-left        { left: -10px; }
+  .card-move-right-float { position: absolute; z-index: 50; transform: none; }
 
   /* Meld cards (mesa) */
   .meld-card {
