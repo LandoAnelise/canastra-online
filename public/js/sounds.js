@@ -17,6 +17,17 @@ function ctx() {
   return _ctx;
 }
 
+// Safari exige que o AudioContext seja criado/resumido dentro de um gesto do
+// usuário. Fazemos isso uma vez no primeiro toque/clique para que sons
+// disparados por eventos de servidor (WebSocket) funcionem normalmente depois.
+function _unlockAudio() {
+  ctx().resume();
+  document.removeEventListener('touchstart', _unlockAudio, true);
+  document.removeEventListener('mousedown',  _unlockAudio, true);
+}
+document.addEventListener('touchstart', _unlockAudio, true);
+document.addEventListener('mousedown',  _unlockAudio, true);
+
 function safe(fn) {
   if (_muted) return;
   try { fn(ctx()); } catch (e) {}
