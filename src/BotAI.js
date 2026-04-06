@@ -720,4 +720,15 @@ function runBotTurns(game, roomId, rm, difficulty) {
     .catch(err => console.error(`[BotAI] Erro no turno do bot ${botIdx}:`, err));
 }
 
-module.exports = { runBotTurns, executeBotTurn };
+module.exports = {
+  runBotTurns,
+  executeBotTurn,
+  // Exportados apenas para testes unitários
+  _findGroupCandidates:     findGroupCandidates,
+  _findSequenceCandidates:  findSequenceCandidates,
+  _findExtensionCandidates: findExtensionCandidates,
+  _decideMeldActions:       decideMeldActions,
+  _decideBater:             decideBater,
+  _chooseDiscard:           chooseDiscard,
+  _shouldTakeDiscard:       shouldTakeDiscard,
+};
