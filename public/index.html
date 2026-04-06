@@ -111,6 +111,16 @@
             <input type="number" id="test-score-1" value="0" min="0" max="1990" step="50" />
           </div>
         </div>
+        <div class="test-scores-row">
+          <div class="test-score-field" style="flex:1">
+            <label>Dificuldade dos Bots</label>
+            <select id="test-bot-difficulty">
+              <option value="easy">Fácil</option>
+              <option value="medium" selected>Médio</option>
+              <option value="hard">Difícil</option>
+            </select>
+          </div>
+        </div>
         <button id="btn-create-test" class="btn-primary">Criar Sala de Teste</button>
       </div>
     </div>
@@ -124,6 +134,17 @@
     <div id="waiting-room-code" class="room-code-badge"></div>
     <div id="waiting-seats" class="seats-grid"></div>
     <p class="waiting-hint">Envie o código acima para seus parceiros!</p>
+    <div id="waiting-bot-controls" class="waiting-bot-controls hidden">
+      <span class="waiting-bot-label">Completar com bots:</span>
+      <div class="waiting-bot-row">
+        <select id="waiting-bot-difficulty" class="waiting-bot-select">
+          <option value="easy">Fácil</option>
+          <option value="medium" selected>Médio</option>
+          <option value="hard">Difícil</option>
+        </select>
+        <button id="btn-add-bot" class="btn-secondary waiting-btn-bot">🤖 Adicionar Bot</button>
+      </div>
+    </div>
     <button id="btn-leave-waiting" class="btn-secondary">← Voltar para a Tela Inicial</button>
   </div>
 </div>
@@ -341,7 +362,7 @@
   <div class="modal-box small" style="text-align:center">
     <div style="font-size:2rem;margin-bottom:4px">↩</div>
     <h3>Sair da partida?</h3>
-    <p class="modal-hint" style="margin:8px 0 20px">Você quer mesmo desistir?<br>O jogo será encerrado caso você saia.</p>
+    <p class="modal-hint" style="margin:8px 0 20px">Você quer mesmo desistir?<br>Um bot irá assumir seu lugar caso você saia.</p>
     <div style="display:flex;gap:10px">
       <button id="btn-leave-cancel" class="btn-action" style="flex:1">Cancelar</button>
       <button id="btn-leave-confirm" class="btn-action" style="flex:1;background:rgba(160,40,40,0.35);border-color:rgba(200,80,80,0.5)">Sair</button>

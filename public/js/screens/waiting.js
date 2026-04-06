@@ -6,11 +6,20 @@ export function renderWaiting(gs) {
   const seats = document.getElementById('waiting-seats');
   seats.innerHTML = '';
   for (let i = 0; i < 4; i++) {
-    const p = gs.players[i];
-    const div = document.createElement('div');
-    div.className = `seat-item ${p ? '' : 'empty'}`;
+    const p      = gs.players[i];
+    const isBot  = gs.botSeats?.includes(i);
+    const div    = document.createElement('div');
+    div.className = `seat-item${p ? '' : ' empty'}${isBot ? ' bot-seat' : ''}`;
     div.innerHTML = `<span class="seat-name">${p ? p.name : 'Aguardando...'}</span>`;
     seats.appendChild(div);
+  }
+
+  // Exibe controles de bot apenas para o líder enquanto há vagas
+  const botControls = document.getElementById('waiting-bot-controls');
+  if (gs.isLeader && gs.players.length < 4) {
+    botControls.classList.remove('hidden');
+  } else {
+    botControls.classList.add('hidden');
   }
 }
 
@@ -28,10 +37,11 @@ export function renderReadyScreen(players) {
     if (p?.teamIndex === 0 || p?.teamIndex === 1) byTeam[p.teamIndex].push({ p, i });
   });
 
+  const botSeats = state.gameState?.botSeats || [];
+
   byTeam.forEach((members, t) => {
     if (members.length === 0) return;
 
-    // Team header
     const header = document.createElement('div');
     header.className = `ready-team-header ${TEAM_CLASS[t]}`;
     header.textContent = TEAM_LABEL[t];
@@ -39,11 +49,12 @@ export function renderReadyScreen(players) {
 
     members.forEach(({ p, i }) => {
       const isReady = state.readyPlayers.has(i);
-      const isMe = i === state.mySeatIndex;
-      const row = document.createElement('div');
+      const isMe    = i === state.mySeatIndex;
+      const isBot   = botSeats.includes(i);
+      const row     = document.createElement('div');
       row.className = `ready-player-row${isReady ? ' is-ready' : ''}`;
       row.innerHTML = `
-        <span class="rp-name${isMe ? ' me' : ''}">${p.name}${isMe ? ' (você)' : ''}</span>
+        <span class="rp-name${isMe ? ' me' : ''}">${isBot ? '🤖 ' : ''}${p.name}${isMe ? ' (você)' : ''}</span>
         <span class="rp-status">${isReady ? '✅ Pronto!' : 'Aguardando…'}</span>`;
       list.appendChild(row);
     });
@@ -77,5 +88,16 @@ document.getElementById('btn-ready').addEventListener('click', () => {
     if (!res.ok) { showToast(res.msg, 'error'); state.iAmReady = false; return; }
     state.readyPlayers.add(state.mySeatIndex);
     if (state.gameState) renderReadyScreen(state.gameState.players);
+  });
+});
+
+// ── Controles de bot na sala de espera ──────────────────────────────────────
+
+document.getElementById('btn-add-bot').addEventListener('click', () => {
+  const difficulty = document.getElementById('waiting-bot-difficulty').value || 'medium';
+  socket.emit('addBotToRoom', { difficulty }, (res) => {
+    if (!res.ok) { showToast(res.msg || 'Erro ao adicionar bot.', 'error'); return; }
+    showToast(`🤖 ${res.botName} adicionado!`, 'success', 1500);
+    // renderWaiting será chamado via gameState broadcast pelo servidor
   });
 });

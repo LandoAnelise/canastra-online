@@ -67,8 +67,9 @@ document.getElementById('btn-create-test').addEventListener('click', () => {
   if (!name) { showToast('Digite seu nome!', 'error'); return; }
   const s0 = parseInt(document.getElementById('test-score-0').value) || 0;
   const s1 = parseInt(document.getElementById('test-score-1').value) || 0;
+  const botDifficulty = document.getElementById('test-bot-difficulty').value || 'medium';
   state.myName = name;
-  socket.emit('createRoom', { playerName: name, testMode: true, testScores: [s0, s1] }, (res) => {
+  socket.emit('createRoom', { playerName: name, testMode: true, testScores: [s0, s1], botDifficulty }, (res) => {
     if (!res.ok) { showToast(res.msg, 'error'); return; }
     state.myRoomId = res.roomId;
     state.mySeatIndex = res.seatIndex;
