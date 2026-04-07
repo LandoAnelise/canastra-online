@@ -108,13 +108,13 @@ function _testSeq(naturals, wilds, valFn, minPossible, maxPossible) {
 // Sequencia: 3+ cartas consecutivas do mesmo naipe
 // As pode ser baixo (A=1: A-2-3) ou alto (A=14: Q-K-A)
 // Regra: no maximo 1 coringa atuando como substituto por sequencia.
-// Um 2 do mesmo naipe ocupando a posicao do rank 2 e natural (nao conta como atuando).
+// Um 2 do mesmo naipe ocupando a posicao do rank 2 e natural (nao conta como atuando),
+// portanto a razao wilds/naturais e verificada via actingWilds, nao por contagem bruta.
 function isValidSequence(cards) {
   if (cards.length < 3) return false;
   const naturals = cards.filter(c => !isWild(c));
   const wilds    = cards.filter(c => isWild(c));
   if (naturals.length === 0) return false;
-  if (wilds.length >= naturals.length) return false;
   const suit = naturals[0].suit;
   if (!naturals.every(c => c.suit === suit)) return false;
 
