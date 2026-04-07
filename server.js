@@ -25,17 +25,13 @@ const BUILD_HASH = (() => {
 // Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
 const DEV_MODE = process.env.DEV_MODE === 'true';
 
-// CSS/JS com cache longo — index.html é servido pelo handler customizado abaixo
+// Arquivos estáticos — index.html é servido pelo handler customizado abaixo
 app.use(express.static(path.join(__dirname, 'public'), {
-  etag: false,
-  lastModified: false,
+  etag: true,
+  lastModified: true,
   index: false, // impede express.static de servir index.html automaticamente
-  setHeaders(res, filePath) {
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-store');
-    } else {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    }
+  setHeaders(res) {
+    res.setHeader('Cache-Control', 'no-cache');
   }
 }));
 
