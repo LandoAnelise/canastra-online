@@ -4,6 +4,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
+const { execSync } = require('child_process');
 const { createRoomManager } = require('./src/roomManager');
 const { registerLobbyHandlers } = require('./src/handlers/lobby');
 const { registerTeamHandlers } = require('./src/handlers/teams');
@@ -14,19 +16,40 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
+// Hash do commit atual — muda a cada deploy, invalida cache do browser
+const BUILD_HASH = (() => {
+  try { return execSync('git rev-parse --short HEAD').toString().trim(); }
+  catch { return Date.now().toString(36); }
+})();
+
+// CSS/JS: cache longo com versionamento por query string (?v=HASH)
+// HTML: nunca cachear (sempre busca versão nova que referencia o hash correto)
 app.use(express.static(path.join(__dirname, 'public'), {
-  etag: true,
-  lastModified: true,
+  etag: false,
+  lastModified: false,
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) {
-      // HTML nunca fica em cache — força revalidação a cada acesso
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'no-store');
     } else {
-      // CSS/JS/imagens: revalida (usa ETag/Last-Modified, não baixa de novo se não mudou)
-      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));
+
+// Serve index.html com ?v=HASH injetado nos imports de CSS e JS
+const HTML_PATH = path.join(__dirname, 'public', 'index.html');
+app.get('/', (req, res) => serveVersionedHtml(res));
+app.get('/index.html', (req, res) => serveVersionedHtml(res));
+function serveVersionedHtml(res) {
+  let html = fs.readFileSync(HTML_PATH, 'utf8');
+  html = html.replace(/(href|src)="(\/(?:css|js)[^"]+)"/g, (_, attr, url) => {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${attr}="${url}${sep}v=${BUILD_HASH}"`;
+  });
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+}
 
 const rm = createRoomManager(io);
 
