@@ -18,22 +18,29 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 // Hash do commit atual — muda a cada deploy, invalida cache do browser
 const BUILD_HASH = (() => {
-  try { return execSync('git rev-parse --short HEAD').toString().trim(); }
-  catch { return Date.now().toString(36); }
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return Date.now().toString(36);
+  }
 })();
 
 // Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
 const DEV_MODE = process.env.DEV_MODE === 'true';
 
 // Arquivos estáticos — index.html é servido pelo handler customizado abaixo
-app.use(express.static(path.join(__dirname, 'public'), {
-  etag: true,
-  lastModified: true,
-  index: false, // impede express.static de servir index.html automaticamente
-  setHeaders(res) {
-    res.setHeader('Cache-Control', 'no-cache');
-  }
-}));
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    etag: true,
+    lastModified: true,
+    index: false, // impede express.static de servir index.html automaticamente
+    setHeaders(res) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    },
+  }),
+);
 
 // Serve index.html com ?v=HASH injetado nos imports de CSS e JS
 // e blocos de dev condicionalmente incluídos/removidos
