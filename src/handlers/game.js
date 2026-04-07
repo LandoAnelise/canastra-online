@@ -116,6 +116,17 @@ function registerGameHandlers(socket, io, rm) {
     runBotTurns(game, info.roomId, rm);
   }));
 
+  // ── DEV: ajustar pontos em sala de teste ──
+  socket.on('setTestScores', (data, cb) => {
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
+    const game = rooms.get(info.roomId);
+    if (!game?.testMode) return cb?.({ ok: false, msg: 'Apenas em sala de teste.' });
+    game.setTestScores(data.s0, data.s1);
+    broadcastState(game);
+    cb?.({ ok: true });
+  });
+
   socket.on('getDiscardPile', (_, cb) => {
     const info = playerRoom.get(socket.id);
     if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
