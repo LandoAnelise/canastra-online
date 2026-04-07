@@ -153,11 +153,7 @@ function findGroupCandidates(hand, difficulty, allowWildsInGroups = false) {
     }
   }
 
-  // Grupo puro de 2s
-  if (difficulty !== 'easy' && wilds.length >= 3) {
-    const g = wilds.slice(0, Math.min(wilds.length, 7));
-    candidates.push({ cardIds: g.map(c => c.id), pts: meldPtsWithBonus(g), isCanastra: g.length >= 7 });
-  }
+  // Grupo puro de 2s: nunca baixar — coringas são mais valiosos como substitutos
 
   return candidates;
 }
