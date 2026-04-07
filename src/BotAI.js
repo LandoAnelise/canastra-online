@@ -36,16 +36,33 @@ function isWild(card)  { return card.rank === '2'; }
 /**
  * Retorna true se uma carta de valor numérico `v` e naipe `suit` pode ser
  * adicionada a uma sequência cujas cartas naturais são `meldNaturals`.
- * Cobre tanto extensões de borda (v = min-1 ou max+1) quanto preenchimento
- * de lacunas internas onde um coringa está atuando como substituto.
+ *
+ * Cobre três casos:
+ *  1. Borda simples: v === min-1 ou v === max+1
+ *  2. Lacuna interna: min < v < max e não está nos naturais (wild atua como gap)
+ *  3. Borda estendida: coringas na borda permitem adicionar além de min-1 / max+1
+ *     Ex: [5,6,7,wild(8)] → 9♥ é válido pois wild passa a ser gap interno em 8
+ *
+ * @param {number}   wildCount  número de coringas no meld (necessário para caso 3)
  */
-function cardFitsSequence(v, suit, meldNaturals) {
+function cardFitsSequence(v, suit, meldNaturals, wildCount = 0) {
   if (!meldNaturals.length || meldNaturals[0].suit !== suit) return false;
   const vs  = meldNaturals.map(c => cardNumVal(c)).sort((a, b) => a - b);
   const min = vs[0], max = vs[vs.length - 1];
   const naturalVals = new Set(vs);
-  return v === min - 1 || v === max + 1
-    || (v > min && v < max && !naturalVals.has(v));
+
+  // Caso 2: lacuna interna
+  if (v > min && v < max && !naturalVals.has(v)) return true;
+
+  // Quantidade de coringas que sobram após preencher lacunas internas
+  const internalGaps  = (max - min) - (vs.length - 1);
+  const borderWilds   = Math.max(0, wildCount - internalGaps);
+
+  // Caso 1+3: extensão de borda — até (borderWilds + 1) posições além de cada extremo
+  if (v < min && v >= min - borderWilds - 1) return true;
+  if (v > max && v <= max + borderWilds + 1) return true;
+
+  return false;
 }
 
 /** Valor numérico do rank para ordenação em sequências (ás = 1). */
@@ -279,9 +296,10 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       const minV = sortedVals[0];
       const maxV = sortedVals[sortedVals.length - 1];
 
+      const meldWildCount = meld.cards.filter(c => isWild(c)).length;
       const extending = hand.filter(c => {
         if (isWild(c) || c.suit !== meldSuit) return false;
-        return cardFitsSequence(cardNumVal(c), meldSuit, meldNaturals);
+        return cardFitsSequence(cardNumVal(c), meldSuit, meldNaturals, meldWildCount);
       });
 
       if (extending.length > 0) {
@@ -469,7 +487,8 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
       if (mr && card.rank === mr) { score -= 15; break; }
     } else if (meld.type === 'sequence') {
       const mn = meld.cards.filter(c => !isWild(c));
-      if (cardFitsSequence(v, card.suit, mn)) { score -= 12; break; }
+      const mw = meld.cards.filter(c => isWild(c)).length;
+      if (cardFitsSequence(v, card.suit, mn, mw)) { score -= 12; break; }
     }
   }
 
@@ -483,7 +502,8 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
       if (mr && card.rank === mr) { score -= 35; break; }
     } else if (meld.type === 'sequence') {
       const mn = meld.cards.filter(c => !isWild(c));
-      if (cardFitsSequence(v, card.suit, mn)) { score -= 30; break; }
+      const mw = meld.cards.filter(c => isWild(c)).length;
+      if (cardFitsSequence(v, card.suit, mn, mw)) { score -= 30; break; }
     }
   }
 
@@ -536,7 +556,8 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
         if (mr && topCard.rank === mr) return true;
       } else if (meld.type === 'sequence') {
         const mn = meld.cards.filter(c => !isWild(c));
-        if (cardFitsSequence(cardNumVal(topCard), topCard.suit, mn)) return true;
+        const mw = meld.cards.filter(c => isWild(c)).length;
+        if (cardFitsSequence(cardNumVal(topCard), topCard.suit, mn, mw)) return true;
       }
     }
     return false;
@@ -565,7 +586,8 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
           if (mr && dc.rank === mr) { value += 15; break; }
         } else if (meld.type === 'sequence') {
           const mn = meld.cards.filter(c => !isWild(c));
-          if (cardFitsSequence(v, dc.suit, mn)) { value += 15; break; }
+          const mw = meld.cards.filter(c => isWild(c)).length;
+          if (cardFitsSequence(v, dc.suit, mn, mw)) { value += 15; break; }
         }
       }
 
