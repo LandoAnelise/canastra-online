@@ -210,8 +210,7 @@ export function renderMe(gs) {
     el.addEventListener('click', () => onCardClick(el.dataset.id));
   });
 
-  // Mobile arrow navigation — comentado temporariamente
-  /*
+  // Mobile arrow navigation
   if (isMobile && state.selectedCards.length === 1) {
     const selId = state.selectedCards[0];
     const selEl = hand.querySelector(`.my-card[data-id="${selId}"]`);
@@ -252,7 +251,6 @@ export function renderMe(gs) {
       });
     }
   }
-  */
 
   setupHandDragDrop(hand);
 }
