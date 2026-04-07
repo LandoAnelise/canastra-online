@@ -56,13 +56,13 @@ document.getElementById('btn-create').addEventListener('click', () => {
   });
 });
 
-// Test Room toggle
-document.getElementById('btn-toggle-test-room').addEventListener('click', () => {
+// Test Room toggle (elemento ausente quando DEV_MODE=false)
+document.getElementById('btn-toggle-test-room')?.addEventListener('click', () => {
   document.getElementById('test-room-panel').classList.toggle('hidden');
 });
 
 // Create Test Room
-document.getElementById('btn-create-test').addEventListener('click', () => {
+document.getElementById('btn-create-test')?.addEventListener('click', () => {
   const name = document.getElementById('input-name').value.trim();
   if (!name) { showToast('Digite seu nome!', 'error'); return; }
   const s0 = parseInt(document.getElementById('test-score-0').value) || 0;
