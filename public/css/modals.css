@@ -180,7 +180,7 @@
 }
 
 /* ── ROUND MODAL: telas estreitas ─────────────────────────────── */
-@media (max-width: 500px) {
+@media (max-width: 599px) {
   .breakdown-line          { font-size: 0.65rem; }
   .round-team-subtotal     { font-size: 0.7rem; }
   .round-team-total .total-label { font-size: 0.6rem; }
