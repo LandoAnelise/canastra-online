@@ -21,8 +21,9 @@ export function renderTeamSelection(gs) {
       : `⏳ Aguardando o líder montar as duplas…`;
     notice.className = state.amLeader ? 'teams-leader-notice leader' : 'teams-leader-notice';
   }
-  document.getElementById('btn-confirm-teams').style.display = state.amLeader ? '' : 'none';
-  document.getElementById('teams-hint').style.display        = state.amLeader ? '' : 'none';
+  const leaderActions = document.getElementById('teams-leader-actions');
+  if (leaderActions) leaderActions.style.display = state.amLeader ? 'flex' : 'none';
+  document.getElementById('teams-hint').style.display = state.amLeader ? '' : 'none';
 
   if (!state.teamsInitialized) {
     state.teamsInitialized = true;
@@ -264,4 +265,24 @@ document.getElementById('btn-confirm-teams').addEventListener('click', () => {
   socket.emit('assignTeams', { teams, teamOrders }, (res) => {
     if (!res.ok) showToast(res.msg, 'error');
   });
+});
+
+document.getElementById('btn-random-teams').addEventListener('click', () => {
+  if (!_currentGs) return;
+  const seats = _currentGs.players.map((_, i) => i);
+  // Fisher-Yates shuffle
+  for (let i = seats.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [seats[i], seats[j]] = [seats[j], seats[i]];
+  }
+  // Reset assignments
+  _currentGs.players.forEach((_, i) => { state.teamAssignments[i] = -1; });
+  teamOrders[0] = [];
+  teamOrders[1] = [];
+  // Assign first 2 to team 0, last 2 to team 1
+  seats.slice(0, 2).forEach(s => { state.teamAssignments[s] = 0; teamOrders[0].push(s); });
+  seats.slice(2, 4).forEach(s => { state.teamAssignments[s] = 1; teamOrders[1].push(s); });
+  updateTeamChips(_currentGs, true);
+  updateConfirmBtn();
+  broadcastDraft();
 });

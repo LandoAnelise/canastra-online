@@ -172,8 +172,12 @@
         <div class="team-col-slots" id="team1-slots"></div>
       </div>
     </div>
-    <button id="btn-confirm-teams" class="btn-primary" disabled>Confirmar e Iniciar Jogo</button>
+    <div id="teams-leader-actions" style="display:none;gap:8px;flex-direction:column">
+      <button id="btn-random-teams" class="btn-secondary">🎲 Duplas Aleatórias</button>
+      <button id="btn-confirm-teams" class="btn-primary" disabled>Confirmar e Iniciar Jogo</button>
+    </div>
     <p id="teams-hint" class="waiting-hint">Distribua 2 jogadores em cada dupla</p>
+    <button id="btn-leave-teams" class="btn-ghost" style="margin-top:4px">← Voltar para a Tela Inicial</button>
   </div>
 </div>
 
@@ -185,6 +189,7 @@
     <div id="ready-players-list" class="ready-list"></div>
     <button id="btn-ready" class="btn-primary">✅ Estou Pronto!</button>
     <p id="ready-hint" class="waiting-hint">Aguardando todos marcarem pronto…</p>
+    <button id="btn-leave-ready" class="btn-ghost" style="margin-top:4px">← Voltar para a Tela Inicial</button>
   </div>
 </div>
 
