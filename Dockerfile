@@ -31,5 +31,8 @@ USER appuser
 EXPOSE 3000
 
 ENV NODE_ENV=production
+# Ativar features de desenvolvimento (sala de teste, painel DEV in-game)
+# Sobrescrever em tempo de execução com: docker run -e DEV_MODE=true ...
+ENV DEV_MODE=false
 
 CMD ["node", "server.js"]

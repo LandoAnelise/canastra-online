@@ -22,6 +22,9 @@ const BUILD_HASH = (() => {
   catch { return Date.now().toString(36); }
 })();
 
+// Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
+const DEV_MODE = process.env.DEV_MODE === 'true';
+
 // CSS/JS: cache longo com versionamento por query string (?v=HASH)
 // HTML: nunca cachear (sempre busca versão nova que referencia o hash correto)
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -37,11 +40,23 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // Serve index.html com ?v=HASH injetado nos imports de CSS e JS
+// e blocos de dev condicionalmente incluídos/removidos
 const HTML_PATH = path.join(__dirname, 'public', 'index.html');
 app.get('/', (req, res) => serveVersionedHtml(res));
 app.get('/index.html', (req, res) => serveVersionedHtml(res));
 function serveVersionedHtml(res) {
   let html = fs.readFileSync(HTML_PATH, 'utf8');
+
+  // Blocos de dev: incluir ou remover conforme DEV_MODE
+  if (DEV_MODE) {
+    html = html.replace(/<!--DEV_BLOCK_START-->/g, '').replace(/<!--DEV_BLOCK_END-->/g, '');
+    html = html.replace('<!--DEV_SCRIPT-->', '<script type="module" src="/js/game/dev.js"></script>');
+  } else {
+    html = html.replace(/<!--DEV_BLOCK_START-->[\s\S]*?<!--DEV_BLOCK_END-->/g, '');
+    html = html.replace('<!--DEV_SCRIPT-->', '');
+  }
+
+  // Injetar ?v=HASH em todos os imports de CSS e JS
   html = html.replace(/(href|src)="(\/(?:css|js)[^"]+)"/g, (_, attr, url) => {
     const sep = url.includes('?') ? '&' : '?';
     return `${attr}="${url}${sep}v=${BUILD_HASH}"`;

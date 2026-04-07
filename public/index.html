@@ -99,7 +99,8 @@
     <button id="btn-show-rules" class="btn-ghost" style="text-align:center;margin-top:4px">📋 Ver regras do jogo</button>
     <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
 
-    <!-- Sala de Teste (dev) — descomentar para habilitar
+    <!--DEV_BLOCK_START-->
+    <!-- Sala de Teste -->
     <div class="dev-room-section">
       <button id="btn-toggle-test-room" class="btn-dev-toggle">🧪 Sala de Teste (dev)</button>
       <div id="test-room-panel" class="test-room-panel hidden">
@@ -127,7 +128,7 @@
         <button id="btn-create-test" class="btn-primary">Criar Sala de Teste</button>
       </div>
     </div>
-    -->
+    <!--DEV_BLOCK_END-->
   </div>
 </div>
 
@@ -534,6 +535,6 @@
 </script>
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/js/main.js"></script>
-<script type="module" src="/js/game/dev.js"></script>
+<!--DEV_SCRIPT-->
 </body>
 </html>
