@@ -2,7 +2,9 @@
 let _ctx = null;
 let _muted = localStorage.getItem('canastra_muted') === '1';
 
-export function isMuted() { return _muted; }
+export function isMuted() {
+  return _muted;
+}
 
 export function toggleMute() {
   _muted = !_muted;
@@ -23,20 +25,23 @@ function ctx() {
 function _unlockAudio() {
   ctx().resume();
   document.removeEventListener('touchstart', _unlockAudio, true);
-  document.removeEventListener('mousedown',  _unlockAudio, true);
+  document.removeEventListener('mousedown', _unlockAudio, true);
 }
 document.addEventListener('touchstart', _unlockAudio, true);
-document.addEventListener('mousedown',  _unlockAudio, true);
+document.addEventListener('mousedown', _unlockAudio, true);
 
 function safe(fn) {
   if (_muted) return;
-  try { fn(ctx()); } catch (e) {}
+  try {
+    fn(ctx());
+  } catch (e) {}
 }
 
 function tone(c, freq, start, dur, vol = 0.25, type = 'sine') {
   const osc = c.createOscillator();
-  const g   = c.createGain();
-  osc.connect(g); g.connect(c.destination);
+  const g = c.createGain();
+  osc.connect(g);
+  g.connect(c.destination);
   osc.type = type;
   osc.frequency.setValueAtTime(freq, start);
   g.gain.setValueAtTime(vol, start);
@@ -63,7 +68,12 @@ function playFile(name, url, { volume = 1, maxDuration = null } = {}) {
   a.volume = volume;
   a.currentTime = 0;
   if (maxDuration) {
-    const trim = () => { if (a.currentTime >= maxDuration) { a.pause(); a.removeEventListener('timeupdate', trim); } };
+    const trim = () => {
+      if (a.currentTime >= maxDuration) {
+        a.pause();
+        a.removeEventListener('timeupdate', trim);
+      }
+    };
     a.addEventListener('timeupdate', trim);
   }
   a.play().catch(() => {});
@@ -76,19 +86,19 @@ export function playCanastraLimpa() {
 
 // ── Canastra Suja — arpejo mais grave (síntese) ───────────────────────────────
 export function playCanastraSuja() {
-  safe(c => {
+  safe((c) => {
     const t = c.currentTime;
-    [523, 659, 784, 1047].forEach((f, i) => tone(c, f, t + i * 0.09, 0.50, 0.22));
+    [523, 659, 784, 1047].forEach((f, i) => tone(c, f, t + i * 0.09, 0.5, 0.22));
     tone(c, 1175, t + 0.38, 0.65, 0.15);
   });
 }
 
 // ── Campainha — sua vez de jogar (síntese) ────────────────────────────────────
 export function playCampainha() {
-  safe(c => {
+  safe((c) => {
     const t = c.currentTime;
-    tone(c, 1174, t,        1.1, 0.28);
-    tone(c, 1568, t,        0.5, 0.10);
+    tone(c, 1174, t, 1.1, 0.28);
+    tone(c, 1568, t, 0.5, 0.1);
     tone(c, 1174, t + 0.35, 0.9, 0.18);
     tone(c, 1568, t + 0.35, 0.4, 0.07);
   });

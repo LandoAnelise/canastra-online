@@ -173,7 +173,12 @@ function findGroupCandidates(hand, difficulty, allowWildsInGroups = false) {
       if (cards.length === 2 && wilds.length >= 1) {
         for (const wild of wilds) {
           const g = [...cards, wild];
-          candidates.push({ cardIds: g.map((c) => c.id), pts: meldPtsWithBonus(g), isCanastra: false, lowPriority: isLowPriority });
+          candidates.push({
+            cardIds: g.map((c) => c.id),
+            pts: meldPtsWithBonus(g),
+            isCanastra: false,
+            lowPriority: isLowPriority,
+          });
         }
       }
     }
@@ -257,7 +262,12 @@ function findSequenceCandidates(hand, difficulty) {
             .join(',');
           if (!seen.has(key)) {
             seen.add(key);
-            candidates.push({ cardIds: all.map((c) => c.id), pts: meldPtsWithBonus(all), isCanastra: false, isSequence: true });
+            candidates.push({
+              cardIds: all.map((c) => c.id),
+              pts: meldPtsWithBonus(all),
+              isCanastra: false,
+              isSequence: true,
+            });
           }
         }
       }
@@ -459,7 +469,9 @@ function decideMeldActions(game, botIdx, difficulty) {
 
   // ── Baixa normal: sem coringas em grupos novos, sem grupos de ranks 5-10 ──
   // Grupos de ranks 5-10 só entram no buraco. Em jogo normal nenhum humano baixa "7,7,7".
-  const groupCands = findGroupCandidates(hand, difficulty, /* allowWildsInGroups */ false).filter((c) => !c.lowPriority);
+  const groupCands = findGroupCandidates(hand, difficulty, /* allowWildsInGroups */ false).filter(
+    (c) => !c.lowPriority,
+  );
   const newCands = [...groupCands, ...seqCands];
   const actions = selectMeldActions(newCands, extCands, hand, hasCan);
 
@@ -561,7 +573,12 @@ function chooseDiscard(game, botIdx, difficulty) {
   const candidates = hand.filter((c) => c.id !== forbidden);
   if (candidates.length === 0) return hand[0]?.id;
 
-  return candidates.slice().sort((a, b) => scoreForDiscard(b, hand, teamIndex, game, difficulty) - scoreForDiscard(a, hand, teamIndex, game, difficulty))[0].id;
+  return candidates
+    .slice()
+    .sort(
+      (a, b) =>
+        scoreForDiscard(b, hand, teamIndex, game, difficulty) - scoreForDiscard(a, hand, teamIndex, game, difficulty),
+    )[0].id;
 }
 
 // ─── DECISÃO DE PEGAR O LIXO ─────────────────────────────────────────────────
@@ -804,7 +821,9 @@ function runBotTurns(game, roomId, rm, difficulty) {
 
   // Wrap bot turn with a timeout to prevent infinite hangs
   const turnPromise = executeBotTurn(game, botIdx, d, rm, roomId);
-  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(`Bot turn timed out after ${BOT_TURN_TIMEOUT_MS}ms`)), BOT_TURN_TIMEOUT_MS));
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Bot turn timed out after ${BOT_TURN_TIMEOUT_MS}ms`)), BOT_TURN_TIMEOUT_MS),
+  );
 
   Promise.race([turnPromise, timeoutPromise])
     .then(() => {

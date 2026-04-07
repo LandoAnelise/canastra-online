@@ -14,8 +14,10 @@ export function showRoundModal(result) {
   playChime();
 
   // Header
-  const winnerTeamName = (result.teamNames && result.teamNames[result.winningTeam]) || 'Dupla ' + (result.winningTeam + 1);
-  document.getElementById('round-winner-badge').textContent = result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
+  const winnerTeamName =
+    (result.teamNames && result.teamNames[result.winningTeam]) || 'Dupla ' + (result.winningTeam + 1);
+  document.getElementById('round-winner-badge').textContent =
+    result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
   document.getElementById('round-modal-number').textContent = 'Rodada ' + result.round;
 
   // Per-team breakdown
@@ -65,13 +67,32 @@ export function showRoundModal(result) {
           '</span>' +
           '</div>'
         : '') +
-      (d.baterBonus > 0 ? '<div class="breakdown-line">' + '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' + '<span class="bl-val bonus">+' + d.baterBonus + '</span>' + '</div>' : '');
+      (d.baterBonus > 0
+        ? '<div class="breakdown-line">' +
+          '<span class="bl-label">' +
+          (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') +
+          '</span>' +
+          '<span class="bl-val bonus">+' +
+          d.baterBonus +
+          '</span>' +
+          '</div>'
+        : '');
 
     // Hand losses for this team
     const teamLosses = result.playerHandLoss.filter((p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
     if (teamLosses.length > 0) {
       teamLosses.forEach((p) => {
-        bd.insertAdjacentHTML('beforeend', '<div class="breakdown-line">' + '<span class="bl-label">M\xe3o de ' + escapeHtml(p.playerName) + '</span>' + '<span class="bl-val negative">\u2212' + p.handPoints + '</span>' + '</div>');
+        bd.insertAdjacentHTML(
+          'beforeend',
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">M\xe3o de ' +
+            escapeHtml(p.playerName) +
+            '</span>' +
+            '<span class="bl-val negative">\u2212' +
+            p.handPoints +
+            '</span>' +
+            '</div>',
+        );
       });
     }
 
@@ -79,9 +100,16 @@ export function showRoundModal(result) {
 
     const roundPts = result.roundPoints[t];
     document.getElementById('round-subtotal-' + t).innerHTML =
-      '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' + '<span style="color:' + (roundPts >= 0 ? '#6de89a' : '#e74c3c') + ';font-weight:700">' + (roundPts >= 0 ? '+' : '') + roundPts + '</span>';
+      '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' +
+      '<span style="color:' +
+      (roundPts >= 0 ? '#6de89a' : '#e74c3c') +
+      ';font-weight:700">' +
+      (roundPts >= 0 ? '+' : '') +
+      roundPts +
+      '</span>';
 
-    document.getElementById('round-total-' + t).innerHTML = '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
+    document.getElementById('round-total-' + t).innerHTML =
+      '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
   }
 
   // Player chips (who lost hand / who bateu)
@@ -167,24 +195,52 @@ export function showGameOverModal(result) {
             '</span>' +
             '</div>'
           : '') +
-        (d.baterBonus > 0 ? '<div class="breakdown-line">' + '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' + '<span class="bl-val bonus">+' + d.baterBonus + '</span>' + '</div>' : '');
+        (d.baterBonus > 0
+          ? '<div class="breakdown-line">' +
+            '<span class="bl-label">' +
+            (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') +
+            '</span>' +
+            '<span class="bl-val bonus">+' +
+            d.baterBonus +
+            '</span>' +
+            '</div>'
+          : '');
 
-      const teamLosses = (result.playerHandLoss || []).filter((p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
+      const teamLosses = (result.playerHandLoss || []).filter(
+        (p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0,
+      );
       teamLosses.forEach((p) => {
-        bd.insertAdjacentHTML('beforeend', '<div class="breakdown-line">' + '<span class="bl-label">M\xe3o de ' + escapeHtml(p.playerName) + '</span>' + '<span class="bl-val negative">\u2212' + p.handPoints + '</span>' + '</div>');
+        bd.insertAdjacentHTML(
+          'beforeend',
+          '<div class="breakdown-line">' +
+            '<span class="bl-label">M\xe3o de ' +
+            escapeHtml(p.playerName) +
+            '</span>' +
+            '<span class="bl-val negative">\u2212' +
+            p.handPoints +
+            '</span>' +
+            '</div>',
+        );
       });
 
       bd.insertAdjacentHTML('beforeend', '<hr class="breakdown-sep">');
 
       const roundPts = result.roundPoints[t];
       document.getElementById('go-subtotal-' + t).innerHTML =
-        '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' + '<span style="color:' + (roundPts >= 0 ? '#6de89a' : '#e74c3c') + ';font-weight:700">' + (roundPts >= 0 ? '+' : '') + roundPts + '</span>';
+        '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' +
+        '<span style="color:' +
+        (roundPts >= 0 ? '#6de89a' : '#e74c3c') +
+        ';font-weight:700">' +
+        (roundPts >= 0 ? '+' : '') +
+        roundPts +
+        '</span>';
     } else {
       bd.innerHTML = '';
       document.getElementById('go-subtotal-' + t).innerHTML = '';
     }
 
-    document.getElementById('go-total-' + t).innerHTML = '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
+    document.getElementById('go-total-' + t).innerHTML =
+      '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
   }
 
   // Player chips
@@ -234,7 +290,8 @@ socket.on('gameResumed', ({ playerName }) => {
 
 socket.on('playerAbandoned', ({ playerName }) => {
   stopPauseCountdown();
-  document.getElementById('paused-msg').textContent = playerName + ' n\xe3o reconectou a tempo. A partida foi encerrada.';
+  document.getElementById('paused-msg').textContent =
+    playerName + ' n\xe3o reconectou a tempo. A partida foi encerrada.';
   document.getElementById('paused-timer').textContent = '';
 });
 

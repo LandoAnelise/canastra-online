@@ -28,7 +28,7 @@ function registerTeamHandlers(socket, io, rm) {
     cb?.({ ok: true });
     broadcastState(game);
     broadcastToRoom(info.roomId, 'teamsAssigned', {
-      players:      game.players.map(p => ({ name: p.name, teamIndex: p.teamIndex })),
+      players: game.players.map((p) => ({ name: p.name, teamIndex: p.teamIndex })),
       readyPlayers: [...game.readyPlayers],
     });
   });

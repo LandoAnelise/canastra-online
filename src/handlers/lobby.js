@@ -38,54 +38,71 @@ const createRoomLimiter = createRateLimiter(10, 60_000);
 const joinRoomLimiter = createRateLimiter(20, 60_000);
 
 function registerLobbyHandlers(socket, rm) {
-  const { rooms, playerRoom, roomMeta, getOrCreateRoom, generateRoomId, broadcastState, broadcastPublicRooms, reconnectKey, reconnectSlots, RECONNECT_TIMEOUT_MS, resumeGame } = rm;
+  const {
+    rooms,
+    playerRoom,
+    roomMeta,
+    getOrCreateRoom,
+    generateRoomId,
+    broadcastState,
+    broadcastPublicRooms,
+    reconnectKey,
+    reconnectSlots,
+    RECONNECT_TIMEOUT_MS,
+    resumeGame,
+  } = rm;
 
   // ── CREATE ROOM ──
-  socket.on('createRoom', ({ playerName, isPublic = false, testMode = false, testScores = [0, 0], botDifficulty = 'medium' }, cb) => {
-    if (!createRoomLimiter.check(socket.id)) return cb?.({ ok: false, msg: 'Muitas requisições. Aguarde.' });
-    const name = sanitizeName(playerName);
-    if (!name) return cb?.({ ok: false, msg: 'Nome inválido.' });
-    if (testMode && !DEV_MODE) return cb?.({ ok: false, msg: 'Sala de teste indisponível.' });
-    const validDifficulty = isValidDifficulty(botDifficulty) ? botDifficulty : 'medium';
-    const roomId = generateRoomId();
-    const game = getOrCreateRoom(roomId);
-    roomMeta.set(roomId, { isPublic: !testMode && !!isPublic });
-    const result = game.addPlayer(socket.id, name);
-    if (!result.ok) return cb?.({ ok: false, msg: result.msg });
-    game.leaderSeatIndex = 0;
-    socket.join(roomId);
-    playerRoom.set(socket.id, { roomId, seatIndex: result.seatIndex });
+  socket.on(
+    'createRoom',
+    ({ playerName, isPublic = false, testMode = false, testScores = [0, 0], botDifficulty = 'medium' }, cb) => {
+      if (!createRoomLimiter.check(socket.id)) return cb?.({ ok: false, msg: 'Muitas requisições. Aguarde.' });
+      const name = sanitizeName(playerName);
+      if (!name) return cb?.({ ok: false, msg: 'Nome inválido.' });
+      if (testMode && !DEV_MODE) return cb?.({ ok: false, msg: 'Sala de teste indisponível.' });
+      const validDifficulty = isValidDifficulty(botDifficulty) ? botDifficulty : 'medium';
+      const roomId = generateRoomId();
+      const game = getOrCreateRoom(roomId);
+      roomMeta.set(roomId, { isPublic: !testMode && !!isPublic });
+      const result = game.addPlayer(socket.id, name);
+      if (!result.ok) return cb?.({ ok: false, msg: result.msg });
+      game.leaderSeatIndex = 0;
+      socket.join(roomId);
+      playerRoom.set(socket.id, { roomId, seatIndex: result.seatIndex });
 
-    if (testMode) {
-      // Adiciona 3 bots e configura a sala automaticamente
-      for (let i = 1; i <= 3; i++) game.addPlayer(`bot-${i}-${roomId}`, `Bot ${i}`);
-      game.botSeats = new Set([1, 2, 3]);
-      game.testMode = true;
-      game.botDifficulty = validDifficulty;
-      game.assignTeams(
-        [
-          { seatIndex: 0, teamIndex: 0 },
-          { seatIndex: 1, teamIndex: 1 },
-          { seatIndex: 2, teamIndex: 0 },
-          { seatIndex: 3, teamIndex: 1 },
-        ],
-        { 0: [0, 2], 1: [1, 3] },
-      );
-      game.setTestScores(testScores[0], testScores[1]);
-      game.startRound();
-      console.log(`[Room ${roomId}] Sala de teste criada por ${name} (scores: ${game.scores}, dificuldade: ${game.botDifficulty})`);
-      cb?.({ ok: true, roomId, seatIndex: 0, testMode: true });
+      if (testMode) {
+        // Adiciona 3 bots e configura a sala automaticamente
+        for (let i = 1; i <= 3; i++) game.addPlayer(`bot-${i}-${roomId}`, `Bot ${i}`);
+        game.botSeats = new Set([1, 2, 3]);
+        game.testMode = true;
+        game.botDifficulty = validDifficulty;
+        game.assignTeams(
+          [
+            { seatIndex: 0, teamIndex: 0 },
+            { seatIndex: 1, teamIndex: 1 },
+            { seatIndex: 2, teamIndex: 0 },
+            { seatIndex: 3, teamIndex: 1 },
+          ],
+          { 0: [0, 2], 1: [1, 3] },
+        );
+        game.setTestScores(testScores[0], testScores[1]);
+        game.startRound();
+        console.log(
+          `[Room ${roomId}] Sala de teste criada por ${name} (scores: ${game.scores}, dificuldade: ${game.botDifficulty})`,
+        );
+        cb?.({ ok: true, roomId, seatIndex: 0, testMode: true });
+        broadcastState(game);
+        // Inicia turnos dos bots se o primeiro jogador for bot
+        runBotTurns(game, roomId, rm, game.botDifficulty);
+        return;
+      }
+
+      console.log(`[Room ${roomId}] Criada por ${name} (${isPublic ? 'pública' : 'privada'})`);
+      cb?.({ ok: true, roomId, seatIndex: result.seatIndex });
       broadcastState(game);
-      // Inicia turnos dos bots se o primeiro jogador for bot
-      runBotTurns(game, roomId, rm, game.botDifficulty);
-      return;
-    }
-
-    console.log(`[Room ${roomId}] Criada por ${name} (${isPublic ? 'pública' : 'privada'})`);
-    cb?.({ ok: true, roomId, seatIndex: result.seatIndex });
-    broadcastState(game);
-    if (isPublic) broadcastPublicRooms();
-  });
+      if (isPublic) broadcastPublicRooms();
+    },
+  );
 
   socket.on('getPublicRooms', (_, cb) => {
     const { getPublicRoomsList } = rm;
@@ -189,7 +206,9 @@ function registerLobbyHandlers(socket, rm) {
 
     game.botSeats.add(result.seatIndex);
 
-    console.log(`[Room ${info.roomId}] 🤖 ${botName} adicionado (assento ${result.seatIndex}, dificuldade: ${game.botDifficulty})`);
+    console.log(
+      `[Room ${info.roomId}] 🤖 ${botName} adicionado (assento ${result.seatIndex}, dificuldade: ${game.botDifficulty})`,
+    );
 
     const { broadcastToRoom: btr } = rm;
     btr(info.roomId, 'playerJoined', {

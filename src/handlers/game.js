@@ -64,7 +64,8 @@ function registerGameHandlers(socket, io, rm) {
   socket.on(
     'stageMeld',
     gameAction((game, info, { cardIds }, cb) => {
-      if (!Array.isArray(cardIds) || cardIds.some((id) => !isValidCardId(id))) return cb?.({ ok: false, msg: 'IDs de carta inválidos.' });
+      if (!Array.isArray(cardIds) || cardIds.some((id) => !isValidCardId(id)))
+        return cb?.({ ok: false, msg: 'IDs de carta inválidos.' });
       const result = game.stageMeld(info.seatIndex, cardIds);
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
       cb?.({ ok: true });
@@ -77,7 +78,8 @@ function registerGameHandlers(socket, io, rm) {
     'addToStagedMeld',
     gameAction((game, info, { stagedMeldIdx, cardIds }, cb) => {
       if (!Number.isInteger(stagedMeldIdx) || stagedMeldIdx < 0) return cb?.({ ok: false, msg: 'Índice inválido.' });
-      if (!Array.isArray(cardIds) || cardIds.some((id) => !isValidCardId(id))) return cb?.({ ok: false, msg: 'IDs de carta inválidos.' });
+      if (!Array.isArray(cardIds) || cardIds.some((id) => !isValidCardId(id)))
+        return cb?.({ ok: false, msg: 'IDs de carta inválidos.' });
       const result = game.addToStagedMeld(info.seatIndex, stagedMeldIdx, cardIds);
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
       cb?.({ ok: true });
@@ -130,7 +132,8 @@ function registerGameHandlers(socket, io, rm) {
   socket.on(
     'bater',
     gameAction((game, info, { discardCardId = null } = {}, cb) => {
-      if (discardCardId !== null && !isValidCardId(discardCardId)) return cb?.({ ok: false, msg: 'ID de carta inválido.' });
+      if (discardCardId !== null && !isValidCardId(discardCardId))
+        return cb?.({ ok: false, msg: 'ID de carta inválido.' });
       const result = game.bater(info.seatIndex, discardCardId);
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
 
@@ -146,7 +149,8 @@ function registerGameHandlers(socket, io, rm) {
     'continueRound',
     gameAction((game, info, _, cb) => {
       if (game.status !== 'roundOver') return cb?.({ ok: false, msg: 'Não há rodada aguardando.' });
-      if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) return cb?.({ ok: false, msg: 'Apenas o líder da sala pode iniciar a próxima rodada.' });
+      if (info.seatIndex !== (game.leaderSeatIndex ?? 0))
+        return cb?.({ ok: false, msg: 'Apenas o líder da sala pode iniciar a próxima rodada.' });
       game.startRound();
       broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });
       broadcastState(game);
@@ -161,7 +165,8 @@ function registerGameHandlers(socket, io, rm) {
     if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
     const game = rooms.get(info.roomId);
     if (!game?.testMode) return cb?.({ ok: false, msg: 'Apenas em sala de teste.' });
-    if (typeof data?.s0 !== 'number' || typeof data?.s1 !== 'number') return cb?.({ ok: false, msg: 'Dados inválidos.' });
+    if (typeof data?.s0 !== 'number' || typeof data?.s1 !== 'number')
+      return cb?.({ ok: false, msg: 'Dados inválidos.' });
     game.setTestScores(data.s0, data.s1);
     broadcastState(game);
     cb?.({ ok: true });
@@ -213,7 +218,9 @@ function registerGameHandlers(socket, io, rm) {
     }
 
     // ── Substitui pelo bot hard ──
-    console.log(`[Room ${info.roomId}] 🤖 ${playerName} saiu voluntariamente — bot hard assume assento ${info.seatIndex}`);
+    console.log(
+      `[Room ${info.roomId}] 🤖 ${playerName} saiu voluntariamente — bot hard assume assento ${info.seatIndex}`,
+    );
     game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
     game.botSeats.add(info.seatIndex);
     game.botDifficulty = 'hard';

@@ -6,9 +6,9 @@ export function renderWaiting(gs) {
   const seats = document.getElementById('waiting-seats');
   seats.innerHTML = '';
   for (let i = 0; i < 4; i++) {
-    const p      = gs.players[i];
-    const isBot  = gs.botSeats?.includes(i);
-    const div    = document.createElement('div');
+    const p = gs.players[i];
+    const isBot = gs.botSeats?.includes(i);
+    const div = document.createElement('div');
     div.className = `seat-item${p ? '' : ' empty'}${isBot ? ' bot-seat' : ''}`;
     div.innerHTML = `<span class="seat-name">${p ? p.name : 'Aguardando...'}</span>`;
     seats.appendChild(div);
@@ -24,7 +24,7 @@ export function renderWaiting(gs) {
 }
 
 const TEAM_LABEL = ['🔵 Dupla 1', '🔴 Dupla 2'];
-const TEAM_CLASS  = ['team0',     'team1'];
+const TEAM_CLASS = ['team0', 'team1'];
 
 export function renderReadyScreen(players) {
   const list = document.getElementById('ready-players-list');
@@ -49,9 +49,9 @@ export function renderReadyScreen(players) {
 
     members.forEach(({ p, i }) => {
       const isReady = state.readyPlayers.has(i);
-      const isMe    = i === state.mySeatIndex;
-      const isBot   = botSeats.includes(i);
-      const row     = document.createElement('div');
+      const isMe = i === state.mySeatIndex;
+      const isBot = botSeats.includes(i);
+      const row = document.createElement('div');
       row.className = `ready-player-row${isReady ? ' is-ready' : ''}`;
       row.innerHTML = `
         <span class="rp-name${isMe ? ' me' : ''}">${isBot ? '🤖 ' : ''}${p.name}${isMe ? ' (você)' : ''}</span>
@@ -90,7 +90,11 @@ document.getElementById('btn-ready').addEventListener('click', () => {
   if (state.iAmReady) return;
   state.iAmReady = true;
   socket.emit('playerReady', {}, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); state.iAmReady = false; return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      state.iAmReady = false;
+      return;
+    }
     state.readyPlayers.add(state.mySeatIndex);
     if (state.gameState) renderReadyScreen(state.gameState.players);
   });
@@ -101,7 +105,10 @@ document.getElementById('btn-ready').addEventListener('click', () => {
 document.getElementById('btn-add-bot').addEventListener('click', () => {
   const difficulty = document.getElementById('waiting-bot-difficulty').value || 'medium';
   socket.emit('addBotToRoom', { difficulty }, (res) => {
-    if (!res.ok) { showToast(res.msg || 'Erro ao adicionar bot.', 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg || 'Erro ao adicionar bot.', 'error');
+      return;
+    }
     showToast(`🤖 ${res.botName} adicionado!`, 'success', 1500);
     // renderWaiting será chamado via gameState broadcast pelo servidor
   });

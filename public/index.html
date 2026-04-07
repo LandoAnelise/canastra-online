@@ -12,19 +12,46 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
     <!-- Splash screens iOS -->
-    <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-2048x2732.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-1668x2388.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1290x2796.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1179x2556.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1170x2532.png" />
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-750x1334.png" />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-2048x2732.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-1668x2388.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1290x2796.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1179x2556.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1170x2532.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-750x1334.png"
+    />
     <title>Canastra Online</title>
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: wss:; img-src 'self' data:;"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/lobby.css" />
     <link rel="stylesheet" href="/css/game.css" />
@@ -64,7 +91,9 @@
         <div class="lobby-panel" id="panel-browse">
           <div class="public-rooms-header">
             <span class="public-rooms-title">Salas disponíveis</span>
-            <button id="btn-refresh-rooms" class="btn-ghost" style="font-size: 0.8rem; padding: 5px 10px">↻ Atualizar</button>
+            <button id="btn-refresh-rooms" class="btn-ghost" style="font-size: 0.8rem; padding: 5px 10px">
+              ↻ Atualizar
+            </button>
           </div>
           <div id="public-rooms-list" class="public-rooms-list">
             <div class="rooms-loading">Clique em Atualizar para carregar</div>
@@ -99,7 +128,9 @@
           <button id="btn-create" class="btn-primary">Criar Sala</button>
         </div>
 
-        <button id="btn-show-rules" class="btn-ghost" style="text-align: center; margin-top: 4px">📋 Ver regras do jogo</button>
+        <button id="btn-show-rules" class="btn-ghost" style="text-align: center; margin-top: 4px">
+          📋 Ver regras do jogo
+        </button>
         <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
 
         <!--DEV_BLOCK_START-->
@@ -107,7 +138,9 @@
         <div class="dev-room-section">
           <button id="btn-toggle-test-room" class="btn-dev-toggle">🧪 Sala de Teste (dev)</button>
           <div id="test-room-panel" class="test-room-panel hidden">
-            <p class="test-room-hint">Jogue sozinho com 3 bots. Defina a pontuação inicial para testar regras do buraco.</p>
+            <p class="test-room-hint">
+              Jogue sozinho com 3 bots. Defina a pontuação inicial para testar regras do buraco.
+            </p>
             <div class="test-scores-row">
               <div class="test-score-field">
                 <label>Dupla 1</label>
@@ -227,13 +260,17 @@
       <div id="table-area">
         <!-- Opponent top -->
         <div id="player-top" class="player-slot opponent top">
-          <div class="player-info"><span class="player-name" id="name-top">—</span><span class="hand-count" id="count-top">0</span></div>
+          <div class="player-info">
+            <span class="player-name" id="name-top">—</span><span class="hand-count" id="count-top">0</span>
+          </div>
           <div class="hand-fan" id="hand-top"></div>
         </div>
 
         <!-- Left opponent -->
         <div id="player-left" class="player-slot opponent left">
-          <div class="player-info vertical"><span class="player-name" id="name-left">—</span><span class="hand-count" id="count-left">0</span></div>
+          <div class="player-info vertical">
+            <span class="player-name" id="name-left">—</span><span class="hand-count" id="count-left">0</span>
+          </div>
           <div class="hand-fan vertical" id="hand-left"></div>
         </div>
 
@@ -286,13 +323,17 @@
 
         <!-- Right opponent -->
         <div id="player-right" class="player-slot opponent right">
-          <div class="player-info vertical"><span class="player-name" id="name-right">—</span><span class="hand-count" id="count-right">0</span></div>
+          <div class="player-info vertical">
+            <span class="player-name" id="name-right">—</span><span class="hand-count" id="count-right">0</span>
+          </div>
           <div class="hand-fan vertical" id="hand-right"></div>
         </div>
 
         <!-- My hand (bottom) -->
         <div id="player-bottom" class="player-slot me bottom">
-          <div class="player-info"><span class="player-name" id="name-me">Você</span><span class="hand-count" id="count-me">0</span></div>
+          <div class="player-info">
+            <span class="player-name" id="name-me">Você</span><span class="hand-count" id="count-me">0</span>
+          </div>
           <div id="my-hand" class="my-hand"></div>
         </div>
       </div>
@@ -309,7 +350,9 @@
         <div class="action-sep"></div>
         <div class="action-group util-actions">
           <button id="btn-sort-hand" class="btn-action sort-hand" title="Ordenar por naipe e valor">♠ Naipe</button>
-          <button id="btn-sort-rank" class="btn-action sort-hand" title="Ordenar por número (para grupos)">🔢 Número</button>
+          <button id="btn-sort-rank" class="btn-action sort-hand" title="Ordenar por número (para grupos)">
+            🔢 Número
+          </button>
         </div>
       </div>
 
@@ -348,10 +391,18 @@
       <div class="modal-box small" style="text-align: center">
         <div style="font-size: 2rem; margin-bottom: 4px">✔</div>
         <h3>Confirmar baixa?</h3>
-        <p class="modal-hint" style="margin: 8px 0 20px">As cartas na mesa serão confirmadas<br />e não poderão ser alteradas.</p>
+        <p class="modal-hint" style="margin: 8px 0 20px">
+          As cartas na mesa serão confirmadas<br />e não poderão ser alteradas.
+        </p>
         <div style="display: flex; gap: 10px">
           <button id="btn-confirm-melds-cancel" class="btn-action" style="flex: 1">Continuar baixando</button>
-          <button id="btn-confirm-melds-ok" class="btn-action" style="flex: 1; background: rgba(40, 120, 60, 0.35); border-color: rgba(80, 180, 100, 0.5)">Confirmar</button>
+          <button
+            id="btn-confirm-melds-ok"
+            class="btn-action"
+            style="flex: 1; background: rgba(40, 120, 60, 0.35); border-color: rgba(80, 180, 100, 0.5)"
+          >
+            Confirmar
+          </button>
         </div>
       </div>
     </div>
@@ -371,10 +422,18 @@
       <div class="modal-box small" style="text-align: center">
         <div style="font-size: 2rem; margin-bottom: 4px">↩</div>
         <h3>Sair da partida?</h3>
-        <p class="modal-hint" style="margin: 8px 0 20px">Você quer mesmo desistir?<br />Um bot irá assumir seu lugar caso você saia.</p>
+        <p class="modal-hint" style="margin: 8px 0 20px">
+          Você quer mesmo desistir?<br />Um bot irá assumir seu lugar caso você saia.
+        </p>
         <div style="display: flex; gap: 10px">
           <button id="btn-leave-cancel" class="btn-action" style="flex: 1">Cancelar</button>
-          <button id="btn-leave-confirm" class="btn-action" style="flex: 1; background: rgba(160, 40, 40, 0.35); border-color: rgba(200, 80, 80, 0.5)">Sair</button>
+          <button
+            id="btn-leave-confirm"
+            class="btn-action"
+            style="flex: 1; background: rgba(160, 40, 40, 0.35); border-color: rgba(200, 80, 80, 0.5)"
+          >
+            Sair
+          </button>
         </div>
       </div>
     </div>
@@ -465,11 +524,17 @@
         <div class="rules-content">
           <section>
             <h4>Configuração</h4>
-            <p>2 baralhos (104 cartas), 4 jogadores em 2 duplas, alternados (J1→J2→J3→J4). Cada jogador recebe <strong>13 cartas</strong>.</p>
+            <p>
+              2 baralhos (104 cartas), 4 jogadores em 2 duplas, alternados (J1→J2→J3→J4). Cada jogador recebe
+              <strong>13 cartas</strong>.
+            </p>
           </section>
           <section>
             <h4>Coringas</h4>
-            <p>Todos os <strong>2s</strong> são coringas (10 pts). As naturais devem ser maioria em qualquer combinação. Exceção: o 2 numa sequência que passa pelo rank 2 é natural (ex: A♥ 2♥ 3♥).</p>
+            <p>
+              Todos os <strong>2s</strong> são coringas (10 pts). As naturais devem ser maioria em qualquer combinação.
+              Exceção: o 2 numa sequência que passa pelo rank 2 é natural (ex: A♥ 2♥ 3♥).
+            </p>
           </section>
           <section>
             <h4>Pontuação das cartas</h4>
@@ -477,11 +542,17 @@
           </section>
           <section>
             <h4>Turno</h4>
-            <p>Primeiro <strong>compre</strong> (monte ou lixo inteiro). Depois baixe combinações ou adicione à mesa. Termine <strong>descartando</strong> uma carta (ou não, ao bater).</p>
+            <p>
+              Primeiro <strong>compre</strong> (monte ou lixo inteiro). Depois baixe combinações ou adicione à mesa.
+              Termine <strong>descartando</strong> uma carta (ou não, ao bater).
+            </p>
           </section>
           <section>
             <h4>Pegar o lixo</h4>
-            <p>Sempre permitido, exceto se você tiver <strong>1 carta na mão</strong> e o lixo tiver <strong>1 carta</strong> — nesse caso é obrigado a pescar do monte.</p>
+            <p>
+              Sempre permitido, exceto se você tiver <strong>1 carta na mão</strong> e o lixo tiver
+              <strong>1 carta</strong> — nesse caso é obrigado a pescar do monte.
+            </p>
           </section>
           <section>
             <h4>Combinações válidas</h4>
@@ -495,9 +566,12 @@
             <h4>Primeira baixa — Buraco</h4>
             <p>
               <strong>Fora do buraco</strong> (&lt; 1000 pts): qualquer combinação válida com 3+ cartas.<br />
-              <strong>No buraco</strong> (≥ 1000 pts): a primeira baixa é feita <em>em espera</em> — as cartas saem da mão, ficam visíveis a todos, e só são confirmadas ao clicar em <strong>Confirmar Baixa</strong>. Os jogos em espera
-              precisam somar <strong>≥ 100 pts</strong> (contando bônus de canastra). Você pode adicionar mais cartas aos jogos em espera antes de confirmar.<br />
-              <strong>Penalidade:</strong> se confirmar com pontos insuficientes, as cartas voltam à mão e a dupla passa a exigir <strong>≥ 150 pts</strong> na próxima tentativa (a penalidade não acumula).
+              <strong>No buraco</strong> (≥ 1000 pts): a primeira baixa é feita <em>em espera</em> — as cartas saem da
+              mão, ficam visíveis a todos, e só são confirmadas ao clicar em <strong>Confirmar Baixa</strong>. Os jogos
+              em espera precisam somar <strong>≥ 100 pts</strong> (contando bônus de canastra). Você pode adicionar mais
+              cartas aos jogos em espera antes de confirmar.<br />
+              <strong>Penalidade:</strong> se confirmar com pontos insuficientes, as cartas voltam à mão e a dupla passa
+              a exigir <strong>≥ 150 pts</strong> na próxima tentativa (a penalidade não acumula).
             </p>
           </section>
           <section>
@@ -511,17 +585,24 @@
             <h4>Bater</h4>
             <p>
               Precisa de <strong>≥ 1 canastra</strong> na mesa. Pode ou não descartar ao bater.<br />
-              <strong>Bônus de batida = +50 pts</strong> — ou <strong>+100 pts</strong> se for <em>batida limpa</em>: o jogador bate sem ter baixado cartas em nenhum turno anterior dessa rodada (nem pelo botão Baixar nem pelo Confirmar
-              Baixa).
+              <strong>Bônus de batida = +50 pts</strong> — ou <strong>+100 pts</strong> se for <em>batida limpa</em>: o
+              jogador bate sem ter baixado cartas em nenhum turno anterior dessa rodada (nem pelo botão Baixar nem pelo
+              Confirmar Baixa).
             </p>
           </section>
           <section>
             <h4>Monte vazio</h4>
-            <p>Quando o monte acaba, o jogador que pescou a última carta joga normalmente seu turno e <strong>ao descartar a rodada encerra automaticamente</strong> — sem bônus de batida.</p>
+            <p>
+              Quando o monte acaba, o jogador que pescou a última carta joga normalmente seu turno e
+              <strong>ao descartar a rodada encerra automaticamente</strong> — sem bônus de batida.
+            </p>
           </section>
           <section>
             <h4>Fim da rodada</h4>
-            <p>Todos que não bateram (inclusive o parceiro de quem bateu) <strong>perdem os pontos das cartas na mão</strong>.</p>
+            <p>
+              Todos que não bateram (inclusive o parceiro de quem bateu)
+              <strong>perdem os pontos das cartas na mão</strong>.
+            </p>
           </section>
           <section>
             <h4>Vitória</h4>

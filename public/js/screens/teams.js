@@ -30,14 +30,19 @@ export function renderTeamSelection(gs) {
     state.teamAssignments = {};
     teamOrders[0] = [];
     teamOrders[1] = [];
-    gs.players.forEach((_, i) => { state.teamAssignments[i] = -1; });
+    gs.players.forEach((_, i) => {
+      state.teamAssignments[i] = -1;
+    });
 
     if (state.amLeader) {
-      ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
+      ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach((id) => {
         const el = document.getElementById(id);
-        el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+        el.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          el.classList.add('drag-over');
+        });
         el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-        el.addEventListener('drop', e => {
+        el.addEventListener('drop', (e) => {
           e.preventDefault();
           el.classList.remove('drag-over');
           if (state.dragSeat === null) return;
@@ -60,7 +65,6 @@ export function renderTeamSelection(gs) {
   updateTeamChips(gs, state.amLeader);
 }
 
-
 function broadcastDraft() {
   if (!state.amLeader) return;
   socket.emit('teamDraftChanged', {
@@ -72,11 +76,14 @@ function broadcastDraft() {
 function performDrop(targetId, gs) {
   const targetTeam = targetId === 'team0-slots' ? 0 : targetId === 'team1-slots' ? 1 : -1;
   if (targetTeam !== -1) {
-    const inTeam = Object.values(state.teamAssignments).filter(t => t === targetTeam).length;
-    if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
+    const inTeam = Object.values(state.teamAssignments).filter((t) => t === targetTeam).length;
+    if (inTeam >= 2) {
+      showToast('Cada dupla só pode ter 2 jogadores.', 'error');
+      return;
+    }
   }
   const prevTeam = state.teamAssignments[state.dragSeat];
-  if (prevTeam !== -1) teamOrders[prevTeam] = teamOrders[prevTeam].filter(s => s !== state.dragSeat);
+  if (prevTeam !== -1) teamOrders[prevTeam] = teamOrders[prevTeam].filter((s) => s !== state.dragSeat);
   if (targetTeam !== -1) teamOrders[targetTeam].push(state.dragSeat);
   state.teamAssignments[state.dragSeat] = targetTeam;
   updateTeamChips(gs, state.amLeader);
@@ -99,10 +106,10 @@ function moveInTeam(gs, teamIdx, seatIdx, direction) {
 function updateTeamChips(gs, isLeader = false) {
   const slots = {
     '-1': document.getElementById('unassigned-slots'),
-    '0':  document.getElementById('team0-slots'),
-    '1':  document.getElementById('team1-slots'),
+    0: document.getElementById('team0-slots'),
+    1: document.getElementById('team1-slots'),
   };
-  Object.values(slots).forEach(s => s.innerHTML = '');
+  Object.values(slots).forEach((s) => (s.innerHTML = ''));
 
   // Unassigned players
   gs.players.forEach((p, i) => {
@@ -119,7 +126,7 @@ function updateTeamChips(gs, isLeader = false) {
   });
 
   // Team players — rendered in teamOrders order
-  [0, 1].forEach(t => {
+  [0, 1].forEach((t) => {
     const order = teamOrders[t];
     order.forEach((seatIdx, pos) => {
       const p = gs.players[seatIdx];
@@ -132,11 +139,13 @@ function updateTeamChips(gs, isLeader = false) {
       chip.dataset.seat = seatIdx;
 
       const posLabel = pos === 0 ? '1º' : '2º';
-      const orderControls = isLeader ? `
+      const orderControls = isLeader
+        ? `
         <div class="chip-order-controls">
           <button class="btn-chip-move" data-dir="-1" ${pos === 0 ? 'disabled' : ''} title="Subir">▲</button>
           <button class="btn-chip-move" data-dir="1"  ${pos === order.length - 1 ? 'disabled' : ''} title="Descer">▼</button>
-        </div>` : '';
+        </div>`
+        : '';
 
       chip.innerHTML = `<span class="chip-pos">${posLabel}</span>
         <span class="chip-name">${isBot ? '🤖 ' : ''}${p.name}${isMe ? ' (você)' : ''}</span>
@@ -144,8 +153,8 @@ function updateTeamChips(gs, isLeader = false) {
 
       if (isLeader) {
         attachDragHandlers(chip, seatIdx, gs);
-        chip.querySelectorAll('.btn-chip-move').forEach(btn => {
-          btn.addEventListener('click', e => {
+        chip.querySelectorAll('.btn-chip-move').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
             e.stopPropagation();
             moveInTeam(gs, t, seatIdx, parseInt(btn.dataset.dir));
           });
@@ -172,8 +181,11 @@ function getDropZoneIdAt(x, y) {
 }
 
 function removeGhost() {
-  if (_ghost) { _ghost.remove(); _ghost = null; }
-  ZONE_IDS.forEach(id => document.getElementById(id)?.classList.remove('drag-over'));
+  if (_ghost) {
+    _ghost.remove();
+    _ghost = null;
+  }
+  ZONE_IDS.forEach((id) => document.getElementById(id)?.classList.remove('drag-over'));
 }
 
 function attachDragHandlers(chip, seatIdx, gs) {
@@ -188,18 +200,20 @@ function attachDragHandlers(chip, seatIdx, gs) {
   });
 
   // ── Touch drag (mobile) ───────────────────────────────────────
-  chip.addEventListener('touchstart', e => {
-    if (e.target.closest('.btn-chip-move')) return;
-    e.stopPropagation();
+  chip.addEventListener(
+    'touchstart',
+    (e) => {
+      if (e.target.closest('.btn-chip-move')) return;
+      e.stopPropagation();
 
-    state.dragSeat = seatIdx;
-    chip.classList.add('dragging');
+      state.dragSeat = seatIdx;
+      chip.classList.add('dragging');
 
-    const touch = e.touches[0];
-    const rect = chip.getBoundingClientRect();
+      const touch = e.touches[0];
+      const rect = chip.getBoundingClientRect();
 
-    _ghost = chip.cloneNode(true);
-    _ghost.style.cssText = `
+      _ghost = chip.cloneNode(true);
+      _ghost.style.cssText = `
       position: fixed;
       left: ${rect.left}px;
       top: ${rect.top}px;
@@ -210,27 +224,33 @@ function attachDragHandlers(chip, seatIdx, gs) {
       transform: scale(1.08);
       transition: none;
     `;
-    _ghost.querySelectorAll('.chip-order-controls').forEach(el => el.remove());
-    document.body.appendChild(_ghost);
+      _ghost.querySelectorAll('.chip-order-controls').forEach((el) => el.remove());
+      document.body.appendChild(_ghost);
 
-    chip._touchOffsetX = touch.clientX - rect.left;
-    chip._touchOffsetY = touch.clientY - rect.top;
-  }, { passive: true });
+      chip._touchOffsetX = touch.clientX - rect.left;
+      chip._touchOffsetY = touch.clientY - rect.top;
+    },
+    { passive: true },
+  );
 
-  chip.addEventListener('touchmove', e => {
-    if (!_ghost || state.dragSeat !== seatIdx) return;
-    e.preventDefault();
+  chip.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!_ghost || state.dragSeat !== seatIdx) return;
+      e.preventDefault();
 
-    const touch = e.touches[0];
-    _ghost.style.left = `${touch.clientX - chip._touchOffsetX}px`;
-    _ghost.style.top  = `${touch.clientY - chip._touchOffsetY}px`;
+      const touch = e.touches[0];
+      _ghost.style.left = `${touch.clientX - chip._touchOffsetX}px`;
+      _ghost.style.top = `${touch.clientY - chip._touchOffsetY}px`;
 
-    ZONE_IDS.forEach(id => document.getElementById(id)?.classList.remove('drag-over'));
-    const zoneId = getDropZoneIdAt(touch.clientX, touch.clientY);
-    if (zoneId) document.getElementById(zoneId)?.classList.add('drag-over');
-  }, { passive: false });
+      ZONE_IDS.forEach((id) => document.getElementById(id)?.classList.remove('drag-over'));
+      const zoneId = getDropZoneIdAt(touch.clientX, touch.clientY);
+      if (zoneId) document.getElementById(zoneId)?.classList.add('drag-over');
+    },
+    { passive: false },
+  );
 
-  chip.addEventListener('touchend', e => {
+  chip.addEventListener('touchend', (e) => {
     if (state.dragSeat !== seatIdx) return;
     const touch = e.changedTouches[0];
     const zoneId = getDropZoneIdAt(touch.clientX, touch.clientY);
@@ -250,7 +270,7 @@ function attachDragHandlers(chip, seatIdx, gs) {
 }
 
 function updateConfirmBtn() {
-  const counts = [0, 1].map(t => Object.values(state.teamAssignments).filter(v => v === t).length);
+  const counts = [0, 1].map((t) => Object.values(state.teamAssignments).filter((v) => v === t).length);
   const ready = counts[0] === 2 && counts[1] === 2;
   document.getElementById('btn-confirm-teams').disabled = !ready;
   document.getElementById('teams-hint').textContent = ready
@@ -260,7 +280,8 @@ function updateConfirmBtn() {
 
 document.getElementById('btn-confirm-teams').addEventListener('click', () => {
   const teams = Object.entries(state.teamAssignments).map(([seat, team]) => ({
-    seatIndex: parseInt(seat), teamIndex: team,
+    seatIndex: parseInt(seat),
+    teamIndex: team,
   }));
   socket.emit('assignTeams', { teams, teamOrders }, (res) => {
     if (!res.ok) showToast(res.msg, 'error');
@@ -276,12 +297,20 @@ document.getElementById('btn-random-teams').addEventListener('click', () => {
     [seats[i], seats[j]] = [seats[j], seats[i]];
   }
   // Reset assignments
-  _currentGs.players.forEach((_, i) => { state.teamAssignments[i] = -1; });
+  _currentGs.players.forEach((_, i) => {
+    state.teamAssignments[i] = -1;
+  });
   teamOrders[0] = [];
   teamOrders[1] = [];
   // Assign first 2 to team 0, last 2 to team 1
-  seats.slice(0, 2).forEach(s => { state.teamAssignments[s] = 0; teamOrders[0].push(s); });
-  seats.slice(2, 4).forEach(s => { state.teamAssignments[s] = 1; teamOrders[1].push(s); });
+  seats.slice(0, 2).forEach((s) => {
+    state.teamAssignments[s] = 0;
+    teamOrders[0].push(s);
+  });
+  seats.slice(2, 4).forEach((s) => {
+    state.teamAssignments[s] = 1;
+    teamOrders[1].push(s);
+  });
   updateTeamChips(_currentGs, true);
   updateConfirmBtn();
   broadcastDraft();

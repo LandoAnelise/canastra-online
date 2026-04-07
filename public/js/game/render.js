@@ -1,6 +1,15 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { autoSortHand, isRed, isWild, cardHTML, isCanastra, isCanastraLimpa, isCanastraSuja, showToast } from '../utils.js';
+import {
+  autoSortHand,
+  isRed,
+  isWild,
+  cardHTML,
+  isCanastra,
+  isCanastraLimpa,
+  isCanastraSuja,
+  showToast,
+} from '../utils.js';
 import { playBzz, playCanastraLimpa, playCanastraSuja, playPica, playDeal } from '../sounds.js';
 
 // Track canastra state per meld to detect new ones
@@ -13,20 +22,24 @@ const _prevMeldCardCounts = {};
 // ─── HAND REORDER DRAG-AND-DROP ───────────────────────────────────────────────
 let dragCardId = null;
 
-export function getDragCardId() { return dragCardId; }
+export function getDragCardId() {
+  return dragCardId;
+}
 
 export function renderGame(gs) {
   if (!gs) return;
 
   // Sync hand order — auto-sort when starting fresh, otherwise preserve custom order
-  const handIds = gs.myHand.map(c => c.id);
+  const handIds = gs.myHand.map((c) => c.id);
   if (state.myHandOrder.length === 0) {
     // New round or first load — apply auto-sort
-    state.myHandOrder = autoSortHand(gs.myHand).map(c => c.id);
+    state.myHandOrder = autoSortHand(gs.myHand).map((c) => c.id);
   } else {
     // Keep custom order, append any new cards (drawn/taken) at end
-    state.myHandOrder = state.myHandOrder.filter(id => handIds.includes(id));
-    handIds.forEach(id => { if (!state.myHandOrder.includes(id)) state.myHandOrder.push(id); });
+    state.myHandOrder = state.myHandOrder.filter((id) => handIds.includes(id));
+    handIds.forEach((id) => {
+      if (!state.myHandOrder.includes(id)) state.myHandOrder.push(id);
+    });
   }
 
   // Detectar pica (qualquer jogador caiu para 1 carta)
@@ -44,20 +57,23 @@ export function renderGame(gs) {
   document.getElementById('game-status-label').textContent = `Rodada ${gs.round}`;
 
   const seats = getRelativeSeats(gs);
-  renderOpponent('top',   seats.top,   gs);
-  renderOpponent('left',  seats.left,  gs);
+  renderOpponent('top', seats.top, gs);
+  renderOpponent('left', seats.left, gs);
   renderOpponent('right', seats.right, gs);
   renderMe(gs);
 
   document.getElementById('deck-count').textContent = `${gs.deckSize} cartas`;
-  document.getElementById('deck-pile').querySelector('.pile-card')?.classList.toggle('hidden', gs.deckSize === 0);
+  document
+    .getElementById('deck-pile')
+    .querySelector('.pile-card')
+    ?.classList.toggle('hidden', gs.deckSize === 0);
   document.getElementById('discard-count').textContent = `${gs.discardSize} no lixo`;
   const discardStack = document.getElementById('discard-stack');
   const btnExpand = document.getElementById('btn-expand-discard');
   discardStack.innerHTML = '';
   if (gs.discardPile && gs.discardPile.length > 0) {
     const COMPACT_MAX = 12;
-    const OVERLAP_PX  = 34; // fixed overlap — always the same distance between cards
+    const OVERLAP_PX = 34; // fixed overlap — always the same distance between cards
     const displayCards = gs.discardPile.slice(-COMPACT_MAX);
     displayCards.forEach((card, i) => {
       const ml = i === 0 ? '' : `style="margin-left:-${OVERLAP_PX}px"`;
@@ -84,7 +100,7 @@ export function renderGame(gs) {
   }
   turnBanner.classList.remove('hidden');
 
-  document.querySelectorAll('.player-slot').forEach(s => s.classList.remove('active-turn'));
+  document.querySelectorAll('.player-slot').forEach((s) => s.classList.remove('active-turn'));
   const slot = getSlotForSeat(gs.currentPlayerIndex, gs);
   if (slot) document.getElementById(`player-${slot}`)?.classList.add('active-turn');
 
@@ -98,20 +114,20 @@ function getRelativeSeats(gs) {
   if (gs.playOrder && gs.playOrder.length === 4) {
     const pos = gs.playOrder.indexOf(me);
     const right = gs.playOrder[(pos + 1) % 4]; // próximo a jogar
-    const top   = gs.playOrder[(pos + 2) % 4]; // parceiro
-    const left  = gs.playOrder[(pos + 3) % 4]; // jogou antes
+    const top = gs.playOrder[(pos + 2) % 4]; // parceiro
+    const left = gs.playOrder[(pos + 3) % 4]; // jogou antes
     return { top, right, left };
   }
 
   // Fallback: seat order
-  return { right: (me+1)%4, top: (me+2)%4, left: (me+3)%4 };
+  return { right: (me + 1) % 4, top: (me + 2) % 4, left: (me + 3) % 4 };
 }
 
 function getSlotForSeat(idx, gs) {
   const s = getRelativeSeats(gs);
   if (idx === state.mySeatIndex) return 'bottom';
-  if (idx === s.top)   return 'top';
-  if (idx === s.left)  return 'left';
+  if (idx === s.top) return 'top';
+  if (idx === s.left) return 'left';
   if (idx === s.right) return 'right';
   return null;
 }
@@ -123,7 +139,7 @@ function renderOpponent(pos, seatIdx, gs) {
   const fan = document.getElementById(`hand-${pos}`);
   if (fan) {
     fan.innerHTML = '';
-    for (let i = 0; i < Math.min(gs.handSizes[seatIdx]||0, 13); i++)
+    for (let i = 0; i < Math.min(gs.handSizes[seatIdx] || 0, 13); i++)
       fan.insertAdjacentHTML('beforeend', '<div class="back-card"></div>');
   }
 }
@@ -136,18 +152,18 @@ export function renderMe(gs) {
   hand.innerHTML = '';
   // Detect newly drawn cards
   if (window._prevHandIds) {
-    const newIds = gs.myHand.map(c => c.id).filter(id => !window._prevHandIds.has(id));
+    const newIds = gs.myHand.map((c) => c.id).filter((id) => !window._prevHandIds.has(id));
     if (newIds.length > 0) {
       state.justDrawnCardId = newIds[0]; // highlight first new card
       window._prevHandIds = null;
-      setTimeout(() => { state.justDrawnCardId = null; }, 2500);
+      setTimeout(() => {
+        state.justDrawnCardId = null;
+      }, 2500);
     }
   }
 
   // Staged cards are excluded by the server (not in myHand); just map the hand order
-  const ordered = state.myHandOrder
-    .map(id => gs.myHand.find(c => c.id === id))
-    .filter(Boolean);
+  const ordered = state.myHandOrder.map((id) => gs.myHand.find((c) => c.id === id)).filter(Boolean);
 
   const isMobile = window.innerWidth <= 600;
 
@@ -160,14 +176,15 @@ export function renderMe(gs) {
   // Use window.innerWidth as primary source on mobile: the bottom slot always spans full width,
   // and slot.clientWidth may be 0 on first render before layout is complete.
   const CARD_STEP = 26; // each card after the first adds 26px (width 56 - margin-left 30)
-  const slotW  = isMobile ? window.innerWidth : (slot?.clientWidth || window.innerWidth);
+  const slotW = isMobile ? window.innerWidth : slot?.clientWidth || window.innerWidth;
   const availW = isMobile ? Math.max(280, slotW - 16) : Infinity; // 16 = hand's 2×8px padding
   const perRow = isMobile ? Math.floor((availW - 30) / CARD_STEP) : Infinity;
-  const numRows = (isMobile && ordered.length > 0) ? Math.ceil(ordered.length / perRow) : 1;
+  const numRows = isMobile && ordered.length > 0 ? Math.ceil(ordered.length / perRow) : 1;
   const needsMultiRows = numRows > 1;
 
   // Heights: single-row slot = 124px; each extra row adds 38px (card 80 - overlap 42)
-  const SLOT_H_BASE = 124, ROW_ADD = 38;
+  const SLOT_H_BASE = 124,
+    ROW_ADD = 38;
   const slotH = needsMultiRows ? SLOT_H_BASE + (numRows - 1) * ROW_ADD : SLOT_H_BASE;
   if (needsMultiRows) {
     hand.setAttribute('data-rows', String(numRows));
@@ -182,7 +199,9 @@ export function renderMe(gs) {
     hand.setAttribute('data-rows', '1');
     slot?.classList.remove('multi-rows');
     tableArea?.classList.remove('has-multi-rows');
-    if (slot) { slot.style.height = slot.style.minHeight = slot.style.maxHeight = slot.style.overflow = ''; }
+    if (slot) {
+      slot.style.height = slot.style.minHeight = slot.style.maxHeight = slot.style.overflow = '';
+    }
     if (tableArea) tableArea.style.gridTemplateRows = '';
   }
 
@@ -191,7 +210,7 @@ export function renderMe(gs) {
       const rowCards = ordered.slice(r * perRow, (r + 1) * perRow);
       const rowEl = document.createElement('div');
       rowEl.className = `hand-row hand-row-${r + 1}`;
-      rowCards.forEach(card => {
+      rowCards.forEach((card) => {
         const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
         const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
         rowEl.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
@@ -199,14 +218,14 @@ export function renderMe(gs) {
       hand.appendChild(rowEl);
     }
   } else {
-    ordered.forEach(card => {
+    ordered.forEach((card) => {
       const sel = state.selectedCards.includes(card.id) ? 'selected' : '';
       const drawn = card.id === state.justDrawnCardId ? 'just-drawn' : '';
       hand.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
     });
   }
 
-  hand.querySelectorAll('.my-card').forEach(el => {
+  hand.querySelectorAll('.my-card').forEach((el) => {
     el.addEventListener('click', () => onCardClick(el.dataset.id));
   });
 
@@ -223,7 +242,7 @@ export function renderMe(gs) {
       const btnL = document.createElement('button');
       btnL.className = 'card-move-arrow card-move-left';
       btnL.textContent = 'ᐊ';
-      btnL.addEventListener('click', e => {
+      btnL.addEventListener('click', (e) => {
         e.stopPropagation();
         state.myHandOrder.splice(idx, 1);
         state.myHandOrder.splice(idx > 0 ? idx - 1 : last, 0, selId);
@@ -236,7 +255,7 @@ export function renderMe(gs) {
       const btnR = document.createElement('button');
       btnR.className = 'card-move-arrow card-move-right-float';
       btnR.textContent = 'ᐅ';
-      btnR.addEventListener('click', e => {
+      btnR.addEventListener('click', (e) => {
         e.stopPropagation();
         state.myHandOrder.splice(idx, 1);
         state.myHandOrder.splice(idx < last ? idx + 1 : 0, 0, selId);
@@ -246,8 +265,8 @@ export function renderMe(gs) {
       requestAnimationFrame(() => {
         const handRect = hand.getBoundingClientRect();
         const cardRect = selEl.getBoundingClientRect();
-        btnR.style.left = (cardRect.right - handRect.left + hand.scrollLeft - 10) + 'px';
-        btnR.style.top  = (cardRect.top  - handRect.top  + cardRect.height / 2 - 10) + 'px';
+        btnR.style.left = cardRect.right - handRect.left + hand.scrollLeft - 10 + 'px';
+        btnR.style.top = cardRect.top - handRect.top + cardRect.height / 2 - 10 + 'px';
       });
     }
   }
@@ -263,10 +282,10 @@ export function renderMelds(gs) {
   // Detect newly formed canastras and suja→limpa transitions
   gs.melds.forEach((teamMelds, t) => {
     teamMelds.forEach((meld, mi) => {
-      const key  = `${t}-${mi}`;
+      const key = `${t}-${mi}`;
       const prev = _canastraState[key] || { isC: false, isL: false };
-      const isC  = isCanastra(meld);
-      const isL  = isCanastraLimpa(meld);
+      const isC = isCanastra(meld);
+      const isL = isCanastraLimpa(meld);
       if (isC && !prev.isC) {
         isL ? playCanastraLimpa() : playCanastraSuja();
       } else if (isC && isL && !prev.isL) {
@@ -277,13 +296,13 @@ export function renderMelds(gs) {
   });
 
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
-  const drawn    = gs.drawnThisTurn;
+  const drawn = gs.drawnThisTurn;
 
   // Update team labels — highlight the player's own team
   for (let t = 0; t < 2; t++) {
-    const label    = document.getElementById(`melds-label-${t}`);
+    const label = document.getElementById(`melds-label-${t}`);
     const youBadge = label?.querySelector('.melds-label-you');
-    const group    = document.getElementById(`melds-team${t}`);
+    const group = document.getElementById(`melds-team${t}`);
     if (gs.teamNames) {
       document.getElementById(`melds-label-text-${t}`).textContent = gs.teamNames[t];
     }
@@ -312,9 +331,7 @@ export function renderMelds(gs) {
 
         hasStagedForTeam = true;
 
-        const stagingLabel = seatIdx === gs.myIndex
-          ? 'Em espera'
-          : `Em espera — ${gs.players[seatIdx].name}`;
+        const stagingLabel = seatIdx === gs.myIndex ? 'Em espera' : `Em espera — ${gs.players[seatIdx].name}`;
 
         const penalty = gs.firstMeldPenalty?.[t];
         const penaltyBadge = penalty
@@ -331,13 +348,17 @@ export function renderMelds(gs) {
               <span class="meld-type-label staged-label-text">${stagingLabel}</span>
               ${penaltyBadge}
             </div>
-            <div class="meld-cards-row">${meld.cards.map(c => fullCardHTML(c)).join('')}</div>`;
+            <div class="meld-cards-row">${meld.cards.map((c) => fullCardHTML(c)).join('')}</div>`;
 
           if (canAddToStaged) {
             el.addEventListener('click', () => {
               if (state.selectedCards.length === 0) return;
-              socket.emit('addToStagedMeld', { stagedMeldIdx: smi, cardIds: [...state.selectedCards] }, res => {
-                if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+              socket.emit('addToStagedMeld', { stagedMeldIdx: smi, cardIds: [...state.selectedCards] }, (res) => {
+                if (!res.ok) {
+                  showToast(res.msg, 'error');
+                  playBzz();
+                  return;
+                }
                 clearSelection();
               });
             });
@@ -355,10 +376,13 @@ export function renderMelds(gs) {
 
     gs.melds[t].forEach((meld, mi) => {
       const isLimpa = isCanastraLimpa(meld);
-      const isSuja  = isCanastraSuja(meld);
+      const isSuja = isCanastraSuja(meld);
       const cls = isLimpa ? 'canastra-limpa' : isSuja ? 'canastra-suja' : '';
-      const badge = isLimpa ? '<span class="canastra-badge limpa">✦ Limpa</span>'
-                  : isSuja  ? '<span class="canastra-badge suja">✦ Suja</span>' : '';
+      const badge = isLimpa
+        ? '<span class="canastra-badge limpa">✦ Limpa</span>'
+        : isSuja
+          ? '<span class="canastra-badge suja">✦ Suja</span>'
+          : '';
       const typeLabel = meld.type === 'sequence' ? 'sq.' : 'gp.';
       const canAdd = isMyTurn && drawn && t === gs.myTeam;
 
@@ -369,30 +393,32 @@ export function renderMelds(gs) {
       _prevMeldCardCounts[meldKey] = meld.cards.length;
 
       const isMobileView = window.matchMedia('(max-width: 600px)').matches;
-      const shouldStack  = isMobileView && meld.cards.length > 4;
+      const shouldStack = isMobileView && meld.cards.length > 4;
 
       // Um 2 é coringa ATUANDO se aparece ao lado de cartas não-coringa (independente do naipe)
       const isActingWild = (c) => {
         if (!isWild(c)) return false;
-        return meld.cards.some(n => !isWild(n));
+        return meld.cards.some((n) => !isWild(n));
       };
 
       // Build card HTML — tag cards for CSS stacking
-      const cardsHTML = meld.cards.map((card, ci, arr) => {
-        let extra = '';
-        if (shouldStack) {
-          const prevActing  = ci >= 1 && isActingWild(arr[ci - 1]);
-          const prev2Acting = ci >= 2 && isActingWild(arr[ci - 2]);
-          // stack-after-visible (-26px) → mostra 18px da carta anterior
-          const needsVisible = ci === 1 || prevActing || prev2Acting || isActingWild(card);
-          if (ci === arr.length - 1) {
-            extra = needsVisible ? 'stack-after-visible' : 'stack-last';
-          } else if (ci > 0 && needsVisible) {
-            extra = 'stack-after-visible';
+      const cardsHTML = meld.cards
+        .map((card, ci, arr) => {
+          let extra = '';
+          if (shouldStack) {
+            const prevActing = ci >= 1 && isActingWild(arr[ci - 1]);
+            const prev2Acting = ci >= 2 && isActingWild(arr[ci - 2]);
+            // stack-after-visible (-26px) → mostra 18px da carta anterior
+            const needsVisible = ci === 1 || prevActing || prev2Acting || isActingWild(card);
+            if (ci === arr.length - 1) {
+              extra = needsVisible ? 'stack-after-visible' : 'stack-last';
+            } else if (ci > 0 && needsVisible) {
+              extra = 'stack-after-visible';
+            }
           }
-        }
-        return fullCardHTML(card, extra);
-      }).join('');
+          return fullCardHTML(card, extra);
+        })
+        .join('');
 
       const el = document.createElement('div');
       el.className = `meld-group-full ${cls}${shouldHighlight ? ' meld-new' : ''}${canAdd || shouldStack ? ' can-add' : ''}`;
@@ -409,14 +435,27 @@ export function renderMelds(gs) {
         if (state.selectedCards.length > 0) {
           const gs = state.gameState;
           const nowMyTurn = gs?.currentPlayerIndex === state.mySeatIndex;
-          const nowDrawn  = gs?.drawnThisTurn;
-          if (!nowMyTurn) { showToast('Aguarde seu turno para jogar.', 'error'); playBzz(); return; }
-          if (!nowDrawn)  { showToast('Compre ou junte da mesa antes de jogar.', 'error'); playBzz(); return; }
+          const nowDrawn = gs?.drawnThisTurn;
+          if (!nowMyTurn) {
+            showToast('Aguarde seu turno para jogar.', 'error');
+            playBzz();
+            return;
+          }
+          if (!nowDrawn) {
+            showToast('Compre ou junte da mesa antes de jogar.', 'error');
+            playBzz();
+            return;
+          }
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...state.selectedCards] }];
-          socket.emit('playMelds', { meldActions }, res => {
-            if (!res.ok) { showToast(res.msg, 'error'); playBzz(); return; }
+          socket.emit('playMelds', { meldActions }, (res) => {
+            if (!res.ok) {
+              showToast(res.msg, 'error');
+              playBzz();
+              return;
+            }
             showToast('Cartas adicionadas!', 'success', 1000);
-            playDeal(); clearSelection();
+            playDeal();
+            clearSelection();
           });
           return;
         }
@@ -439,18 +478,21 @@ export function renderMelds(gs) {
 
       // Drag-to-meld (desktop only, canAdd)
       if (canAdd) {
-        el.addEventListener('dragover', e => {
+        el.addEventListener('dragover', (e) => {
           if (!dragCardId) return;
           e.preventDefault();
           el.classList.add('drop-target');
         });
         el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
-        el.addEventListener('drop', e => {
+        el.addEventListener('drop', (e) => {
           e.preventDefault();
           el.classList.remove('drop-target');
           if (!dragCardId) return;
-          socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, res => {
-            if (!res.ok) { showToast(res.msg, 'error'); return; }
+          socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, (res) => {
+            if (!res.ok) {
+              showToast(res.msg, 'error');
+              return;
+            }
             showToast('Carta adicionada!', 'success', 1000);
             clearSelection();
           });
@@ -473,13 +515,13 @@ export function renderMelds(gs) {
 export function updateButtons(gs) {
   const isMyTurn = gs.currentPlayerIndex === state.mySeatIndex;
   const drawn = gs.drawnThisTurn;
-  const hasCanastra = gs.melds[gs.myTeam]?.some(m => m.cards.length >= 7);
+  const hasCanastra = gs.melds[gs.myTeam]?.some((m) => m.cards.length >= 7);
   const isStaging = (gs.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
   const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
 
   const btnPlayMelds = document.getElementById('btn-play-melds');
-  const btnConfirm   = document.getElementById('btn-confirm-melds');
-  const btnCancel    = document.getElementById('btn-cancel-melds');
+  const btnConfirm = document.getElementById('btn-confirm-melds');
+  const btnCancel = document.getElementById('btn-cancel-melds');
 
   // During staging: "Baixar" stays active (add more melds), "Confirmar" appears, "Cancelar" hidden
   btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length < 3;
@@ -494,7 +536,7 @@ export function updateButtons(gs) {
 
 export function onCardClick(cardId) {
   state.selectedCards = state.selectedCards.includes(cardId)
-    ? state.selectedCards.filter(id => id !== cardId)
+    ? state.selectedCards.filter((id) => id !== cardId)
     : [...state.selectedCards, cardId];
   renderMe(state.gameState);
   updateButtons(state.gameState);
@@ -523,64 +565,85 @@ function setupHandDragDrop(container) {
     container._pointerDragInit = true;
     let td = null; // estado do drag por touch
 
-    container.addEventListener('touchstart', e => {
-      const card = e.target.closest('.my-card');
-      if (!card) return;
-      const touch = e.touches[0];
-      td = { id: card.dataset.id, el: card, touchId: touch.identifier,
-             startX: touch.clientX, startY: touch.clientY, captured: false };
-    }, { passive: true });
+    container.addEventListener(
+      'touchstart',
+      (e) => {
+        const card = e.target.closest('.my-card');
+        if (!card) return;
+        const touch = e.touches[0];
+        td = {
+          id: card.dataset.id,
+          el: card,
+          touchId: touch.identifier,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          captured: false,
+        };
+      },
+      { passive: true },
+    );
 
-    container.addEventListener('touchmove', e => {
-      if (!td) return;
-      const touch = [...e.touches].find(t => t.identifier === td.touchId);
-      if (!touch) return;
-      const dx = Math.abs(touch.clientX - td.startX);
-      const dy = Math.abs(touch.clientY - td.startY);
+    container.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!td) return;
+        const touch = [...e.touches].find((t) => t.identifier === td.touchId);
+        if (!touch) return;
+        const dx = Math.abs(touch.clientX - td.startX);
+        const dy = Math.abs(touch.clientY - td.startY);
 
-      if (!td.captured) {
-        if (dx > 8 && dx > dy * 1.5) {
-          // Gesto horizontal dominante → inicia reordenação
-          td.captured = true;
-          td.el.style.opacity = '0.4';
-          dragCardId = td.id;
-        } else if (dy > 10) {
-          td = null; // scroll vertical → cancela drag
-          return;
-        } else {
-          return; // aguarda decisão
+        if (!td.captured) {
+          if (dx > 8 && dx > dy * 1.5) {
+            // Gesto horizontal dominante → inicia reordenação
+            td.captured = true;
+            td.el.style.opacity = '0.4';
+            dragCardId = td.id;
+          } else if (dy > 10) {
+            td = null; // scroll vertical → cancela drag
+            return;
+          } else {
+            return; // aguarda decisão
+          }
         }
-      }
 
-      // Bloqueamos scroll apenas após confirmar gesto horizontal
-      e.preventDefault();
+        // Bloqueamos scroll apenas após confirmar gesto horizontal
+        e.preventDefault();
 
-      // Destaca carta alvo sob o dedo
-      const cards = [...container.querySelectorAll('.my-card')];
-      cards.forEach(c => c.classList.remove('drag-over-card'));
-      const target = cards.find(c => {
-        if (c === td.el) return false;
-        const r = c.getBoundingClientRect();
-        return touch.clientX >= r.left && touch.clientX <= r.right &&
-               touch.clientY >= r.top - 20 && touch.clientY <= r.bottom + 20;
-      });
-      if (target) target.classList.add('drag-over-card');
-    }, { passive: false });
+        // Destaca carta alvo sob o dedo
+        const cards = [...container.querySelectorAll('.my-card')];
+        cards.forEach((c) => c.classList.remove('drag-over-card'));
+        const target = cards.find((c) => {
+          if (c === td.el) return false;
+          const r = c.getBoundingClientRect();
+          return (
+            touch.clientX >= r.left &&
+            touch.clientX <= r.right &&
+            touch.clientY >= r.top - 20 &&
+            touch.clientY <= r.bottom + 20
+          );
+        });
+        if (target) target.classList.add('drag-over-card');
+      },
+      { passive: false },
+    );
 
     const finishTouchDrag = () => {
-      if (!td || !td.captured) { td = null; return; }
+      if (!td || !td.captured) {
+        td = null;
+        return;
+      }
       const { id, el } = td;
       td = null;
       el.style.opacity = '';
       dragCardId = null;
 
       const cards = [...container.querySelectorAll('.my-card')];
-      const target = cards.find(c => c.classList.contains('drag-over-card'));
-      cards.forEach(c => c.classList.remove('drag-over-card'));
+      const target = cards.find((c) => c.classList.contains('drag-over-card'));
+      cards.forEach((c) => c.classList.remove('drag-over-card'));
 
       if (target && id !== target.dataset.id) {
         const from = state.myHandOrder.indexOf(id);
-        const to   = state.myHandOrder.indexOf(target.dataset.id);
+        const to = state.myHandOrder.indexOf(target.dataset.id);
         if (from !== -1 && to !== -1) {
           state.myHandOrder.splice(from, 1);
           state.myHandOrder.splice(to, 0, id);
@@ -593,36 +656,36 @@ function setupHandDragDrop(container) {
     container.addEventListener('touchcancel', () => {
       if (!td) return;
       td.el.style.opacity = '';
-      container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+      container.querySelectorAll('.my-card').forEach((c) => c.classList.remove('drag-over-card'));
       dragCardId = null;
       td = null;
     });
   }
 
   // ── HTML5 Drag — fallback para Chrome (desktop/Android) e drag para lixo/melds
-  container.querySelectorAll('.my-card').forEach(el => {
-    el.addEventListener('dragstart', e => {
+  container.querySelectorAll('.my-card').forEach((el) => {
+    el.addEventListener('dragstart', (e) => {
       dragCardId = el.dataset.id;
       e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => el.style.opacity = '0.35', 0);
+      setTimeout(() => (el.style.opacity = '0.35'), 0);
     });
     el.addEventListener('dragend', () => {
       el.style.opacity = '';
       dragCardId = null;
-      container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+      container.querySelectorAll('.my-card').forEach((c) => c.classList.remove('drag-over-card'));
     });
-    el.addEventListener('dragover', e => {
+    el.addEventListener('dragover', (e) => {
       e.preventDefault();
       if (dragCardId && dragCardId !== el.dataset.id) {
-        container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+        container.querySelectorAll('.my-card').forEach((c) => c.classList.remove('drag-over-card'));
         el.classList.add('drag-over-card');
       }
     });
-    el.addEventListener('drop', e => {
+    el.addEventListener('drop', (e) => {
       e.preventDefault();
       if (!dragCardId || dragCardId === el.dataset.id) return;
       const from = state.myHandOrder.indexOf(dragCardId);
-      const to   = state.myHandOrder.indexOf(el.dataset.id);
+      const to = state.myHandOrder.indexOf(el.dataset.id);
       if (from === -1 || to === -1) return;
       state.myHandOrder.splice(from, 1);
       state.myHandOrder.splice(to, 0, dragCardId);
@@ -631,15 +694,13 @@ function setupHandDragDrop(container) {
   });
 }
 
-const FACE_GLYPH = { 'K': '♚', 'Q': '♛', 'J': '♞' };
+const FACE_GLYPH = { K: '♚', Q: '♛', J: '♞' };
 
 function fullCardHTML(card, extraClass = '', extraStyle = '') {
   const red = isRed(card.suit) ? 'red' : '';
   const wild = isWild(card) ? 'wild' : '';
   const glyph = FACE_GLYPH[card.rank];
-  const face = glyph
-    ? `<span class="meld-face">${glyph}</span>`
-    : `<span class="meld-face-suit">${card.suit}</span>`;
+  const face = glyph ? `<span class="meld-face">${glyph}</span>` : `<span class="meld-face-suit">${card.suit}</span>`;
   return `<div class="meld-card ${red} ${wild} ${extraClass}" ${extraStyle}>
     <span class="card-rank">${card.rank}</span>
     <span class="card-suit">${card.suit}</span>

@@ -16,7 +16,9 @@ const app = express();
 const server = http.createServer(app);
 
 // CORS: allow same-origin in production, configurable via env
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()) : undefined; // undefined = same-origin only in production
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
+  : undefined; // undefined = same-origin only in production
 const io = new Server(server, {
   cors: {
     origin: ALLOWED_ORIGINS || (process.env.NODE_ENV === 'production' ? false : '*'),
@@ -135,7 +137,9 @@ setInterval(() => {
   const now = Date.now();
   for (const [roomId, game] of rm.rooms) {
     // Skip rooms with active human players
-    const hasHumans = game.players.some((p, i) => p?.id && !p.id.startsWith('bot') && !(game.botSeats && game.botSeats.has(i)));
+    const hasHumans = game.players.some(
+      (p, i) => p?.id && !p.id.startsWith('bot') && !(game.botSeats && game.botSeats.has(i)),
+    );
     if (hasHumans) {
       // Update last activity timestamp
       game._lastActivity = now;

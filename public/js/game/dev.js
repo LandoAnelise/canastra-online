@@ -5,17 +5,20 @@ import { showToast } from '../utils.js';
 // ── DEV PANEL ────────────────────────────────────────────────────────────────
 // Só ativo em salas de teste (testMode = true no gameState)
 
-const panel     = document.getElementById('dev-panel');
-const toggle    = document.getElementById('dev-panel-toggle');
-const body      = document.getElementById('dev-panel-body');
-const inp0      = document.getElementById('dev-score-0');
-const inp1      = document.getElementById('dev-score-1');
-const btnApply  = document.getElementById('dev-apply-scores');
-const cbHands   = document.getElementById('dev-show-hands');
+const panel = document.getElementById('dev-panel');
+const toggle = document.getElementById('dev-panel-toggle');
+const body = document.getElementById('dev-panel-body');
+const inp0 = document.getElementById('dev-score-0');
+const inp1 = document.getElementById('dev-score-1');
+const btnApply = document.getElementById('dev-apply-scores');
+const cbHands = document.getElementById('dev-show-hands');
 
 // Mostra/oculta o painel conforme o gameState
 socket.on('gameState', (gs) => {
-  if (!gs.testMode) { panel.classList.add('hidden'); return; }
+  if (!gs.testMode) {
+    panel.classList.add('hidden');
+    return;
+  }
   panel.classList.remove('hidden');
 
   // Sincroniza inputs com os scores atuais (sem sobrescrever se o usuário estiver editando)
@@ -44,7 +47,7 @@ cbHands.addEventListener('change', () => {
 });
 
 function clearAllHandOverlays() {
-  document.querySelectorAll('.dev-hand-overlay').forEach(el => el.remove());
+  document.querySelectorAll('.dev-hand-overlay').forEach((el) => el.remove());
 }
 
 function renderAllHands(gs) {
@@ -63,7 +66,7 @@ function renderAllHands(gs) {
 
     const overlay = document.createElement('div');
     overlay.className = 'dev-hand-overlay';
-    hand.forEach(card => {
+    hand.forEach((card) => {
       const isRed = card.suit === '♥' || card.suit === '♦';
       const div = document.createElement('div');
       div.className = `dev-mini-card${isRed ? ' red' : ''}`;

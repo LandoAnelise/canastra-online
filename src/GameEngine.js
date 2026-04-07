@@ -471,7 +471,8 @@ class Game {
 
   // Pescar do monte
   drawFromDeck(playerIndex) {
-    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4) return { ok: false, msg: 'Índice de jogador inválido.' };
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (this.drawnThisTurn) return { ok: false, msg: 'Você já comprou neste turno.' };
     if (this.deck.length === 0) return { ok: false, msg: 'Monte vazio.' };
@@ -486,7 +487,8 @@ class Game {
 
   // Pegar o lixo inteiro
   takeDiscard(playerIndex) {
-    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4) return { ok: false, msg: 'Índice de jogador inválido.' };
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (this.drawnThisTurn) return { ok: false, msg: 'Você já comprou neste turno.' };
     if (this.discard.length === 0) return { ok: false, msg: 'Lixo vazio.' };
@@ -510,7 +512,8 @@ class Game {
   // Baixar cartas (first meld ou adicionar a meld existente)
   // meldActions: [{type: 'new', cards: [cardIds]} | {type: 'add', meldIndex: N, cards: [cardIds]}]
   playMelds(playerIndex, meldActions) {
-    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4) return { ok: false, msg: 'Índice de jogador inválido.' };
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de baixar.' };
 
@@ -585,7 +588,10 @@ class Game {
 
     // Não pode baixar e ficar sem cartas suficientes se não tiver canastra
     if (remainingHand.length < 2 && !hasCanastraAfter) {
-      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+      return {
+        ok: false,
+        msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.',
+      };
     }
 
     // Aplicar
@@ -696,7 +702,10 @@ class Game {
       const allCards = staged.flatMap((m) => m.cards);
       this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
       this.stagedMelds[playerIndex] = [];
-      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+      return {
+        ok: false,
+        msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.',
+      };
     }
 
     // Commitar
