@@ -25,11 +25,11 @@ const BUILD_HASH = (() => {
 // Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
 const DEV_MODE = process.env.DEV_MODE === 'true';
 
-// CSS/JS: cache longo com versionamento por query string (?v=HASH)
-// HTML: nunca cachear (sempre busca versão nova que referencia o hash correto)
+// CSS/JS com cache longo — index.html é servido pelo handler customizado abaixo
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: false,
   lastModified: false,
+  index: false, // impede express.static de servir index.html automaticamente
   setHeaders(res, filePath) {
     if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-store');
