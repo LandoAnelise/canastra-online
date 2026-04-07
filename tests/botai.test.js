@@ -197,14 +197,22 @@ describe('findExtensionCandidates', () => {
     assert.ok(!wildExt, 'Grupo misto não deve receber segundo coringa');
   });
 
-  test('E6 Easy: nunca gera extensões', () => {
-    const teamMelds = [{
+  test('E6 Easy: gera extensão natural em grupo mas não em sequência', () => {
+    const groupMeld = {
       type: 'group', rank: 'K',
       cards: [card('K','♠',1), card('K','♥',1), card('K','♦',1)],
-    }];
-    const hand = [card('K','♣',1)];
+    };
+    const seqMeld = {
+      type: 'sequence', suit: '♥',
+      cards: [card('5','♥',1), card('6','♥',1), card('7','♥',1)],
+    };
+    const teamMelds = [groupMeld, seqMeld];
+    const hand = [card('K','♣',1), card('8','♥',1)];
     const cands = findExtensionCandidates(hand, teamMelds, 'easy');
-    assert.equal(cands.length, 0);
+    const groupExt = cands.find(c => c.meldIndex === 0);
+    const seqExt   = cands.find(c => c.meldIndex === 1);
+    assert.ok(groupExt,  'Easy deve estender grupo natural');
+    assert.ok(!seqExt,   'Easy NÃO deve estender sequência');
   });
 
 });
