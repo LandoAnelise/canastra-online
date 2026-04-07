@@ -1039,6 +1039,7 @@
   .player-slot.bottom.multi-rows { overflow: visible; }
 
   /* Arrow navigation for card reordering (single card selected) */
+  /* Setas de navegação da mão — comentado temporariamente
   .card-move-arrow {
     position: absolute;
     top: 50%;
@@ -1062,6 +1063,7 @@
   }
   .card-move-left        { left: -10px; }
   .card-move-right-float { position: absolute; z-index: 50; transform: none; }
+  */
 
   /* Meld cards (mesa) */
   .meld-card {
