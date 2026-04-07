@@ -167,7 +167,10 @@ socket.on('connect', () => {
   socket.emit('joinRoom', { roomId: session.roomId, playerName: session.playerName }, (res) => {
     if (!res.ok) {
       clearSession();
-      showToast('Sessão expirada. Entre novamente.', 'error', 3000);
+      showToast('Sala não encontrada. Redirecionando...', 'error', 3000);
+      showScreen('screen-lobby');
+      const nameInput = document.getElementById('input-name');
+      if (nameInput && !nameInput.value) nameInput.value = session.playerName;
       return;
     }
     state.myName    = session.playerName;
