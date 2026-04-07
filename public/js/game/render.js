@@ -157,8 +157,10 @@ export function renderMe(gs) {
 
   // Calculate how many cards fit per row based on slot width.
   // Do NOT use hand.clientWidth — after innerHTML='' with flex-column+align-start it collapses to ~0.
+  // Use window.innerWidth as primary source on mobile: the bottom slot always spans full width,
+  // and slot.clientWidth may be 0 on first render before layout is complete.
   const CARD_STEP = 26; // each card after the first adds 26px (width 56 - margin-left 30)
-  const slotW  = slot ? slot.clientWidth : window.innerWidth;
+  const slotW  = isMobile ? window.innerWidth : (slot?.clientWidth || window.innerWidth);
   const availW = isMobile ? Math.max(280, slotW - 16) : Infinity; // 16 = hand's 2×8px padding
   const perRow = isMobile ? Math.floor((availW - 30) / CARD_STEP) : Infinity;
   const numRows = (isMobile && ordered.length > 0) ? Math.ceil(ordered.length / perRow) : 1;
