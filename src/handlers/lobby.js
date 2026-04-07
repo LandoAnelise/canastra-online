@@ -67,8 +67,14 @@ function registerLobbyHandlers(socket, rm) {
     if (!roomId || !playerName) return cb({ ok: false, msg: 'Dados inválidos.' });
 
     const name = playerName.trim().slice(0, 10);
-    const game = getOrCreateRoom(roomId);
     const key  = reconnectKey(roomId, name);
+
+    // Sala deve existir — não criar automaticamente
+    if (!rooms.has(roomId) && !reconnectSlots.has(key)) {
+      return cb({ ok: false, msg: 'Sala não encontrada.' });
+    }
+
+    const game = rooms.get(roomId) || getOrCreateRoom(roomId);
 
     // ── RECONNECT path ──
     if (reconnectSlots.has(key)) {
@@ -170,10 +176,24 @@ function registerLobbyHandlers(socket, rm) {
 
     const player = game.players[info.seatIndex];
     const name = player?.name || '?';
+    const meta = roomMeta.get(info.roomId);
+    const { broadcastToRoom: btr } = rm;
 
-    // Remove player slot and compact the array
+    socket.leave(info.roomId);
+    playerRoom.delete(socket.id);
+
+    // Se o líder saiu, encerra a sala para todos
+    if (info.seatIndex === game.leaderSeatIndex) {
+      console.log(`[Room ${info.roomId}] Líder ${name} saiu — sala encerrada`);
+      btr(info.roomId, 'roomClosed', { reason: 'O líder da sala saiu.' });
+      rooms.delete(info.roomId);
+      roomMeta.delete(info.roomId);
+      if (meta?.isPublic) broadcastPublicRooms();
+      return;
+    }
+
+    // Remove slot e compacta
     game.players.splice(info.seatIndex, 1);
-    // Fix seatIndex for remaining players and update playerRoom entries
     game.players.forEach((p, i) => {
       if (p) {
         p.seatIndex = i;
@@ -181,17 +201,11 @@ function registerLobbyHandlers(socket, rm) {
         if (entry) entry.seatIndex = i;
       }
     });
-    // Seat 0 is always the leader
     game.leaderSeatIndex = 0;
 
-    socket.leave(info.roomId);
-    playerRoom.delete(socket.id);
-
     console.log(`[Room ${info.roomId}] ${name} saiu voluntariamente`);
-    const { broadcastToRoom: btr } = rm;
     btr(info.roomId, 'playerDisconnected', { playerName: name, seatIndex: info.seatIndex });
 
-    const meta = roomMeta.get(info.roomId);
     if (game.players.length === 0) {
       rooms.delete(info.roomId);
       roomMeta.delete(info.roomId);

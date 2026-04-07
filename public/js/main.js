@@ -2,7 +2,7 @@ import socket from './socket.js';
 import { state } from './state.js';
 import { showToast, showScreen, closeModal } from './utils.js';
 import { playCampainha, playFolhaVirando, playWhoosh, playDeal, playBzz } from './sounds.js';
-import { loadSession, clearSession } from './session.js';
+import { loadSession, clearSession, clearRoomFromSession } from './session.js';
 
 let _prevTurnIdx = -1;
 import './screens/lobby.js';
@@ -56,11 +56,19 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
   // If reconnectWindowMs is set, gamePaused event handles the UI
 });
 
+socket.on('roomClosed', ({ reason }) => {
+  clearRoomFromSession();
+  state.myRoomId = null;
+  showToast(reason || 'A sala foi encerrada.', 'error', 4000);
+  history.replaceState(null, '', '/');
+  showScreen('screen-lobby');
+});
+
 socket.on('gameAbandoned', ({ playerName }) => {
   const msg = document.getElementById('modal-abandoned-msg');
   if (msg) msg.textContent = `${playerName} desistiu da partida. O jogo foi finalizado.`;
   document.getElementById('modal-abandoned').classList.remove('hidden');
-  clearSession();
+  clearRoomFromSession();
   state.teamsInitialized = false;
   state.gameState = null;
   state.myRoomId  = null;
@@ -163,14 +171,18 @@ socket.on('connect', () => {
   const session = loadSession();
   if (!session) return;
 
+  // Sempre preenche o nome salvo no campo do lobby
+  const nameInput = document.getElementById('input-name');
+  if (nameInput && !nameInput.value && session.playerName) nameInput.value = session.playerName;
+
+  if (!session.roomId) return; // sem sala para reconectar
+
   showToast('Reconectando à partida...', 'info', 3000);
   socket.emit('joinRoom', { roomId: session.roomId, playerName: session.playerName }, (res) => {
     if (!res.ok) {
-      clearSession();
+      clearRoomFromSession();
       showToast('Sala não encontrada. Redirecionando...', 'error', 3000);
       showScreen('screen-lobby');
-      const nameInput = document.getElementById('input-name');
-      if (nameInput && !nameInput.value) nameInput.value = session.playerName;
       return;
     }
     state.myName    = session.playerName;

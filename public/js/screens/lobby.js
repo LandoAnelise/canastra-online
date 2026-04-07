@@ -80,14 +80,6 @@ document.getElementById('btn-create-test').addEventListener('click', () => {
   });
 });
 
-// Random room code generator (for join-by-code tab)
-document.getElementById('btn-random-room').addEventListener('click', () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  document.getElementById('input-room').value = code;
-});
-
 // Join by code
 export function joinRoomByCode(code) {
   const name = document.getElementById('input-name').value.trim();
