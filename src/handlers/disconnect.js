@@ -97,27 +97,34 @@ function registerDisconnectHandler(socket, io, rm) {
             reconnectWindowMs: RECONNECT_TIMEOUT_MS,
           });
         } else {
-          // Jogo ainda não começou — libera o slot imediatamente
-          game.players.splice(info.seatIndex, 1);
-          game.players.forEach((p, i) => {
-            if (p) {
-              p.seatIndex = i;
-              const entry = playerRoom.get(p.id);
-              if (entry) entry.seatIndex = i;
-            }
-          });
-          game.leaderSeatIndex = 0;
-
-          broadcastToRoom(info.roomId, 'playerDisconnected', {
-            playerName: name,
-            seatIndex: info.seatIndex,
-          });
-
-          if (game.players.length === 0) {
+          // Jogo ainda não começou — se o líder saiu, encerra a sala para todos
+          if (info.seatIndex === game.leaderSeatIndex) {
+            broadcastToRoom(info.roomId, 'roomClosed', { reason: 'O líder da sala saiu.' });
             rooms.delete(info.roomId);
             roomMeta.delete(info.roomId);
           } else {
-            broadcastState(game);
+            // Libera o slot e compacta
+            game.players.splice(info.seatIndex, 1);
+            game.players.forEach((p, i) => {
+              if (p) {
+                p.seatIndex = i;
+                const entry = playerRoom.get(p.id);
+                if (entry) entry.seatIndex = i;
+              }
+            });
+            game.leaderSeatIndex = 0;
+
+            broadcastToRoom(info.roomId, 'playerDisconnected', {
+              playerName: name,
+              seatIndex: info.seatIndex,
+            });
+
+            if (game.players.length === 0) {
+              rooms.delete(info.roomId);
+              roomMeta.delete(info.roomId);
+            } else {
+              broadcastState(game);
+            }
           }
         }
       }
