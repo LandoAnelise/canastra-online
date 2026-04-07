@@ -244,7 +244,7 @@ export function renderMe(gs) {
       requestAnimationFrame(() => {
         const handRect = hand.getBoundingClientRect();
         const cardRect = selEl.getBoundingClientRect();
-        btnR.style.left = (cardRect.right - handRect.left + hand.scrollLeft - 10) + 'px';
+        btnR.style.left = (cardRect.right - handRect.left + hand.scrollLeft - 24) + 'px';
         btnR.style.top  = (cardRect.top  - handRect.top  + cardRect.height / 2 - 10) + 'px';
       });
     }

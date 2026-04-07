@@ -465,6 +465,7 @@
   transform: translateY(-14px);
   box-shadow: 0 16px 30px rgba(201,168,76,0.55);
   background: #fffff5;
+  z-index: 10;
 }
 .my-card.to-discard {
   border-color: #e74c3c;
@@ -1060,7 +1061,7 @@
     touch-action: manipulation;
     line-height: 1;
   }
-  .card-move-left        { left: -10px; }
+  .card-move-left        { left: 4px; }
   .card-move-right-float { position: absolute; z-index: 50; transform: none; }
 
   /* Meld cards (mesa) */
