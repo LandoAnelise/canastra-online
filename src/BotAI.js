@@ -33,6 +33,21 @@ const DELAYS = {
 function cardPts(rank) { return CARD_PTS[rank] || 5; }
 function isWild(card)  { return card.rank === '2'; }
 
+/**
+ * Retorna true se uma carta de valor numérico `v` e naipe `suit` pode ser
+ * adicionada a uma sequência cujas cartas naturais são `meldNaturals`.
+ * Cobre tanto extensões de borda (v = min-1 ou max+1) quanto preenchimento
+ * de lacunas internas onde um coringa está atuando como substituto.
+ */
+function cardFitsSequence(v, suit, meldNaturals) {
+  if (!meldNaturals.length || meldNaturals[0].suit !== suit) return false;
+  const vs  = meldNaturals.map(c => cardNumVal(c)).sort((a, b) => a - b);
+  const min = vs[0], max = vs[vs.length - 1];
+  const naturalVals = new Set(vs);
+  return v === min - 1 || v === max + 1
+    || (v > min && v < max && !naturalVals.has(v));
+}
+
 /** Valor numérico do rank para ordenação em sequências (ás = 1). */
 function cardNumVal(card) {
   if (card.rank === 'A') return 1;
@@ -212,8 +227,6 @@ function findSequenceCandidates(hand, difficulty) {
  * Retorna candidatos do tipo 'add'.
  */
 function findExtensionCandidates(hand, teamMelds, difficulty) {
-  if (difficulty === 'easy') return [];
-
   const wilds      = hand.filter(c => isWild(c));
   const candidates = [];
 
@@ -226,12 +239,13 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
 
       let matching;
       if (meldRank === '2') {
-        matching = wilds; // grupo de 2s: adicionar mais coringas
+        matching = wilds;
       } else {
         matching = hand.filter(c => !isWild(c) && c.rank === meldRank);
       }
 
       if (matching.length > 0) {
+        // Extensão natural: TODAS as dificuldades — cartas do mesmo rank sempre vão para o meld existente
         const extended = [...meld.cards, ...matching];
         candidates.push({
           meldIndex:       meldIdx,
@@ -240,9 +254,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           resultsCanastra: extended.length >= 7 && meld.cards.length < 7,
           currentLen:      meld.cards.length,
         });
-      } else if (meldRank !== '2' && wilds.length > 0 && meld.cards.length === 6) {
-        // Qualquer dificuldade: adiciona coringa a grupo com 6 cartas para fazer canastra
-        // (nunca adiciona coringa se o grupo já tiver um — máx 1 por grupo)
+      } else if (difficulty !== 'easy' && meldRank !== '2' && wilds.length > 0 && meld.cards.length === 6) {
+        // Extensão com coringa para completar canastra (grupo com 6 cartas): medium/hard
         const alreadyHasWild = meld.cards.some(c => isWild(c));
         if (!alreadyHasWild) {
           const extended = [...meld.cards, wilds[0]];
@@ -256,7 +269,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
         }
       }
 
-    } else if (meld.type === 'sequence') {
+    } else if (difficulty !== 'easy' && meld.type === 'sequence') {
+      // Extensão de sequência: medium/hard
       const meldNaturals = meld.cards.filter(c => !isWild(c));
       if (!meldNaturals.length) continue;
 
@@ -267,8 +281,7 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
 
       const extending = hand.filter(c => {
         if (isWild(c) || c.suit !== meldSuit) return false;
-        const v = cardNumVal(c);
-        return v === minV - 1 || v === maxV + 1;
+        return cardFitsSequence(cardNumVal(c), meldSuit, meldNaturals);
       });
 
       if (extending.length > 0) {
@@ -456,10 +469,7 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
       if (mr && card.rank === mr) { score -= 15; break; }
     } else if (meld.type === 'sequence') {
       const mn = meld.cards.filter(c => !isWild(c));
-      if (mn.length && mn[0].suit === card.suit) {
-        const vs = mn.map(c => cardNumVal(c)).sort((a, b) => a - b);
-        if (v === vs[0] - 1 || v === vs[vs.length - 1] + 1) { score -= 12; break; }
-      }
+      if (cardFitsSequence(v, card.suit, mn)) { score -= 12; break; }
     }
   }
 
@@ -473,10 +483,7 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
       if (mr && card.rank === mr) { score -= 35; break; }
     } else if (meld.type === 'sequence') {
       const mn = meld.cards.filter(c => !isWild(c));
-      if (mn.length && mn[0].suit === card.suit) {
-        const vs = mn.map(c => cardNumVal(c)).sort((a, b) => a - b);
-        if (v === vs[0] - 1 || v === vs[vs.length - 1] + 1) { score -= 30; break; }
-      }
+      if (cardFitsSequence(v, card.suit, mn)) { score -= 30; break; }
     }
   }
 
@@ -529,32 +536,45 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
         if (mr && topCard.rank === mr) return true;
       } else if (meld.type === 'sequence') {
         const mn = meld.cards.filter(c => !isWild(c));
-        if (!mn.length || mn[0].suit !== topCard.suit) continue;
-        const vs = mn.map(c => cardNumVal(c)).sort((a, b) => a - b);
-        const tv = cardNumVal(topCard);
-        if (tv === vs[0] - 1 || tv === vs[vs.length - 1] + 1) return true;
+        if (cardFitsSequence(cardNumVal(topCard), topCard.suit, mn)) return true;
       }
     }
     return false;
   }
 
   if (difficulty === 'hard') {
-    // Avalia as últimas 5 cartas do lixo
-    const evalCards = pile.slice(Math.max(0, pile.length - 5));
+    // O lixo é aberto: avalia todas as cartas, não só o topo
     let value = 0;
-    for (const dc of evalCards) {
+    for (const dc of pile) {
+      // Coringas são muito valiosos independentemente do contexto
+      if (isWild(dc)) { value += 25; continue; }
+
+      const v  = cardNumVal(dc);
       const sr = hand.filter(c => c.rank === dc.rank && !isWild(c)).length;
+
+      // Forma grupo novo com cartas na mão
       if (sr >= 2) value += 20;
+      else if (sr >= 1 && hand.some(c => isWild(c))) value += 12;
       else if (sr >= 1) value += 8;
+
+      // Estende meld do time (grupo ou sequência, incluindo lacunas de coringa)
       for (const meld of teamMelds) {
+        if (meld.cards.length >= 7) continue;
         if (meld.type === 'group') {
           const mr = meld.cards.find(c => !isWild(c))?.rank;
-          if (mr && dc.rank === mr) value += 12;
+          if (mr && dc.rank === mr) { value += 15; break; }
+        } else if (meld.type === 'sequence') {
+          const mn = meld.cards.filter(c => !isWild(c));
+          if (cardFitsSequence(v, dc.suit, mn)) { value += 15; break; }
         }
       }
+
+      // Valor base da carta
       value += cardPts(dc.rank) / 8;
     }
-    return value >= 15;
+
+    // Threshold: ajustado para lixo inteiro (pile maior → mais chance de acumular valor)
+    return value >= 20;
   }
 
   return false;
