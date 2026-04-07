@@ -14,7 +14,16 @@ const { registerDisconnectHandler } = require('./src/handlers/disconnect');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+
+// CORS: allow same-origin in production, configurable via env
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()) : undefined; // undefined = same-origin only in production
+const io = new Server(server, {
+  cors: {
+    origin: ALLOWED_ORIGINS || (process.env.NODE_ENV === 'production' ? false : '*'),
+  },
+  // Limit payload size to prevent abuse
+  maxHttpBufferSize: 1e6, // 1MB
+});
 
 // Hash do commit atual — muda a cada deploy, invalida cache do browser
 const BUILD_HASH = (() => {
@@ -27,6 +36,16 @@ const BUILD_HASH = (() => {
 
 // Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
 const DEV_MODE = process.env.DEV_MODE === 'true';
+
+// ── SECURITY HEADERS ──
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
 
 // Arquivos estáticos — index.html é servido pelo handler customizado abaixo
 app.use(
@@ -71,6 +90,34 @@ function serveVersionedHtml(res) {
 
 const rm = createRoomManager(io);
 
+// ── CONNECTION RATE LIMITING ──
+const connectionAttempts = new Map(); // ip → { count, resetAt }
+const CONN_RATE_LIMIT = 20; // max connections per window
+const CONN_RATE_WINDOW = 60_000; // 1 minute window
+
+io.use((socket, next) => {
+  const ip = socket.handshake.address;
+  const now = Date.now();
+  let entry = connectionAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + CONN_RATE_WINDOW };
+    connectionAttempts.set(ip, entry);
+  }
+  entry.count++;
+  if (entry.count > CONN_RATE_LIMIT) {
+    return next(new Error('Rate limit exceeded'));
+  }
+  next();
+});
+
+// Clean up rate limit map periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of connectionAttempts) {
+    if (now > entry.resetAt) connectionAttempts.delete(ip);
+  }
+}, 60_000);
+
 io.on('connection', (socket) => {
   console.log(`[+] Conectado: ${socket.id}`);
   registerLobbyHandlers(socket, rm);
@@ -78,6 +125,31 @@ io.on('connection', (socket) => {
   registerGameHandlers(socket, io, rm);
   registerDisconnectHandler(socket, io, rm);
 });
+
+// ── STALE ROOM CLEANUP ──
+// Every 10 minutes, remove rooms that have been empty or inactive for 30+ minutes
+const STALE_ROOM_CHECK_INTERVAL = 10 * 60_000;
+const STALE_ROOM_MAX_AGE = 30 * 60_000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [roomId, game] of rm.rooms) {
+    // Skip rooms with active human players
+    const hasHumans = game.players.some((p, i) => p?.id && !p.id.startsWith('bot') && !(game.botSeats && game.botSeats.has(i)));
+    if (hasHumans) {
+      // Update last activity timestamp
+      game._lastActivity = now;
+      continue;
+    }
+    // Remove if no humans and stale
+    const lastActivity = game._lastActivity || game._createdAt || 0;
+    if (now - lastActivity > STALE_ROOM_MAX_AGE) {
+      console.log(`[Cleanup] Removing stale room ${roomId}`);
+      rm.rooms.delete(roomId);
+      rm.roomMeta.delete(roomId);
+    }
+  }
+}, STALE_ROOM_CHECK_INTERVAL);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
