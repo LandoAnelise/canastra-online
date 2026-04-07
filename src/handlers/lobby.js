@@ -2,6 +2,8 @@
 
 const { runBotTurns } = require('../BotAI');
 
+const DEV_MODE = process.env.DEV_MODE === 'true';
+
 function registerLobbyHandlers(socket, rm) {
   const {
     rooms,
@@ -21,6 +23,7 @@ function registerLobbyHandlers(socket, rm) {
   socket.on('createRoom', ({ playerName, isPublic = false, testMode = false, testScores = [0, 0], botDifficulty = 'medium' }, cb) => {
     const name = playerName?.trim().slice(0, 10);
     if (!name) return cb?.({ ok: false, msg: 'Nome inválido.' });
+    if (testMode && !DEV_MODE) return cb?.({ ok: false, msg: 'Sala de teste indisponível.' });
     const roomId = generateRoomId();
     const game = getOrCreateRoom(roomId);
     roomMeta.set(roomId, { isPublic: !testMode && !!isPublic });
