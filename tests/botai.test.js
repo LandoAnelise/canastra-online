@@ -215,6 +215,43 @@ describe('findExtensionCandidates', () => {
     assert.ok(!seqExt,   'Easy NÃO deve estender sequência');
   });
 
+  test('E7 Coringa na borda direita: carta original (posição do wild) é identificada', () => {
+    // Meld: [5♥, 6♥, 7♥, wild] — wild age como 8♥
+    // Bot tem 8♥ → deve reconhecer que pode adicionar (meld fica [5,6,7,8,wild])
+    const meld = {
+      type: 'sequence', suit: '♥',
+      cards: [card('5','♥',1), card('6','♥',1), card('7','♥',1), wild(1)],
+    };
+    const hand = [card('8','♥',1)];
+    const cands = findExtensionCandidates(hand, [meld], 'medium');
+    assert.ok(cands.some(c => c.cardIds.includes('8♥-1')), 'Deve identificar 8♥ quando wild está na borda direita');
+  });
+
+  test('E8 Coringa na borda esquerda: carta original é identificada', () => {
+    // Meld: [wild, 6♥, 7♥, 8♥] — wild age como 5♥
+    // Bot tem 5♥ → deve reconhecer que pode adicionar
+    const meld = {
+      type: 'sequence', suit: '♥',
+      cards: [wild(1), card('6','♥',1), card('7','♥',1), card('8','♥',1)],
+    };
+    const hand = [card('5','♥',1)];
+    const cands = findExtensionCandidates(hand, [meld], 'medium');
+    assert.ok(cands.some(c => c.cardIds.includes('5♥-1')), 'Deve identificar 5♥ quando wild está na borda esquerda');
+  });
+
+  test('E9 Coringa na borda: carta ALÉM do wild também é identificada', () => {
+    // Meld: [5♥, 6♥, 7♥, wild(8)] — wild na borda direita atuando como 8♥
+    // Bot tem 9♥ → válido: wild vira gap interno em 8, meld fica [5,6,7,wild,9]
+    // borderWilds = 1 (nenhuma lacuna interna) → max + borderWilds + 1 = 7 + 1 + 1 = 9 ✓
+    const meld = {
+      type: 'sequence', suit: '♥',
+      cards: [card('5','♥',1), card('6','♥',1), card('7','♥',1), wild(1)],
+    };
+    const hand = [card('9','♥',1)];
+    const cands = findExtensionCandidates(hand, [meld], 'medium');
+    assert.ok(cands.some(c => c.cardIds.includes('9♥-1')), '9♥ deve ser identificada quando wild está na borda e pode virar gap interno');
+  });
+
 });
 
 // ─── decideMeldActions ───────────────────────────────────────────────────────
