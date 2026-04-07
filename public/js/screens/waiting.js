@@ -72,14 +72,19 @@ export function renderReadyScreen(players) {
   }
 }
 
-document.getElementById('btn-leave-waiting').addEventListener('click', () => {
+document.getElementById('btn-leave-waiting').addEventListener('click', leavePreGame);
+
+function leavePreGame() {
   socket.emit('leaveRoom');
   state.myRoomId = null;
   state.gameState = null;
   state.teamsInitialized = false;
   history.replaceState(null, '', '/');
   showScreen('screen-lobby');
-});
+}
+
+document.getElementById('btn-leave-teams').addEventListener('click', leavePreGame);
+document.getElementById('btn-leave-ready').addEventListener('click', leavePreGame);
 
 document.getElementById('btn-ready').addEventListener('click', () => {
   if (state.iAmReady) return;
