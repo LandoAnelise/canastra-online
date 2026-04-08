@@ -1,5 +1,5 @@
 # ── Stage 1: install dependencies ────────────────────────────────────────────
-FROM node:20-alpine AS deps
+FROM node:lts-alpine AS deps
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
 # ── Stage 2: final image ──────────────────────────────────────────────────────
-FROM node:20-alpine AS runtime
+FROM node:lts-alpine AS runtime
 
 # Create a non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
