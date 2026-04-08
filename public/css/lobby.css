@@ -226,6 +226,9 @@
   letter-spacing: 1.5px;
   opacity: 0.55;
 }
+.public-rooms-scroll-area {
+  position: relative;
+}
 .public-rooms-list {
   display: flex;
   flex-direction: column;
@@ -233,6 +236,42 @@
   max-height: 180px;
   overflow-y: auto;
   min-height: 60px;
+  padding-right: 10px;
+  scrollbar-width: none;
+}
+.public-rooms-list::-webkit-scrollbar {
+  display: none;
+}
+.rooms-scrollbar-track {
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 99px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.public-rooms-scroll-area.is-scrollable .rooms-scrollbar-track {
+  opacity: 1;
+  pointer-events: auto;
+}
+.rooms-scrollbar-thumb {
+  position: absolute;
+  width: 100%;
+  min-height: 24px;
+  background: rgba(201, 168, 76, 0.5);
+  border-radius: 99px;
+  cursor: grab;
+  transition: background 0.15s;
+  top: 0;
+}
+.rooms-scrollbar-thumb:hover,
+.rooms-scrollbar-thumb.dragging {
+  background: rgba(201, 168, 76, 0.85);
+  cursor: grabbing;
 }
 .public-room-item {
   display: flex;

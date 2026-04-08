@@ -178,8 +178,7 @@ socket.on('gameState', (gs) => {
 });
 
 socket.on('publicRoomsUpdated', ({ rooms }) => {
-  const panel = document.getElementById('panel-browse');
-  if (!panel.classList.contains('hidden')) renderPublicRooms(rooms);
+  renderPublicRooms(rooms);
 });
 
 // ── Auto-reconexão ao carregar a página ───────────────────────────────────────

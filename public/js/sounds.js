@@ -1,6 +1,21 @@
-// ── Sound engine — arquivos reais + Web Audio API synthesis ───────────────────
-let _ctx = null;
+// ── Sound engine — arquivos MP3 ───────────────────────────────────────────────
 let _muted = localStorage.getItem('canastra_muted') === '1';
+let _audioUnlocked = false;
+let _unlockAudioEl = null;
+
+const SOUND_URLS = {
+  shine: '/sounds/shine.mp3',
+  'canastra-suja': '/sounds/canastra_suja.mp3',
+  campainha: '/sounds/campainha.mp3',
+  chime: '/sounds/chime.mp3',
+  thud: '/sounds/thud.mp3',
+  whoosh: '/sounds/whoosh.mp3',
+  pagina: '/sounds/pagina.mp3',
+  knock: '/sounds/knock.mp3',
+  bzz: '/sounds/bzz.mp3',
+  win: '/sounds/win.mp3',
+  lose: '/sounds/lose.mp3',
+};
 
 export function isMuted() {
   return _muted;
@@ -12,68 +27,89 @@ export function toggleMute() {
   return _muted;
 }
 
-// ── Web Audio context (para sons sintéticos) ──────────────────────────────────
-function ctx() {
-  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
-  if (_ctx.state === 'suspended') _ctx.resume();
-  return _ctx;
-}
-
-// Safari exige que o AudioContext seja criado/resumido dentro de um gesto do
-// usuário. Fazemos isso uma vez no primeiro toque/clique para que sons
-// disparados por eventos de servidor (WebSocket) funcionem normalmente depois.
-function _unlockAudio() {
-  ctx().resume();
-  document.removeEventListener('touchstart', _unlockAudio, true);
-  document.removeEventListener('mousedown', _unlockAudio, true);
-}
-document.addEventListener('touchstart', _unlockAudio, true);
-document.addEventListener('mousedown', _unlockAudio, true);
-
-function safe(fn) {
-  if (_muted) return;
-  try {
-    fn(ctx());
-  } catch (e) {}
-}
-
-function tone(c, freq, start, dur, vol = 0.25, type = 'sine') {
-  const osc = c.createOscillator();
-  const g = c.createGain();
-  osc.connect(g);
-  g.connect(c.destination);
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  g.gain.setValueAtTime(vol, start);
-  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  osc.start(start);
-  osc.stop(start + dur + 0.01);
-}
-
 // ── Pre-load de arquivos MP3 ──────────────────────────────────────────────────
 const _cache = {};
+function createAudio(url) {
+  const a = new Audio(url);
+  a.preload = 'auto';
+  a.setAttribute('playsinline', '');
+  a.setAttribute('webkit-playsinline', '');
+  a.load();
+  return a;
+}
+
 function load(name, url) {
   if (!_cache[name]) {
-    const a = new Audio(url);
-    a.preload = 'auto';
-    _cache[name] = a;
+    _cache[name] = {
+      url,
+      audio: createAudio(url),
+    };
   }
   return _cache[name];
 }
 
+async function unlockAudio() {
+  if (_audioUnlocked) return;
+
+  // Preload real assets, but do not play them during unlock.
+  Object.entries(SOUND_URLS).forEach(([name, url]) => load(name, url));
+
+  // iOS Safari may require one user-gesture play() call; use a silent clip so
+  // no game sound leaks when the page is opened.
+  if (!_unlockAudioEl) {
+    _unlockAudioEl = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+    _unlockAudioEl.preload = 'auto';
+    _unlockAudioEl.setAttribute('playsinline', '');
+    _unlockAudioEl.setAttribute('webkit-playsinline', '');
+  }
+
+  try {
+    _unlockAudioEl.currentTime = 0;
+    await _unlockAudioEl.play();
+    _unlockAudioEl.pause();
+    _unlockAudioEl.currentTime = 0;
+  } catch (e) {}
+
+  _audioUnlocked = true;
+  document.removeEventListener('touchstart', onFirstUserGesture, true);
+  document.removeEventListener('mousedown', onFirstUserGesture, true);
+  document.removeEventListener('keydown', onFirstUserGesture, true);
+}
+
+function onFirstUserGesture() {
+  unlockAudio().catch(() => {});
+}
+
+document.addEventListener('touchstart', onFirstUserGesture, true);
+document.addEventListener('mousedown', onFirstUserGesture, true);
+document.addEventListener('keydown', onFirstUserGesture, true);
+
+function clearTrimHandler(audio) {
+  if (audio._trimHandler) {
+    audio.removeEventListener('timeupdate', audio._trimHandler);
+    audio._trimHandler = null;
+  }
+}
+
 function playFile(name, url, { volume = 1, maxDuration = null } = {}) {
   if (_muted) return;
-  load(name, url); // garante pré-carga
-  const a = _cache[name].cloneNode();
+  const entry = load(name, url);
+  const a = entry.audio;
+  clearTrimHandler(a);
+  a.pause();
   a.volume = volume;
-  a.currentTime = 0;
+  try {
+    a.currentTime = 0;
+  } catch (e) {}
   if (maxDuration) {
     const trim = () => {
       if (a.currentTime >= maxDuration) {
         a.pause();
         a.removeEventListener('timeupdate', trim);
+        a._trimHandler = null;
       }
     };
+    a._trimHandler = trim;
     a.addEventListener('timeupdate', trim);
   }
   a.play().catch(() => {});
@@ -84,24 +120,14 @@ export function playCanastraLimpa() {
   playFile('shine', '/sounds/shine.mp3', { volume: 0.9 });
 }
 
-// ── Canastra Suja — arpejo mais grave (síntese) ───────────────────────────────
+// ── Canastra Suja — arpejo mais grave (arquivo real) ──────────────────────────
 export function playCanastraSuja() {
-  safe((c) => {
-    const t = c.currentTime;
-    [523, 659, 784, 1047].forEach((f, i) => tone(c, f, t + i * 0.09, 0.5, 0.22));
-    tone(c, 1175, t + 0.38, 0.65, 0.15);
-  });
+  playFile('canastra-suja', '/sounds/canastra_suja.mp3', { volume: 0.9 });
 }
 
-// ── Campainha — sua vez de jogar (síntese) ────────────────────────────────────
+// ── Campainha — sua vez de jogar (arquivo real) ───────────────────────────────
 export function playCampainha() {
-  safe((c) => {
-    const t = c.currentTime;
-    tone(c, 1174, t, 1.1, 0.28);
-    tone(c, 1568, t, 0.5, 0.1);
-    tone(c, 1174, t + 0.35, 0.9, 0.18);
-    tone(c, 1568, t + 0.35, 0.4, 0.07);
-  });
+  playFile('campainha', '/sounds/campainha.mp3', { volume: 0.9 });
 }
 
 // ── Chime — fim de rodada (arquivo real) ──────────────────────────────────────
