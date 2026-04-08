@@ -118,7 +118,7 @@ socket.on('roundEnded', (result) => {
   setTimeout(() => {
     window._roundEndedPending = false;
     showRoundModal(result);
-  }, 2500);
+  }, result.isResync ? 0 : 2500);
 });
 
 socket.on('deckEmpty', ({ playerName }) => {
@@ -145,17 +145,11 @@ socket.on('gameState', (gs) => {
   _prevTurnIdx = gs.currentPlayerIndex;
 
   if (gs.status === 'finished') {
-    // Garante que renderGame não mostra o modal imediatamente —
-    // pode chegar antes do roundEnded por diferença de caminho no Socket.IO
+    // roundEnded chegará em seguida (via re-envio na reconexão ou emitido diretamente)
+    // e cuidará de exibir o modal com todos os dados. Apenas marcamos a flag de pendência
+    // para evitar que o gameState dispare o modal antes do roundEnded.
     if (!window._roundEndedPending) {
-      if (prevStatus === 'finished') {
-        // Reconexão a partida já encerrada — mostra modal direto
-        showGameOverModal(gs);
-      } else {
-        // Race condition: gameState chegou antes do roundEnded
-        // roundEnded vai disparar em seguida e cuidar do delay de 2,5s
-        window._roundEndedPending = true;
-      }
+      window._roundEndedPending = true;
     }
   }
 

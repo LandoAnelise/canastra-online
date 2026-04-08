@@ -24,6 +24,7 @@ function registerDisconnectHandler(socket, io, rm) {
     broadcastPublicRooms,
     pauseGame,
     broadcastState,
+    countDisconnectedPlayers,
   } = rm;
 
   // ── DISCONNECT ──
@@ -65,7 +66,6 @@ function registerDisconnectHandler(socket, io, rm) {
             game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
             game.botSeats.add(info.seatIndex);
             game.botDifficulty = game.botDifficulty || 'medium';
-            game.paused = false;
 
             // Transfere liderança se o líder foi substituído
             if (game.leaderSeatIndex === info.seatIndex) {
@@ -75,7 +75,14 @@ function registerDisconnectHandler(socket, io, rm) {
               if (nextHuman !== -1) game.leaderSeatIndex = nextHuman;
             }
 
-            broadcastToRoom(info.roomId, 'gameResumed', { playerName: `${name} (Bot)` });
+            // Só retoma o jogo se nenhum outro jogador ainda está desconectado
+            const stillDisconnected = countDisconnectedPlayers(info.roomId);
+            if (stillDisconnected === 0) game.paused = false;
+
+            broadcastToRoom(info.roomId, 'gameResumed', {
+              playerName: `${name} (Bot)`,
+              stillPaused: stillDisconnected > 0,
+            });
             broadcastState(game);
 
             // Se era a vez do bot, inicia os turnos
@@ -95,7 +102,7 @@ function registerDisconnectHandler(socket, io, rm) {
             }
           }, RECONNECT_TIMEOUT_MS);
 
-          reconnectSlots.set(key, { seatIndex: info.seatIndex, disconnectTimer: timer });
+          reconnectSlots.set(key, { seatIndex: info.seatIndex, disconnectTimer: timer, pausesGame: true, playerName: name, disconnectedAt: Date.now() });
 
           // Pausa o jogo e notifica os demais
           pauseGame(game, info.roomId, name);
@@ -105,6 +112,14 @@ function registerDisconnectHandler(socket, io, rm) {
             seatIndex: info.seatIndex,
             reconnectWindowMs: RECONNECT_TIMEOUT_MS,
           });
+        } else if (game.status === 'finished') {
+          // Jogo encerrado — registra slot para o jogador poder voltar e ver o modal de fim de jogo
+          const key = reconnectKey(info.roomId, name);
+          const timer = setTimeout(() => {
+            reconnectSlots.delete(key);
+          }, RECONNECT_TIMEOUT_MS);
+          reconnectSlots.set(key, { seatIndex: info.seatIndex, disconnectTimer: timer, pausesGame: false });
+          // Não pausa nem notifica — partida já encerrou
         } else {
           // Jogo ainda não começou — se o líder saiu, encerra a sala para todos
           if (info.seatIndex === game.leaderSeatIndex) {

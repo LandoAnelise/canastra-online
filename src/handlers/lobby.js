@@ -76,6 +76,7 @@ function registerLobbyHandlers(socket, rm) {
     getOrCreateRoom,
     generateRoomId,
     broadcastState,
+    broadcastRoundEnded,
     broadcastPublicRooms,
     reconnectKey,
     reconnectSlots,
@@ -178,10 +179,31 @@ function registerLobbyHandlers(socket, rm) {
       console.log(`[Room ${cleanRoomId}] ↩  ${name} reconectou (assento ${slot.seatIndex})`);
       cb({ ok: true, seatIndex: slot.seatIndex, roomId: cleanRoomId, reconnected: true });
 
-      if (game.status === 'playing' || game.status === 'finished') {
-        resumeGame(game, cleanRoomId, name);
+      if (game.status === 'finished') {
+        // Jogo encerrado: envia estado e modal apenas para quem reconectou, sem avisar os demais
+        const gs = game.getStateFor(slot.seatIndex);
+        gs.isLeader = slot.seatIndex === (game.leaderSeatIndex ?? 0);
+        socket.emit('gameState', gs);
+        if (game.lastRoundResult) socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
       } else {
-        broadcastState(game);
+        resumeGame(game, cleanRoomId, name);
+        if (game.status === 'roundOver' && game.lastRoundResult) {
+          socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
+        }
+        // Se o jogo ainda está pausado (outros jogadores desconectados), reenvia os timers
+        // de pausa para o jogador que acabou de reconectar
+        if (game.paused) {
+          for (const [slotKey, slotData] of reconnectSlots) {
+            if (slotKey.startsWith(cleanRoomId + '|') && slotData.pausesGame) {
+              const remaining = RECONNECT_TIMEOUT_MS - (Date.now() - (slotData.disconnectedAt || 0));
+              socket.emit('gamePaused', {
+                playerName: slotData.playerName || slotKey.split('|')[1],
+                timeoutMs: Math.max(0, remaining),
+                isResync: true,
+              });
+            }
+          }
+        }
       }
       return;
     }

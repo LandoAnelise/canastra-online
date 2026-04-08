@@ -62,18 +62,36 @@ function createRoomManager(io) {
   }
 
   // Pause/resume helpers
+  function countDisconnectedPlayers(roomId) {
+    let count = 0;
+    for (const [key, slot] of reconnectSlots) {
+      if (key.startsWith(roomId + '|') && slot.pausesGame) count++;
+    }
+    return count;
+  }
+
   function pauseGame(game, roomId, playerName) {
-    if (game.paused) return;
     game.paused = true;
     console.log(`[Room ${roomId}] ⏸  Jogo pausado — ${playerName} desconectou`);
     broadcastToRoom(roomId, 'gamePaused', { playerName, timeoutMs: RECONNECT_TIMEOUT_MS });
   }
 
   function resumeGame(game, roomId, playerName) {
-    game.paused = false;
-    console.log(`[Room ${roomId}] ▶  Jogo retomado — ${playerName} reconectou`);
-    broadcastToRoom(roomId, 'gameResumed', { playerName });
+    const stillDisconnected = countDisconnectedPlayers(roomId);
+    if (stillDisconnected > 0) {
+      console.log(`[Room ${roomId}] ↩  ${playerName} reconectou, mas ${stillDisconnected} jogador(es) ainda desconectado(s)`);
+      broadcastToRoom(roomId, 'gameResumed', { playerName, stillPaused: true });
+    } else {
+      game.paused = false;
+      console.log(`[Room ${roomId}] ▶  Jogo retomado — ${playerName} reconectou`);
+      broadcastToRoom(roomId, 'gameResumed', { playerName, stillPaused: false });
+    }
     broadcastState(game);
+  }
+
+  function broadcastRoundEnded(game, roomId, result) {
+    game.lastRoundResult = result;
+    broadcastToRoom(roomId, 'roundEnded', result);
   }
 
   return {
@@ -89,6 +107,8 @@ function createRoomManager(io) {
     broadcastPublicRooms,
     broadcastState,
     broadcastToRoom,
+    broadcastRoundEnded,
+    countDisconnectedPlayers,
     pauseGame,
     resumeGame,
   };
