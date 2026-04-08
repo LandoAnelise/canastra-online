@@ -1,8 +1,8 @@
 // ── Sound engine — arquivos MP3 ───────────────────────────────────────────────
 let _muted = localStorage.getItem('canastra_muted') === '1';
 let _audioUnlocked = false;
+let _unlockAudioEl = null;
 
-const SOUND_POOL_SIZE = 3;
 const SOUND_URLS = {
   shine: '/sounds/shine.mp3',
   'canastra-suja': '/sounds/canastra_suja.mp3',
@@ -42,8 +42,7 @@ function load(name, url) {
   if (!_cache[name]) {
     _cache[name] = {
       url,
-      players: Array.from({ length: SOUND_POOL_SIZE }, () => createAudio(url)),
-      nextIndex: 0,
+      audio: createAudio(url),
     };
   }
   return _cache[name];
@@ -52,23 +51,25 @@ function load(name, url) {
 async function unlockAudio() {
   if (_audioUnlocked) return;
 
-  const entries = Object.entries(SOUND_URLS).map(([name, url]) => load(name, url));
-  await Promise.all(
-    entries.flatMap((entry) =>
-      entry.players.map(async (audio) => {
-        try {
-          audio.muted = true;
-          audio.currentTime = 0;
-          await audio.play();
-          audio.pause();
-          audio.currentTime = 0;
-        } catch (e) {
-        } finally {
-          audio.muted = false;
-        }
-      }),
-    ),
-  );
+  // Preload real assets, but do not play them during unlock.
+  Object.entries(SOUND_URLS).forEach(([name, url]) => load(name, url));
+
+  // iOS Safari may require one user-gesture play() call; use a silent clip so
+  // no game sound leaks when the page is opened.
+  if (!_unlockAudioEl) {
+    _unlockAudioEl = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+    _unlockAudioEl.preload = 'auto';
+    _unlockAudioEl.setAttribute('playsinline', '');
+    _unlockAudioEl.setAttribute('webkit-playsinline', '');
+  }
+
+  try {
+    _unlockAudioEl.currentTime = 0;
+    await _unlockAudioEl.play();
+    _unlockAudioEl.pause();
+    _unlockAudioEl.currentTime = 0;
+  } catch (e) {
+  }
 
   _audioUnlocked = true;
   document.removeEventListener('touchstart', onFirstUserGesture, true);
@@ -84,18 +85,18 @@ document.addEventListener('touchstart', onFirstUserGesture, true);
 document.addEventListener('mousedown', onFirstUserGesture, true);
 document.addEventListener('keydown', onFirstUserGesture, true);
 
-function pickPlayer(entry) {
-  const idle = entry.players.find((audio) => audio.paused || audio.ended);
-  if (idle) return idle;
-  const audio = entry.players[entry.nextIndex % entry.players.length];
-  entry.nextIndex = (entry.nextIndex + 1) % entry.players.length;
-  return audio;
+function clearTrimHandler(audio) {
+  if (audio._trimHandler) {
+    audio.removeEventListener('timeupdate', audio._trimHandler);
+    audio._trimHandler = null;
+  }
 }
 
 function playFile(name, url, { volume = 1, maxDuration = null } = {}) {
   if (_muted) return;
   const entry = load(name, url);
-  const a = pickPlayer(entry);
+  const a = entry.audio;
+  clearTrimHandler(a);
   a.pause();
   a.volume = volume;
   try {
@@ -106,8 +107,10 @@ function playFile(name, url, { volume = 1, maxDuration = null } = {}) {
       if (a.currentTime >= maxDuration) {
         a.pause();
         a.removeEventListener('timeupdate', trim);
+        a._trimHandler = null;
       }
     };
+    a._trimHandler = trim;
     a.addEventListener('timeupdate', trim);
   }
   a.play().catch(() => {});
