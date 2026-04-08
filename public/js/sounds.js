@@ -1,5 +1,4 @@
-// ── Sound engine — arquivos reais + Web Audio API synthesis ───────────────────
-let _ctx = null;
+// ── Sound engine — arquivos MP3 ───────────────────────────────────────────────
 let _muted = localStorage.getItem('canastra_muted') === '1';
 
 export function isMuted() {
@@ -10,44 +9,6 @@ export function toggleMute() {
   _muted = !_muted;
   localStorage.setItem('canastra_muted', _muted ? '1' : '0');
   return _muted;
-}
-
-// ── Web Audio context (para sons sintéticos) ──────────────────────────────────
-function ctx() {
-  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
-  if (_ctx.state === 'suspended') _ctx.resume();
-  return _ctx;
-}
-
-// Safari exige que o AudioContext seja criado/resumido dentro de um gesto do
-// usuário. Fazemos isso uma vez no primeiro toque/clique para que sons
-// disparados por eventos de servidor (WebSocket) funcionem normalmente depois.
-function _unlockAudio() {
-  ctx().resume();
-  document.removeEventListener('touchstart', _unlockAudio, true);
-  document.removeEventListener('mousedown', _unlockAudio, true);
-}
-document.addEventListener('touchstart', _unlockAudio, true);
-document.addEventListener('mousedown', _unlockAudio, true);
-
-function safe(fn) {
-  if (_muted) return;
-  try {
-    fn(ctx());
-  } catch (e) {}
-}
-
-function tone(c, freq, start, dur, vol = 0.25, type = 'sine') {
-  const osc = c.createOscillator();
-  const g = c.createGain();
-  osc.connect(g);
-  g.connect(c.destination);
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  g.gain.setValueAtTime(vol, start);
-  g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-  osc.start(start);
-  osc.stop(start + dur + 0.01);
 }
 
 // ── Pre-load de arquivos MP3 ──────────────────────────────────────────────────
@@ -84,24 +45,14 @@ export function playCanastraLimpa() {
   playFile('shine', '/sounds/shine.mp3', { volume: 0.9 });
 }
 
-// ── Canastra Suja — arpejo mais grave (síntese) ───────────────────────────────
+// ── Canastra Suja — arpejo mais grave (arquivo real) ──────────────────────────
 export function playCanastraSuja() {
-  safe((c) => {
-    const t = c.currentTime;
-    [523, 659, 784, 1047].forEach((f, i) => tone(c, f, t + i * 0.09, 0.5, 0.22));
-    tone(c, 1175, t + 0.38, 0.65, 0.15);
-  });
+  playFile('canastra-suja', '/sounds/canastra_suja.mp3', { volume: 0.9 });
 }
 
-// ── Campainha — sua vez de jogar (síntese) ────────────────────────────────────
+// ── Campainha — sua vez de jogar (arquivo real) ───────────────────────────────
 export function playCampainha() {
-  safe((c) => {
-    const t = c.currentTime;
-    tone(c, 1174, t, 1.1, 0.28);
-    tone(c, 1568, t, 0.5, 0.1);
-    tone(c, 1174, t + 0.35, 0.9, 0.18);
-    tone(c, 1568, t + 0.35, 0.4, 0.07);
-  });
+  playFile('campainha', '/sounds/campainha.mp3', { volume: 0.9 });
 }
 
 // ── Chime — fim de rodada (arquivo real) ──────────────────────────────────────
