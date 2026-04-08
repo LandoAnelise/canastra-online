@@ -68,8 +68,7 @@ async function unlockAudio() {
     await _unlockAudioEl.play();
     _unlockAudioEl.pause();
     _unlockAudioEl.currentTime = 0;
-  } catch (e) {
-  }
+  } catch (e) {}
 
   _audioUnlocked = true;
   document.removeEventListener('touchstart', onFirstUserGesture, true);

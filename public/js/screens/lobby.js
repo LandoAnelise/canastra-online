@@ -3,6 +3,8 @@ import { state } from '../state.js';
 import { showToast, showScreen } from '../utils.js';
 import { saveSession } from '../session.js';
 
+let _publicRoomsBootstrapped = false;
+
 // Auto-refresh interval for the browse tab
 let _browseInterval = null;
 function startBrowseRefresh() {
@@ -163,7 +165,7 @@ if (urlParams.get('sala')) {
 }
 
 // Public rooms
-function loadPublicRooms() {
+export function loadPublicRooms() {
   const list = document.getElementById('public-rooms-list');
   list.innerHTML = '<div class="rooms-loading">Carregando…</div>';
   socket.emit('getPublicRooms', {}, (res) => {
@@ -179,6 +181,7 @@ export function renderPublicRooms(rooms) {
   const list = document.getElementById('public-rooms-list');
   if (!rooms || rooms.length === 0) {
     list.innerHTML = '<div class="rooms-empty">Nenhuma sala pública disponível no momento.</div>';
+    requestAnimationFrame(_syncScrollbar);
     return;
   }
   list.innerHTML = '';
@@ -196,6 +199,74 @@ export function renderPublicRooms(rooms) {
     });
     list.appendChild(item);
   });
+  requestAnimationFrame(_syncScrollbar);
 }
 
 document.getElementById('btn-refresh-rooms').addEventListener('click', loadPublicRooms);
+
+// ── Custom scrollbar (cross-browser) ─────────────────────────────────────────
+const _roomsList = document.getElementById('public-rooms-list');
+const _scrollArea = _roomsList?.closest('.public-rooms-scroll-area');
+const _scrollTrack = _scrollArea?.querySelector('.rooms-scrollbar-track');
+const _scrollThumb = _scrollArea?.querySelector('.rooms-scrollbar-thumb');
+
+function _syncScrollbar() {
+  if (!_roomsList || !_scrollThumb || !_scrollArea || !_scrollTrack) return;
+  const { scrollTop, scrollHeight, clientHeight } = _roomsList;
+  const isScrollable = scrollHeight > clientHeight + 1;
+  _scrollArea.classList.toggle('is-scrollable', isScrollable);
+  if (!isScrollable) return;
+  const trackHeight = _scrollTrack.clientHeight;
+  const thumbHeight = Math.max(24, (clientHeight / scrollHeight) * trackHeight);
+  const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * (trackHeight - thumbHeight);
+  _scrollThumb.style.height = thumbHeight + 'px';
+  _scrollThumb.style.top = thumbTop + 'px';
+}
+
+let _dragStartY = 0;
+let _dragStartScrollTop = 0;
+let _isDragging = false;
+
+function _onThumbPointerDown(e) {
+  _isDragging = true;
+  _dragStartY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+  _dragStartScrollTop = _roomsList.scrollTop;
+  _scrollThumb.classList.add('dragging');
+  e.preventDefault();
+}
+
+function _onPointerMove(e) {
+  if (!_isDragging) return;
+  const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+  const { scrollHeight, clientHeight } = _roomsList;
+  const trackHeight = _scrollTrack.clientHeight;
+  const thumbHeight = parseFloat(_scrollThumb.style.height) || 24;
+  const ratio = (scrollHeight - clientHeight) / (trackHeight - thumbHeight);
+  _roomsList.scrollTop = _dragStartScrollTop + (clientY - _dragStartY) * ratio;
+}
+
+function _onPointerUp() {
+  if (!_isDragging) return;
+  _isDragging = false;
+  _scrollThumb?.classList.remove('dragging');
+}
+
+if (_scrollThumb) {
+  _scrollThumb.addEventListener('mousedown', _onThumbPointerDown);
+  _scrollThumb.addEventListener('touchstart', _onThumbPointerDown, { passive: false });
+}
+document.addEventListener('mousemove', _onPointerMove);
+document.addEventListener('touchmove', _onPointerMove, { passive: true });
+document.addEventListener('mouseup', _onPointerUp);
+document.addEventListener('touchend', _onPointerUp);
+_roomsList?.addEventListener('scroll', _syncScrollbar, { passive: true });
+
+// Sempre busca a lista ao abrir/atualizar a página no lobby, mesmo fora da aba "browse".
+loadPublicRooms();
+
+// Re-sincroniza no primeiro connect após refresh/reabertura.
+socket.on('connect', () => {
+  if (_publicRoomsBootstrapped) return;
+  _publicRoomsBootstrapped = true;
+  loadPublicRooms();
+});
