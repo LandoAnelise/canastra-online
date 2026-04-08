@@ -387,6 +387,21 @@
   font-weight: 600;
   font-size: 1rem;
 }
+.btn-kick-bot {
+  margin-top: 4px;
+  font-size: 0.74rem;
+  font-family: var(--font-body);
+  background: rgba(180, 60, 60, 0.2);
+  border: 1px solid rgba(230, 110, 110, 0.45);
+  color: #ffdede;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-kick-bot:hover {
+  background: rgba(190, 60, 60, 0.35);
+}
 .seat-item.empty .seat-name {
   opacity: 0.25;
   font-style: italic;

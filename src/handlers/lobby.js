@@ -37,6 +37,37 @@ const createRoomLimiter = createRateLimiter(10, 60_000);
 // Max 20 join attempts per minute per socket
 const joinRoomLimiter = createRateLimiter(20, 60_000);
 
+function remapBotSeats(botSeats, removedSeatIndex) {
+  if (!botSeats || botSeats.size === 0) return new Set();
+  const remapped = new Set();
+  for (const seat of botSeats) {
+    if (seat === removedSeatIndex) continue;
+    remapped.add(seat > removedSeatIndex ? seat - 1 : seat);
+  }
+  return remapped;
+}
+
+function compactWaitingSeats(game, playerRoom, removedSeatIndex) {
+  game.players.splice(removedSeatIndex, 1);
+  game.players.forEach((p, i) => {
+    if (!p) return;
+    p.seatIndex = i;
+    const entry = playerRoom.get(p.id);
+    if (entry) entry.seatIndex = i;
+  });
+
+  game.botSeats = remapBotSeats(game.botSeats, removedSeatIndex);
+  if (game.draft) game.draft = null;
+
+  if (game.players.length === 0) {
+    game.leaderSeatIndex = 0;
+    return;
+  }
+
+  const leaderSeatIndex = game.leaderSeatIndex ?? 0;
+  game.leaderSeatIndex = leaderSeatIndex > removedSeatIndex ? leaderSeatIndex - 1 : leaderSeatIndex;
+}
+
 function registerLobbyHandlers(socket, rm) {
   const {
     rooms,
@@ -222,6 +253,35 @@ function registerLobbyHandlers(socket, rm) {
     broadcastState(game);
   });
 
+  // ── KICK BOT FROM ROOM (pre-game, leader only) ──
+  socket.on('kickBotFromRoom', (payload = {}, cb) => {
+    const seatIndex = Number(payload.seatIndex);
+    const info = playerRoom.get(socket.id);
+    if (!info) return cb?.({ ok: false, msg: 'Não está em uma sala.' });
+    const game = rooms.get(info.roomId);
+    if (!game || game.status !== 'waiting') return cb?.({ ok: false, msg: 'Sala não disponível.' });
+    if (info.seatIndex !== (game.leaderSeatIndex ?? 0)) {
+      return cb?.({ ok: false, msg: 'Apenas o líder pode remover bots.' });
+    }
+    if (!Number.isInteger(seatIndex) || seatIndex < 0 || seatIndex >= game.players.length) {
+      return cb?.({ ok: false, msg: 'Assento inválido.' });
+    }
+
+    game.botSeats = game.botSeats || new Set();
+    if (!game.botSeats.has(seatIndex)) {
+      return cb?.({ ok: false, msg: 'Esse assento não é de bot.' });
+    }
+
+    const botName = game.players[seatIndex]?.name || 'Bot';
+    compactWaitingSeats(game, playerRoom, seatIndex);
+
+    const { broadcastToRoom: btr } = rm;
+    btr(info.roomId, 'playerDisconnected', { playerName: botName, seatIndex, isBot: true });
+
+    cb?.({ ok: true, botName });
+    broadcastState(game);
+  });
+
   // ── LEAVE ROOM (voluntary, pre-game only) ──
   socket.on('leaveRoom', () => {
     const info = playerRoom.get(socket.id);
@@ -248,14 +308,7 @@ function registerLobbyHandlers(socket, rm) {
     }
 
     // Remove slot e compacta
-    game.players.splice(info.seatIndex, 1);
-    game.players.forEach((p, i) => {
-      if (p) {
-        p.seatIndex = i;
-        const entry = playerRoom.get(p.id);
-        if (entry) entry.seatIndex = i;
-      }
-    });
+    compactWaitingSeats(game, playerRoom, info.seatIndex);
     game.leaderSeatIndex = 0;
 
     console.log(`[Room ${info.roomId}] ${name} saiu voluntariamente`);
