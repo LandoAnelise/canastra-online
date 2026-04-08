@@ -381,7 +381,7 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
  * Seleciona um conjunto não-conflitante de ações de meld maximizando o valor.
  * Prioridade: extensões que completam canastras > extensões simples > novos melds.
  */
-function selectMeldActions(newCandidates, extCandidates, hand, hasCanastra) {
+function selectMeldActions(newCandidates, extCandidates, hand, hasCanastra, difficulty = 'medium') {
   const usedIds = new Set();
   const meldActions = [];
   let handSize = hand.length;
@@ -423,8 +423,10 @@ function selectMeldActions(newCandidates, extCandidates, hand, hasCanastra) {
     const remainingAfter = handSize - cost;
     const wouldHaveCanastra = hasCanastraAfter || cand.isCanastra || cand.resultsCanastra;
 
-    // Deve manter pelo menos 2 cartas (1 para descartar + 1 buffer) a menos que tenha canastra
-    if (remainingAfter < 2 && !wouldHaveCanastra) continue;
+    // Hard sem canastra: manter ao menos 3 cartas para não ficar pica (1 carta) após descartar.
+    // Outros casos: manter ao menos 2 (1 para descartar + 1 buffer), a menos que tenha canastra.
+    const minHand = difficulty === 'hard' && !wouldHaveCanastra ? 3 : 2;
+    if (remainingAfter < minHand && !wouldHaveCanastra) continue;
     // Não pode ficar com 0 cartas sem canastra (seria auto-bater sem condições)
     if (remainingAfter < 0) continue;
 
@@ -497,7 +499,7 @@ function decideMeldActions(game, botIdx, difficulty) {
     (c) => !c.lowPriority,
   );
   const newCands = [...groupCands, ...seqCands];
-  const actions = selectMeldActions(newCands, extCands, hand, hasCan);
+  const actions = selectMeldActions(newCands, extCands, hand, hasCan, difficulty);
 
   // ── Exceção: coringas em grupos (incl. ranks 5-10) se viabiliza bater ──
   // (time já tem canastra e usar esses grupos reduziria a mão a 1 carta)
@@ -507,7 +509,7 @@ function decideMeldActions(game, botIdx, difficulty) {
     if (remNormal > 1) {
       const groupCandsW = findGroupCandidates(hand, difficulty, true); // inclui lowPriority + wilds
       const newCandsW = [...groupCandsW, ...seqCands];
-      const actionsW = selectMeldActions(newCandsW, extCands, hand, hasCan);
+      const actionsW = selectMeldActions(newCandsW, extCands, hand, hasCan, difficulty);
       const usedWild = new Set(actionsW.flatMap((a) => a.cards));
       const remWild = hand.filter((c) => !usedWild.has(c.id)).length;
       if (remWild <= 1 && remWild < remNormal) return actionsW;
