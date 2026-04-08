@@ -1,5 +1,21 @@
 // ── Sound engine — arquivos MP3 ───────────────────────────────────────────────
 let _muted = localStorage.getItem('canastra_muted') === '1';
+let _audioUnlocked = false;
+
+const SOUND_POOL_SIZE = 3;
+const SOUND_URLS = {
+  shine: '/sounds/shine.mp3',
+  'canastra-suja': '/sounds/canastra_suja.mp3',
+  campainha: '/sounds/campainha.mp3',
+  chime: '/sounds/chime.mp3',
+  thud: '/sounds/thud.mp3',
+  whoosh: '/sounds/whoosh.mp3',
+  pagina: '/sounds/pagina.mp3',
+  knock: '/sounds/knock.mp3',
+  bzz: '/sounds/bzz.mp3',
+  win: '/sounds/win.mp3',
+  lose: '/sounds/lose.mp3',
+};
 
 export function isMuted() {
   return _muted;
@@ -13,21 +29,78 @@ export function toggleMute() {
 
 // ── Pre-load de arquivos MP3 ──────────────────────────────────────────────────
 const _cache = {};
+function createAudio(url) {
+  const a = new Audio(url);
+  a.preload = 'auto';
+  a.setAttribute('playsinline', '');
+  a.setAttribute('webkit-playsinline', '');
+  a.load();
+  return a;
+}
+
 function load(name, url) {
   if (!_cache[name]) {
-    const a = new Audio(url);
-    a.preload = 'auto';
-    _cache[name] = a;
+    _cache[name] = {
+      url,
+      players: Array.from({ length: SOUND_POOL_SIZE }, () => createAudio(url)),
+      nextIndex: 0,
+    };
   }
   return _cache[name];
 }
 
+async function unlockAudio() {
+  if (_audioUnlocked) return;
+
+  const entries = Object.entries(SOUND_URLS).map(([name, url]) => load(name, url));
+  await Promise.all(
+    entries.flatMap((entry) =>
+      entry.players.map(async (audio) => {
+        try {
+          audio.muted = true;
+          audio.currentTime = 0;
+          await audio.play();
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (e) {
+        } finally {
+          audio.muted = false;
+        }
+      }),
+    ),
+  );
+
+  _audioUnlocked = true;
+  document.removeEventListener('touchstart', onFirstUserGesture, true);
+  document.removeEventListener('mousedown', onFirstUserGesture, true);
+  document.removeEventListener('keydown', onFirstUserGesture, true);
+}
+
+function onFirstUserGesture() {
+  unlockAudio().catch(() => {});
+}
+
+document.addEventListener('touchstart', onFirstUserGesture, true);
+document.addEventListener('mousedown', onFirstUserGesture, true);
+document.addEventListener('keydown', onFirstUserGesture, true);
+
+function pickPlayer(entry) {
+  const idle = entry.players.find((audio) => audio.paused || audio.ended);
+  if (idle) return idle;
+  const audio = entry.players[entry.nextIndex % entry.players.length];
+  entry.nextIndex = (entry.nextIndex + 1) % entry.players.length;
+  return audio;
+}
+
 function playFile(name, url, { volume = 1, maxDuration = null } = {}) {
   if (_muted) return;
-  load(name, url); // garante pré-carga
-  const a = _cache[name].cloneNode();
+  const entry = load(name, url);
+  const a = pickPlayer(entry);
+  a.pause();
   a.volume = volume;
-  a.currentTime = 0;
+  try {
+    a.currentTime = 0;
+  } catch (e) {}
   if (maxDuration) {
     const trim = () => {
       if (a.currentTime >= maxDuration) {
