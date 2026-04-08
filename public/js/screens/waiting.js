@@ -10,7 +10,10 @@ export function renderWaiting(gs) {
     const isBot = gs.botSeats?.includes(i);
     const div = document.createElement('div');
     div.className = `seat-item${p ? '' : ' empty'}${isBot ? ' bot-seat' : ''}`;
-    div.innerHTML = `<span class="seat-name">${p ? p.name : 'Aguardando...'}</span>`;
+    div.innerHTML = `
+      <span class="seat-name">${p ? p.name : 'Aguardando...'}</span>
+      ${gs.isLeader && isBot ? `<button class="btn-kick-bot" data-seat="${i}">Remover bot</button>` : ''}
+    `;
     seats.appendChild(div);
   }
 
@@ -111,5 +114,27 @@ document.getElementById('btn-add-bot').addEventListener('click', () => {
     }
     showToast(`🤖 ${res.botName} adicionado!`, 'success', 1500);
     // renderWaiting será chamado via gameState broadcast pelo servidor
+  });
+});
+
+document.getElementById('waiting-seats').addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn-kick-bot');
+  if (!btn) return;
+  if (btn.disabled) return;
+  const seatIndex = parseInt(btn.dataset.seat);
+  if (!Number.isInteger(seatIndex)) return;
+
+  btn.disabled = true;
+  socket.timeout(3000).emit('kickBotFromRoom', { seatIndex }, (err, res) => {
+    btn.disabled = false;
+    if (err) {
+      showToast('Servidor não respondeu ao remover o bot. Atualize a página e tente novamente.', 'error');
+      return;
+    }
+    if (!res?.ok) {
+      showToast(res?.msg || 'Erro ao remover bot.', 'error');
+      return;
+    }
+    showToast(`🤖 ${res.botName} removido.`, 'success', 1500);
   });
 });

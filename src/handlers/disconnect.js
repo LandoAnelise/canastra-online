@@ -2,6 +2,16 @@
 
 const { runBotTurns } = require('../BotAI');
 
+function remapBotSeats(botSeats, removedSeatIndex) {
+  if (!botSeats || botSeats.size === 0) return new Set();
+  const remapped = new Set();
+  for (const seat of botSeats) {
+    if (seat === removedSeatIndex) continue;
+    remapped.add(seat > removedSeatIndex ? seat - 1 : seat);
+  }
+  return remapped;
+}
+
 function registerDisconnectHandler(socket, io, rm) {
   const {
     rooms,
@@ -111,6 +121,8 @@ function registerDisconnectHandler(socket, io, rm) {
                 if (entry) entry.seatIndex = i;
               }
             });
+            game.botSeats = remapBotSeats(game.botSeats, info.seatIndex);
+            if (game.draft) game.draft = null;
             game.leaderSeatIndex = 0;
 
             broadcastToRoom(info.roomId, 'playerDisconnected', {
