@@ -42,9 +42,12 @@ socket.on('roundStarted', ({ round }) => {
   clearSelection();
   resetRoundState();
   // Restaurar botões/pilhas que foram ocultados pelo roundEnded
-  ['btn-play-melds', 'btn-discard', 'deck-pile', 'discard-pile'].forEach(id => {
+  ['btn-play-melds', 'btn-discard', 'deck-pile', 'discard-pile'].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) { el.disabled = false; el.classList.remove('hidden'); }
+    if (el) {
+      el.disabled = false;
+      el.classList.remove('hidden');
+    }
   });
 });
 
@@ -71,7 +74,7 @@ socket.on('gameAbandoned', ({ playerName }) => {
   clearRoomFromSession();
   state.teamsInitialized = false;
   state.gameState = null;
-  state.myRoomId  = null;
+  state.myRoomId = null;
 });
 
 document.getElementById('btn-abandoned-menu').addEventListener('click', () => {
@@ -84,16 +87,31 @@ socket.on('playerReplacedByBot', ({ playerName }) => {
   showToast(`🤖 ${playerName} saiu — bot assumiu o lugar.`, 'info', 4000);
 });
 
-socket.on('playerDrew', () => { playFolhaVirando(); });
-socket.on('playerTookDiscard', () => { playWhoosh(); });
-socket.on('playerDealt', () => { playDeal(); });
+socket.on('playerDrew', () => {
+  playFolhaVirando();
+});
+socket.on('playerTookDiscard', () => {
+  playWhoosh();
+});
+socket.on('playerDealt', () => {
+  playDeal();
+});
 
 socket.on('roundEnded', (result) => {
   // Desabilita todos os botões de ação imediatamente — rodada encerrada (mas mantém visíveis)
-  ['btn-play-melds', 'btn-confirm-melds', 'btn-cancel-melds', 'btn-discard', 'btn-bater',
-   'deck-pile', 'discard-pile'].forEach(id => {
+  [
+    'btn-play-melds',
+    'btn-confirm-melds',
+    'btn-cancel-melds',
+    'btn-discard',
+    'btn-bater',
+    'deck-pile',
+    'discard-pile',
+  ].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) { el.disabled = true; }
+    if (el) {
+      el.disabled = true;
+    }
   });
 
   window._roundEndedPending = true;
@@ -108,7 +126,11 @@ socket.on('deckEmpty', ({ playerName }) => {
 });
 
 socket.on('stagingPenalty', ({ playerName, teamName }) => {
-  showToast(`⚠️ ${playerName} (${teamName}) tentou baixar com pontos insuficientes! Penalidade: agora precisam de 150 pts.`, 'error', 6000);
+  showToast(
+    `⚠️ ${playerName} (${teamName}) tentou baixar com pontos insuficientes! Penalidade: agora precisam de 150 pts.`,
+    'error',
+    6000,
+  );
   playBzz();
 });
 
@@ -139,7 +161,7 @@ socket.on('gameState', (gs) => {
 
   if (gs.status === 'waiting') {
     renderWaiting(gs);
-    if (gs.players.length === 4 && gs.players.some(p => p.teamIndex === -1)) {
+    if (gs.players.length === 4 && gs.players.some((p) => p.teamIndex === -1)) {
       showScreen('screen-teams');
       renderTeamSelection(gs);
     } else if (gs.players.length < 4) {
@@ -159,7 +181,6 @@ socket.on('publicRoomsUpdated', ({ rooms }) => {
   const panel = document.getElementById('panel-browse');
   if (!panel.classList.contains('hidden')) renderPublicRooms(rooms);
 });
-
 
 // ── Auto-reconexão ao carregar a página ───────────────────────────────────────
 let _autoReconnectDone = false;
@@ -185,8 +206,8 @@ socket.on('connect', () => {
       showScreen('screen-lobby');
       return;
     }
-    state.myName    = session.playerName;
-    state.myRoomId  = session.roomId;
+    state.myName = session.playerName;
+    state.myRoomId = session.roomId;
     state.mySeatIndex = res.seatIndex;
     // Preenche o nome no campo do lobby caso o jogador volte ao lobby depois
     const nameInput = document.getElementById('input-name');
@@ -217,7 +238,7 @@ function applyMobileScale() {
     game.style.transformOrigin = 'top left';
     game.style.transform = `scale(${scale})`;
     game.style.width = DESIGN_MIN_W + 'px';
-    game.style.height = (window.innerHeight / scale) + 'px';
+    game.style.height = window.innerHeight / scale + 'px';
   } else {
     game.style.transform = '';
     game.style.width = '';

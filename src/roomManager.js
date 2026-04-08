@@ -3,7 +3,7 @@
 const { Game } = require('./GameEngine');
 
 function createRoomManager(io) {
-  const rooms      = new Map(); // roomId → Game
+  const rooms = new Map(); // roomId → Game
   const playerRoom = new Map(); // socketId → { roomId, seatIndex }
 
   // Reconnection registry: "ROOMID|normalizedName" → { seatIndex, disconnectTimer }
@@ -37,7 +37,7 @@ function createRoomManager(io) {
       if (!meta.isPublic) continue;
       const game = rooms.get(roomId);
       if (!game || game.status !== 'waiting' || game.players.length >= 4) continue;
-      list.push({ roomId, playerCount: game.players.length, players: game.players.map(p => p.name) });
+      list.push({ roomId, playerCount: game.players.length, players: game.players.map((p) => p.name) });
     }
     return list.sort((a, b) => b.playerCount - a.playerCount);
   }
@@ -51,7 +51,7 @@ function createRoomManager(io) {
       const p = game.players[i];
       if (p?.id) {
         const state = game.getStateFor(i);
-        state.isLeader = (i === (game.leaderSeatIndex ?? 0));
+        state.isLeader = i === (game.leaderSeatIndex ?? 0);
         io.to(p.id).emit('gameState', state);
       }
     }

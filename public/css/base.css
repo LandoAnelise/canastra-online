@@ -1,5 +1,11 @@
 /* ── RESET & BASE ─────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 :root {
   color-scheme: light;
@@ -13,13 +19,14 @@
   --black-suit: #1a1a2e;
   --card-bg: #fffdf7;
   --card-border: #d4c8b0;
-  --shadow: rgba(0,0,0,0.45);
+  --shadow: rgba(0, 0, 0, 0.45);
   --radius: 10px;
   --font-display: 'Playfair Display', serif;
   --font-body: 'DM Sans', sans-serif;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: var(--font-body);
   background: var(--felt-dark);
@@ -29,13 +36,22 @@ html, body {
 }
 
 /* ── SCREENS ──────────────────────────────────────────────────── */
-.screen { display: none; width: 100vw; height: 100vh; height: 100dvh; } /* dvh: ajusta com barra do browser */
-.screen.active { display: flex; align-items: center; justify-content: center; }
+.screen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+} /* dvh: ajusta com barra do browser */
+.screen.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ── BUTTONS ──────────────────────────────────────────────────── */
 .btn-ghost {
   background: transparent;
-  border: 1px solid rgba(201,168,76,0.3);
+  border: 1px solid rgba(201, 168, 76, 0.3);
   border-radius: 8px;
   padding: 8px 14px;
   color: var(--gold);
@@ -44,9 +60,18 @@ html, body {
   font-size: 0.9rem;
   transition: all 0.2s;
 }
-.btn-ghost:hover { background: rgba(201,168,76,0.1); border-color: var(--gold); }
-.btn-ghost.red { border-color: rgba(192,57,43,0.4); color: #e74c3c; }
-.btn-ghost.red:hover { background: rgba(192,57,43,0.1); border-color: #e74c3c; }
+.btn-ghost:hover {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: var(--gold);
+}
+.btn-ghost.red {
+  border-color: rgba(192, 57, 43, 0.4);
+  color: #e74c3c;
+}
+.btn-ghost.red:hover {
+  background: rgba(192, 57, 43, 0.1);
+  border-color: #e74c3c;
+}
 
 .btn-primary {
   background: linear-gradient(135deg, #c9a84c, #e8c96e);
@@ -59,31 +84,39 @@ html, body {
   cursor: pointer;
   font-family: var(--font-body);
   transition: all 0.2s;
-  box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3);
   width: 100%;
 }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.45); }
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(201, 168, 76, 0.45);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
 .btn-secondary {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 10px;
   padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.65);
+  color: rgba(255, 255, 255, 0.65);
   cursor: pointer;
   font-family: var(--font-body);
   transition: all 0.2s;
   width: 100%;
 }
-.btn-secondary:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
+.btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
 
 .btn-action {
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--cream);
   font-family: var(--font-body);
   font-size: 0.82rem;
@@ -92,35 +125,48 @@ html, body {
   transition: all 0.15s;
   white-space: nowrap;
 }
-.btn-action:hover:not(:disabled) { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
-.btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-action:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.btn-action:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
 .btn-action.bater {
-  background: linear-gradient(135deg, rgba(201,168,76,0.3), rgba(232,201,110,0.2));
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.3), rgba(232, 201, 110, 0.2));
   border-color: var(--gold);
   color: var(--gold-light);
   font-weight: 600;
 }
-.btn-action.bater:hover:not(:disabled) { background: linear-gradient(135deg, rgba(201,168,76,0.5), rgba(232,201,110,0.35)); }
+.btn-action.bater:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(201, 168, 76, 0.5), rgba(232, 201, 110, 0.35));
+}
 .btn-action.confirm-melds {
-  background: linear-gradient(135deg, rgba(46,160,67,0.35), rgba(46,160,67,0.2));
+  background: linear-gradient(135deg, rgba(46, 160, 67, 0.35), rgba(46, 160, 67, 0.2));
   border-color: #2ea043;
   color: #7ee787;
   font-weight: 600;
 }
-.btn-action.confirm-melds:hover:not(:disabled) { background: linear-gradient(135deg, rgba(46,160,67,0.55), rgba(46,160,67,0.4)); }
+.btn-action.confirm-melds:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(46, 160, 67, 0.55), rgba(46, 160, 67, 0.4));
+}
 .btn-action.cancel-melds {
-  border-color: rgba(192,57,43,0.5);
+  border-color: rgba(192, 57, 43, 0.5);
   color: #e74c3c;
 }
-.btn-action.cancel-melds:hover { background: rgba(192,57,43,0.12); border-color: #e74c3c; }
+.btn-action.cancel-melds:hover {
+  background: rgba(192, 57, 43, 0.12);
+  border-color: #e74c3c;
+}
 .btn-action.sort-hand {
-  border-color: rgba(120,180,255,0.35);
+  border-color: rgba(120, 180, 255, 0.35);
   color: #a8d4ff;
   font-size: 0.78rem;
 }
 .btn-action.sort-hand:hover:not(:disabled) {
-  background: rgba(120,180,255,0.12);
-  border-color: rgba(120,180,255,0.6);
+  background: rgba(120, 180, 255, 0.12);
+  border-color: rgba(120, 180, 255, 0.6);
 }
 
 .action-group {
@@ -131,14 +177,24 @@ html, body {
 .action-sep {
   width: 1px;
   height: 28px;
-  background: rgba(255,255,255,0.14);
+  background: rgba(255, 255, 255, 0.14);
   flex-shrink: 0;
 }
 
 /* Utility */
-.hidden { display: none !important; }
+.hidden {
+  display: none !important;
+}
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}

@@ -23,7 +23,7 @@ function registerDisconnectHandler(socket, io, rm) {
       const game = rooms.get(info.roomId);
       if (game) {
         const player = game.players[info.seatIndex];
-        const name   = player?.name || '?';
+        const name = player?.name || '?';
         console.log(`[-] ${name} desconectou da sala ${info.roomId}`);
 
         if (game.status === 'playing' || game.status === 'roundOver') {
@@ -40,7 +40,7 @@ function registerDisconnectHandler(socket, io, rm) {
 
             // Se não restam humanos, encerra o jogo
             const remainingHumans = game.players.filter(
-              (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+              (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i),
             );
             if (remainingHumans.length === 0) {
               console.log(`[Room ${info.roomId}] Todos os jogadores saíram — encerrando sala`);
@@ -60,7 +60,7 @@ function registerDisconnectHandler(socket, io, rm) {
             // Transfere liderança se o líder foi substituído
             if (game.leaderSeatIndex === info.seatIndex) {
               const nextHuman = game.players.findIndex(
-                (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i)
+                (p, i) => i !== info.seatIndex && p?.id && !game.botSeats.has(i),
               );
               if (nextHuman !== -1) game.leaderSeatIndex = nextHuman;
             }
@@ -83,7 +83,6 @@ function registerDisconnectHandler(socket, io, rm) {
                 runBotTurns(game, info.roomId, rm, game.botDifficulty);
               }, 3000);
             }
-
           }, RECONNECT_TIMEOUT_MS);
 
           reconnectSlots.set(key, { seatIndex: info.seatIndex, disconnectTimer: timer });

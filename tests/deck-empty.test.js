@@ -12,29 +12,41 @@ function setupGame() {
   const g = new Game('test');
   ['Alice', 'Bob', 'Carol', 'Dave'].forEach((name, i) => g.addPlayer(`p${i}`, name));
   g.assignTeams(
-    [{ seatIndex: 0, teamIndex: 0 }, { seatIndex: 1, teamIndex: 1 },
-     { seatIndex: 2, teamIndex: 0 }, { seatIndex: 3, teamIndex: 1 }],
-    { 0: [0, 2], 1: [1, 3] }
+    [
+      { seatIndex: 0, teamIndex: 0 },
+      { seatIndex: 1, teamIndex: 1 },
+      { seatIndex: 2, teamIndex: 0 },
+      { seatIndex: 3, teamIndex: 1 },
+    ],
+    { 0: [0, 2], 1: [1, 3] },
   );
   g.startRound();
   return g;
 }
 
 describe('Monte vazio: encerramento automático ao descartar', () => {
-
   test('1. Jogador pescou a última carta, descarta → deckEndRound, rodada encerrada', () => {
     const g = setupGame();
 
     // Configura: dupla 0 já tem canastra na mesa
     g.hasFirstMeld[0] = true;
     g.melds[0].push({
-      rank: 'K', suit: '♠', type: 'group',
-      cards: [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1),
-              card('K','♠',2), card('K','♥',2), card('K','♦',2)],
+      rank: 'K',
+      suit: '♠',
+      type: 'group',
+      cards: [
+        card('K', '♠', 1),
+        card('K', '♥', 1),
+        card('K', '♦', 1),
+        card('K', '♣', 1),
+        card('K', '♠', 2),
+        card('K', '♥', 2),
+        card('K', '♦', 2),
+      ],
     });
 
     // Esvazia o baralho e simula que o jogador 0 pescou a última carta
-    g.deck = [card('3','♣',99)]; // última carta
+    g.deck = [card('3', '♣', 99)]; // última carta
     g.drawnThisTurn = false;
     const draw = g.drawFromDeck(0);
     assert.ok(draw.ok);
@@ -54,13 +66,22 @@ describe('Monte vazio: encerramento automático ao descartar', () => {
 
     g.hasFirstMeld[0] = true;
     g.melds[0].push({
-      rank: 'K', suit: '♠', type: 'group',
-      cards: [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1),
-              card('K','♠',2), card('K','♥',2), card('K','♦',2)],
+      rank: 'K',
+      suit: '♠',
+      type: 'group',
+      cards: [
+        card('K', '♠', 1),
+        card('K', '♥', 1),
+        card('K', '♦', 1),
+        card('K', '♣', 1),
+        card('K', '♠', 2),
+        card('K', '♥', 2),
+        card('K', '♦', 2),
+      ],
     });
 
     // Pescou a última carta
-    g.deck = [card('3','♣',99)];
+    g.deck = [card('3', '♣', 99)];
     g.drawnThisTurn = false;
     g.drawFromDeck(0);
 
@@ -72,8 +93,11 @@ describe('Monte vazio: encerramento automático ao descartar', () => {
     // Tenta bater depois — deve ser recusado
     const baterResult = g.bater(0);
     assert.ok(!baterResult.ok, 'bater() deve ser recusado após fim de rodada');
-    assert.equal(baterResult.msg, 'A rodada já foi encerrada.',
-      `Mensagem esperada: "A rodada já foi encerrada.", recebida: "${baterResult.msg}"`);
+    assert.equal(
+      baterResult.msg,
+      'A rodada já foi encerrada.',
+      `Mensagem esperada: "A rodada já foi encerrada.", recebida: "${baterResult.msg}"`,
+    );
   });
 
   test('3. Após deckEndRound, um segundo discard() deve ser recusado', () => {
@@ -81,12 +105,21 @@ describe('Monte vazio: encerramento automático ao descartar', () => {
 
     g.hasFirstMeld[0] = true;
     g.melds[0].push({
-      rank: 'K', suit: '♠', type: 'group',
-      cards: [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1),
-              card('K','♠',2), card('K','♥',2), card('K','♦',2)],
+      rank: 'K',
+      suit: '♠',
+      type: 'group',
+      cards: [
+        card('K', '♠', 1),
+        card('K', '♥', 1),
+        card('K', '♦', 1),
+        card('K', '♣', 1),
+        card('K', '♠', 2),
+        card('K', '♥', 2),
+        card('K', '♦', 2),
+      ],
     });
 
-    g.deck = [card('3','♣',99)];
+    g.deck = [card('3', '♣', 99)];
     g.drawnThisTurn = false;
     g.drawFromDeck(0);
 
@@ -102,5 +135,4 @@ describe('Monte vazio: encerramento automático ao descartar', () => {
     // Se não sobrou carta, o teste passa trivialmente — rodada encerrada de qualquer forma
     assert.notEqual(g.status, 'playing');
   });
-
 });

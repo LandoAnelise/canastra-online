@@ -16,10 +16,10 @@ function stopBrowseRefresh() {
 }
 
 // Tab switching
-document.querySelectorAll('.lobby-tab').forEach(tab => {
+document.querySelectorAll('.lobby-tab').forEach((tab) => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.lobby-tab').forEach((t) => t.classList.remove('active'));
+    document.querySelectorAll('.lobby-panel').forEach((p) => p.classList.add('hidden'));
     tab.classList.add('active');
     document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
     if (tab.dataset.tab === 'browse') startBrowseRefresh();
@@ -42,10 +42,16 @@ document.getElementById('type-public').addEventListener('click', () => {
 // Create Room
 document.getElementById('btn-create').addEventListener('click', () => {
   const name = document.getElementById('input-name').value.trim();
-  if (!name) { showToast('Digite seu nome!', 'error'); return; }
+  if (!name) {
+    showToast('Digite seu nome!', 'error');
+    return;
+  }
   state.myName = name;
   socket.emit('createRoom', { playerName: name, isPublic: state.selectedRoomType === 'public' }, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     state.myRoomId = res.roomId;
     state.mySeatIndex = res.seatIndex;
     saveSession(res.roomId, name);
@@ -64,13 +70,19 @@ document.getElementById('btn-toggle-test-room')?.addEventListener('click', () =>
 // Create Test Room
 document.getElementById('btn-create-test')?.addEventListener('click', () => {
   const name = document.getElementById('input-name').value.trim();
-  if (!name) { showToast('Digite seu nome!', 'error'); return; }
+  if (!name) {
+    showToast('Digite seu nome!', 'error');
+    return;
+  }
   const s0 = parseInt(document.getElementById('test-score-0').value) || 0;
   const s1 = parseInt(document.getElementById('test-score-1').value) || 0;
   const botDifficulty = document.getElementById('test-bot-difficulty').value || 'medium';
   state.myName = name;
   socket.emit('createRoom', { playerName: name, testMode: true, testScores: [s0, s1], botDifficulty }, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     state.myRoomId = res.roomId;
     state.mySeatIndex = res.seatIndex;
     saveSession(res.roomId, name);
@@ -83,12 +95,21 @@ document.getElementById('btn-create-test')?.addEventListener('click', () => {
 // Join by code
 export function joinRoomByCode(code) {
   const name = document.getElementById('input-name').value.trim();
-  if (!name) { showToast('Digite seu nome!', 'error'); return; }
-  if (!code) { showToast('Digite o código da sala!', 'error'); return; }
+  if (!name) {
+    showToast('Digite seu nome!', 'error');
+    return;
+  }
+  if (!code) {
+    showToast('Digite o código da sala!', 'error');
+    return;
+  }
   state.myName = name;
   state.myRoomId = code;
   socket.emit('joinRoom', { roomId: code, playerName: name }, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     state.mySeatIndex = res.seatIndex;
     saveSession(code, name);
     document.getElementById('waiting-room-code').textContent = code;
@@ -105,19 +126,25 @@ export function joinRoomByCode(code) {
 document.getElementById('btn-join').addEventListener('click', () => {
   joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
 });
-document.getElementById('input-name').addEventListener('keydown', e => {
+document.getElementById('input-name').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     const activeTab = document.querySelector('.lobby-tab.active')?.dataset.tab;
     if (activeTab === 'join') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
     else if (activeTab === 'create') document.getElementById('btn-create').click();
   }
 });
-document.getElementById('input-room').addEventListener('keydown', e => {
+document.getElementById('input-room').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
 });
 
 // Pré-preenche o nome salvo na sessão anterior
-const _savedSession = (() => { try { return JSON.parse(localStorage.getItem('canastra_session')); } catch { return null; } })();
+const _savedSession = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('canastra_session'));
+  } catch {
+    return null;
+  }
+})();
 if (_savedSession?.playerName) {
   const ni = document.getElementById('input-name');
   if (ni && !ni.value) ni.value = _savedSession.playerName;
@@ -129,8 +156,8 @@ if (urlParams.get('sala')) {
   const code = urlParams.get('sala').toUpperCase();
   document.getElementById('input-room').value = code;
   // Switch to join tab
-  document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.lobby-tab').forEach((t) => t.classList.remove('active'));
+  document.querySelectorAll('.lobby-panel').forEach((p) => p.classList.add('hidden'));
   document.querySelector('[data-tab="join"]').classList.add('active');
   document.getElementById('panel-join').classList.remove('hidden');
 }
@@ -140,7 +167,10 @@ function loadPublicRooms() {
   const list = document.getElementById('public-rooms-list');
   list.innerHTML = '<div class="rooms-loading">Carregando…</div>';
   socket.emit('getPublicRooms', {}, (res) => {
-    if (!res.ok) { list.innerHTML = '<div class="rooms-empty">Erro ao carregar.</div>'; return; }
+    if (!res.ok) {
+      list.innerHTML = '<div class="rooms-empty">Erro ao carregar.</div>';
+      return;
+    }
     renderPublicRooms(res.rooms);
   });
 }
@@ -152,7 +182,7 @@ export function renderPublicRooms(rooms) {
     return;
   }
   list.innerHTML = '';
-  rooms.forEach(r => {
+  rooms.forEach((r) => {
     const item = document.createElement('div');
     item.className = 'public-room-item';
     item.innerHTML = `

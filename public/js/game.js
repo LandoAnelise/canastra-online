@@ -16,7 +16,7 @@ let iAmReady = false;
 
 // Suit interleaved by color: ♠(black) ♦(red) ♣(black) ♥(red)
 const SUIT_ORDER = { '♠': 0, '♦': 1, '♣': 2, '♥': 3 };
-const RANK_ORDER_SORT = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RANK_ORDER_SORT = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 function autoSortHand(hand) {
   return [...hand].sort((a, b) => {
@@ -27,8 +27,12 @@ function autoSortHand(hand) {
 }
 
 // ─── UTILS ───────────────────────────────────────────────────────────────────
-function isRed(suit) { return suit === '♥' || suit === '♦'; }
-function isWild(card) { return card.rank === '2'; }
+function isRed(suit) {
+  return suit === '♥' || suit === '♦';
+}
+function isWild(card) {
+  return card.rank === '2';
+}
 
 function cardHTML(card, extra = '') {
   const red = isRed(card.suit) ? 'red' : '';
@@ -54,9 +58,15 @@ function discardCardHTML(card) {
   </div>`;
 }
 
-function isCanastra(meld) { return meld.cards.length >= 7; }
-function isCanastraLimpa(meld) { return isCanastra(meld) && meld.cards.every(c => !isWild(c)); }
-function isCanastraSuja(meld)  { return isCanastra(meld) && meld.cards.some(c => isWild(c)); }
+function isCanastra(meld) {
+  return meld.cards.length >= 7;
+}
+function isCanastraLimpa(meld) {
+  return isCanastra(meld) && meld.cards.every((c) => !isWild(c));
+}
+function isCanastraSuja(meld) {
+  return isCanastra(meld) && meld.cards.some((c) => isWild(c));
+}
 
 function showToast(msg, type = '', duration = 2800) {
   const t = document.getElementById('toast');
@@ -67,7 +77,7 @@ function showToast(msg, type = '', duration = 2800) {
 }
 
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
@@ -76,10 +86,10 @@ let amLeader = false;
 let selectedRoomType = 'private';
 
 // Tab switching
-document.querySelectorAll('.lobby-tab').forEach(tab => {
+document.querySelectorAll('.lobby-tab').forEach((tab) => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.lobby-tab').forEach((t) => t.classList.remove('active'));
+    document.querySelectorAll('.lobby-panel').forEach((p) => p.classList.add('hidden'));
     tab.classList.add('active');
     document.getElementById(`panel-${tab.dataset.tab}`).classList.remove('hidden');
     if (tab.dataset.tab === 'browse') loadPublicRooms();
@@ -101,10 +111,16 @@ document.getElementById('type-public').addEventListener('click', () => {
 // Create Room
 document.getElementById('btn-create').addEventListener('click', () => {
   const name = document.getElementById('input-name').value.trim();
-  if (!name) { showToast('Digite seu nome!', 'error'); return; }
+  if (!name) {
+    showToast('Digite seu nome!', 'error');
+    return;
+  }
   myName = name;
   socket.emit('createRoom', { playerName: name, isPublic: selectedRoomType === 'public' }, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     myRoomId = res.roomId;
     mySeatIndex = res.seatIndex;
     document.getElementById('waiting-room-code').textContent = res.roomId;
@@ -124,11 +140,21 @@ document.getElementById('btn-random-room').addEventListener('click', () => {
 // Join by code
 function joinRoomByCode(code) {
   const name = document.getElementById('input-name').value.trim();
-  if (!name) { showToast('Digite seu nome!', 'error'); return; }
-  if (!code) { showToast('Digite o código da sala!', 'error'); return; }
-  myName = name; myRoomId = code;
+  if (!name) {
+    showToast('Digite seu nome!', 'error');
+    return;
+  }
+  if (!code) {
+    showToast('Digite o código da sala!', 'error');
+    return;
+  }
+  myName = name;
+  myRoomId = code;
   socket.emit('joinRoom', { roomId: code, playerName: name }, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     mySeatIndex = res.seatIndex;
     document.getElementById('waiting-room-code').textContent = code;
     history.replaceState(null, '', `?sala=${code}`);
@@ -143,14 +169,14 @@ function joinRoomByCode(code) {
 document.getElementById('btn-join').addEventListener('click', () => {
   joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
 });
-document.getElementById('input-name').addEventListener('keydown', e => {
+document.getElementById('input-name').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     const activeTab = document.querySelector('.lobby-tab.active')?.dataset.tab;
     if (activeTab === 'join') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
     else if (activeTab === 'create') document.getElementById('btn-create').click();
   }
 });
-document.getElementById('input-room').addEventListener('keydown', e => {
+document.getElementById('input-room').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') joinRoomByCode(document.getElementById('input-room').value.trim().toUpperCase());
 });
 
@@ -160,8 +186,8 @@ if (urlParams.get('sala')) {
   const code = urlParams.get('sala').toUpperCase();
   document.getElementById('input-room').value = code;
   // Switch to join tab
-  document.querySelectorAll('.lobby-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.lobby-panel').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.lobby-tab').forEach((t) => t.classList.remove('active'));
+  document.querySelectorAll('.lobby-panel').forEach((p) => p.classList.add('hidden'));
   document.querySelector('[data-tab="join"]').classList.add('active');
   document.getElementById('panel-join').classList.remove('hidden');
 }
@@ -171,7 +197,10 @@ function loadPublicRooms() {
   const list = document.getElementById('public-rooms-list');
   list.innerHTML = '<div class="rooms-loading">Carregando…</div>';
   socket.emit('getPublicRooms', {}, (res) => {
-    if (!res.ok) { list.innerHTML = '<div class="rooms-empty">Erro ao carregar.</div>'; return; }
+    if (!res.ok) {
+      list.innerHTML = '<div class="rooms-empty">Erro ao carregar.</div>';
+      return;
+    }
     renderPublicRooms(res.rooms);
   });
 }
@@ -183,7 +212,7 @@ function renderPublicRooms(rooms) {
     return;
   }
   list.innerHTML = '';
-  rooms.forEach(r => {
+  rooms.forEach((r) => {
     const item = document.createElement('div');
     item.className = 'public-room-item';
     item.innerHTML = `
@@ -241,14 +270,16 @@ socket.on('playerDisconnected', ({ playerName, reconnectWindowMs }) => {
   // If reconnectWindowMs is set, gamePaused event handles the UI
 });
 
-socket.on('roundEnded', (result) => { showRoundModal(result); });
+socket.on('roundEnded', (result) => {
+  showRoundModal(result);
+});
 
 socket.on('gameState', (state) => {
   gameState = state;
 
   if (state.status === 'waiting') {
     renderWaiting(state);
-    if (state.players.length === 4 && state.players.some(p => p.teamIndex === -1)) {
+    if (state.players.length === 4 && state.players.some((p) => p.teamIndex === -1)) {
       showScreen('screen-teams');
       renderTeamSelection(state);
     } else if (state.players.length < 4) {
@@ -309,7 +340,11 @@ document.getElementById('btn-ready').addEventListener('click', () => {
   if (iAmReady) return;
   iAmReady = true;
   socket.emit('playerReady', {}, (res) => {
-    if (!res.ok) { showToast(res.msg, 'error'); iAmReady = false; return; }
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      iAmReady = false;
+      return;
+    }
     readyPlayers.add(mySeatIndex);
     if (gameState) renderReadyScreen(gameState.players);
   });
@@ -333,24 +368,35 @@ function renderTeamSelection(state) {
   }
   document.getElementById('btn-confirm-teams').style.display = amLeader ? '' : 'none';
 
-  if (teamsInitialized) { updateTeamChips(state, amLeader); return; }
+  if (teamsInitialized) {
+    updateTeamChips(state, amLeader);
+    return;
+  }
   teamsInitialized = true;
   teamAssignments = {};
-  state.players.forEach((_, i) => { teamAssignments[i] = -1; });
+  state.players.forEach((_, i) => {
+    teamAssignments[i] = -1;
+  });
 
   if (amLeader) {
-    ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach(id => {
+    ['unassigned-slots', 'team0-slots', 'team1-slots'].forEach((id) => {
       const el = document.getElementById(id);
-      el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        el.classList.add('drag-over');
+      });
       el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-      el.addEventListener('drop', e => {
+      el.addEventListener('drop', (e) => {
         e.preventDefault();
         el.classList.remove('drag-over');
         if (dragSeat === null) return;
         const targetTeam = id === 'team0-slots' ? 0 : id === 'team1-slots' ? 1 : -1;
         if (targetTeam !== -1) {
-          const inTeam = Object.values(teamAssignments).filter(t => t === targetTeam).length;
-          if (inTeam >= 2) { showToast('Cada dupla só pode ter 2 jogadores.', 'error'); return; }
+          const inTeam = Object.values(teamAssignments).filter((t) => t === targetTeam).length;
+          if (inTeam >= 2) {
+            showToast('Cada dupla só pode ter 2 jogadores.', 'error');
+            return;
+          }
         }
         teamAssignments[dragSeat] = targetTeam;
         updateTeamChips(state, amLeader);
@@ -365,10 +411,10 @@ function renderTeamSelection(state) {
 function updateTeamChips(state, isLeader = false) {
   const slots = {
     '-1': document.getElementById('unassigned-slots'),
-    '0':  document.getElementById('team0-slots'),
-    '1':  document.getElementById('team1-slots'),
+    0: document.getElementById('team0-slots'),
+    1: document.getElementById('team1-slots'),
   };
-  Object.values(slots).forEach(s => s.innerHTML = '');
+  Object.values(slots).forEach((s) => (s.innerHTML = ''));
 
   state.players.forEach((p, i) => {
     const team = String(teamAssignments[i] ?? -1);
@@ -377,7 +423,7 @@ function updateTeamChips(state, isLeader = false) {
     chip.className = `player-chip${isMe ? ' me-chip' : ''}`;
     chip.draggable = isLeader;
     chip.dataset.seat = i;
-    chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0,2).toUpperCase()}</div>
+    chip.innerHTML = `<div class="chip-avatar">${p.name.slice(0, 2).toUpperCase()}</div>
       <span>${p.name}${isMe ? ' (você)' : ''}</span>`;
     if (isLeader) {
       chip.addEventListener('dragstart', () => {
@@ -394,7 +440,7 @@ function updateTeamChips(state, isLeader = false) {
 }
 
 function updateConfirmBtn() {
-  const counts = [0, 1].map(t => Object.values(teamAssignments).filter(v => v === t).length);
+  const counts = [0, 1].map((t) => Object.values(teamAssignments).filter((v) => v === t).length);
   const ready = counts[0] === 2 && counts[1] === 2;
   document.getElementById('btn-confirm-teams').disabled = !ready;
   document.getElementById('teams-hint').textContent = ready
@@ -404,7 +450,8 @@ function updateConfirmBtn() {
 
 document.getElementById('btn-confirm-teams').addEventListener('click', () => {
   const teams = Object.entries(teamAssignments).map(([seat, team]) => ({
-    seatIndex: parseInt(seat), teamIndex: team,
+    seatIndex: parseInt(seat),
+    teamIndex: team,
   }));
   socket.emit('assignTeams', { teams }, (res) => {
     if (!res.ok) showToast(res.msg, 'error');
@@ -416,14 +463,16 @@ function renderGame(state) {
   if (!state) return;
 
   // Sync hand order — auto-sort when starting fresh, otherwise preserve custom order
-  const handIds = state.myHand.map(c => c.id);
+  const handIds = state.myHand.map((c) => c.id);
   if (myHandOrder.length === 0) {
     // New round or first load — apply auto-sort
-    myHandOrder = autoSortHand(state.myHand).map(c => c.id);
+    myHandOrder = autoSortHand(state.myHand).map((c) => c.id);
   } else {
     // Keep custom order, append any new cards (drawn/taken) at end
-    myHandOrder = myHandOrder.filter(id => handIds.includes(id));
-    handIds.forEach(id => { if (!myHandOrder.includes(id)) myHandOrder.push(id); });
+    myHandOrder = myHandOrder.filter((id) => handIds.includes(id));
+    handIds.forEach((id) => {
+      if (!myHandOrder.includes(id)) myHandOrder.push(id);
+    });
   }
 
   document.getElementById('val-score-0').textContent = state.scores[0];
@@ -431,15 +480,17 @@ function renderGame(state) {
   document.getElementById('game-status-label').textContent = `Rodada ${state.round}`;
 
   const seats = getRelativeSeats(state);
-  renderOpponent('top',   seats.top,   state);
-  renderOpponent('left',  seats.left,  state);
+  renderOpponent('top', seats.top, state);
+  renderOpponent('left', seats.left, state);
   renderOpponent('right', seats.right, state);
   renderMe(state);
 
   document.getElementById('deck-count').textContent = `${state.deckSize} cartas`;
   document.getElementById('discard-count').textContent = `${state.discardSize} no lixo`;
   document.getElementById('discard-pile').querySelector('.pile-card')?.remove();
-  document.getElementById('discard-pile').querySelector('.pile-count')
+  document
+    .getElementById('discard-pile')
+    .querySelector('.pile-count')
     .insertAdjacentHTML('beforebegin', discardCardHTML(state.discardTop));
 
   renderMelds(state);
@@ -450,7 +501,7 @@ function renderGame(state) {
   turnBanner.textContent = isMyTurn ? '🎯 Sua vez!' : `Vez de ${currentName}`;
   turnBanner.classList.remove('hidden');
 
-  document.querySelectorAll('.player-slot').forEach(s => s.classList.remove('active-turn'));
+  document.querySelectorAll('.player-slot').forEach((s) => s.classList.remove('active-turn'));
   const slot = getSlotForSeat(state.currentPlayerIndex, state);
   if (slot) document.getElementById(`player-${slot}`)?.classList.add('active-turn');
 
@@ -460,14 +511,14 @@ function renderGame(state) {
 
 function getRelativeSeats(state) {
   const me = mySeatIndex;
-  return { right: (me+1)%4, top: (me+2)%4, left: (me+3)%4 };
+  return { right: (me + 1) % 4, top: (me + 2) % 4, left: (me + 3) % 4 };
 }
 
 function getSlotForSeat(idx, state) {
   const s = getRelativeSeats(state);
   if (idx === mySeatIndex) return 'bottom';
-  if (idx === s.top)   return 'top';
-  if (idx === s.left)  return 'left';
+  if (idx === s.top) return 'top';
+  if (idx === s.left) return 'left';
   if (idx === s.right) return 'right';
   return null;
 }
@@ -479,7 +530,7 @@ function renderOpponent(pos, seatIdx, state) {
   const fan = document.getElementById(`hand-${pos}`);
   if (fan) {
     fan.innerHTML = '';
-    for (let i = 0; i < Math.min(state.handSizes[seatIdx]||0, 13); i++)
+    for (let i = 0; i < Math.min(state.handSizes[seatIdx] || 0, 13); i++)
       fan.insertAdjacentHTML('beforeend', '<div class="back-card"></div>');
   }
 }
@@ -492,22 +543,24 @@ function renderMe(state) {
   hand.innerHTML = '';
   // Detect newly drawn cards
   if (window._prevHandIds) {
-    const newIds = state.myHand.map(c => c.id).filter(id => !window._prevHandIds.has(id));
+    const newIds = state.myHand.map((c) => c.id).filter((id) => !window._prevHandIds.has(id));
     if (newIds.length > 0) {
       justDrawnCardId = newIds[0]; // highlight first new card
       window._prevHandIds = null;
-      setTimeout(() => { justDrawnCardId = null; }, 2500);
+      setTimeout(() => {
+        justDrawnCardId = null;
+      }, 2500);
     }
   }
 
-  const ordered = myHandOrder.map(id => state.myHand.find(c => c.id === id)).filter(Boolean);
-  ordered.forEach(card => {
+  const ordered = myHandOrder.map((id) => state.myHand.find((c) => c.id === id)).filter(Boolean);
+  ordered.forEach((card) => {
     const sel = selectedCards.includes(card.id) ? 'selected' : '';
     const drawn = card.id === justDrawnCardId ? 'just-drawn' : '';
     hand.insertAdjacentHTML('beforeend', cardHTML(card, `${sel} ${drawn}`));
   });
 
-  hand.querySelectorAll('.my-card').forEach(el => {
+  hand.querySelectorAll('.my-card').forEach((el) => {
     el.addEventListener('click', () => onCardClick(el.dataset.id));
   });
 
@@ -518,29 +571,29 @@ function renderMe(state) {
 let dragCardId = null;
 
 function setupHandDragDrop(container) {
-  container.querySelectorAll('.my-card').forEach(el => {
-    el.addEventListener('dragstart', e => {
+  container.querySelectorAll('.my-card').forEach((el) => {
+    el.addEventListener('dragstart', (e) => {
       dragCardId = el.dataset.id;
       e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => el.style.opacity = '0.35', 0);
+      setTimeout(() => (el.style.opacity = '0.35'), 0);
     });
     el.addEventListener('dragend', () => {
       el.style.opacity = '';
       dragCardId = null;
-      container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+      container.querySelectorAll('.my-card').forEach((c) => c.classList.remove('drag-over-card'));
     });
-    el.addEventListener('dragover', e => {
+    el.addEventListener('dragover', (e) => {
       e.preventDefault();
       if (dragCardId && dragCardId !== el.dataset.id) {
-        container.querySelectorAll('.my-card').forEach(c => c.classList.remove('drag-over-card'));
+        container.querySelectorAll('.my-card').forEach((c) => c.classList.remove('drag-over-card'));
         el.classList.add('drag-over-card');
       }
     });
-    el.addEventListener('drop', e => {
+    el.addEventListener('drop', (e) => {
       e.preventDefault();
       if (!dragCardId || dragCardId === el.dataset.id) return;
       const from = myHandOrder.indexOf(dragCardId);
-      const to   = myHandOrder.indexOf(el.dataset.id);
+      const to = myHandOrder.indexOf(el.dataset.id);
       if (from === -1 || to === -1) return;
       myHandOrder.splice(from, 1);
       myHandOrder.splice(to, 0, dragCardId);
@@ -560,13 +613,13 @@ function fullCardHTML(card) {
 
 function renderMelds(state) {
   const isMyTurn = state.currentPlayerIndex === mySeatIndex;
-  const drawn    = state.drawnThisTurn;
+  const drawn = state.drawnThisTurn;
 
   // Update team labels — highlight the player's own team
   for (let t = 0; t < 2; t++) {
-    const label    = document.getElementById(`melds-label-${t}`);
+    const label = document.getElementById(`melds-label-${t}`);
     const youBadge = label?.querySelector('.melds-label-you');
-    const group    = document.getElementById(`melds-team${t}`);
+    const group = document.getElementById(`melds-team${t}`);
     if (t === state.myTeam) {
       group?.classList.add('my-team');
       youBadge?.classList.remove('hidden');
@@ -587,10 +640,13 @@ function renderMelds(state) {
 
     state.melds[t].forEach((meld, mi) => {
       const isLimpa = isCanastraLimpa(meld);
-      const isSuja  = isCanastraSuja(meld);
+      const isSuja = isCanastraSuja(meld);
       const cls = isLimpa ? 'canastra-limpa' : isSuja ? 'canastra-suja' : '';
-      const badge = isLimpa ? '<span class="canastra-badge limpa">✦ Limpa</span>'
-                  : isSuja  ? '<span class="canastra-badge suja">✦ Suja</span>' : '';
+      const badge = isLimpa
+        ? '<span class="canastra-badge limpa">✦ Limpa</span>'
+        : isSuja
+          ? '<span class="canastra-badge suja">✦ Suja</span>'
+          : '';
       const typeLabel = meld.type === 'sequence' ? 'Sequência' : 'Grupo';
       const canAdd = isMyTurn && drawn && t === state.myTeam;
 
@@ -607,28 +663,37 @@ function renderMelds(state) {
       // Add button handler + drag-to-meld
       if (canAdd) {
         el.querySelector('.btn-add-to-meld').addEventListener('click', () => {
-          if (selectedCards.length === 0) { showToast('Selecione cartas na mão primeiro.', 'error'); return; }
+          if (selectedCards.length === 0) {
+            showToast('Selecione cartas na mão primeiro.', 'error');
+            return;
+          }
           const meldActions = [{ type: 'add', meldIndex: mi, cards: [...selectedCards] }];
-          socket.emit('playMelds', { meldActions }, res => {
-            if (!res.ok) { showToast(res.msg, 'error'); return; }
+          socket.emit('playMelds', { meldActions }, (res) => {
+            if (!res.ok) {
+              showToast(res.msg, 'error');
+              return;
+            }
             showToast('Cartas adicionadas!', 'success');
             clearSelection();
           });
         });
 
         // Drag a card from hand directly onto this meld
-        el.addEventListener('dragover', e => {
+        el.addEventListener('dragover', (e) => {
           if (!dragCardId) return;
           e.preventDefault();
           el.classList.add('drop-target');
         });
         el.addEventListener('dragleave', () => el.classList.remove('drop-target'));
-        el.addEventListener('drop', e => {
+        el.addEventListener('drop', (e) => {
           e.preventDefault();
           el.classList.remove('drop-target');
           if (!dragCardId) return;
-          socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, res => {
-            if (!res.ok) { showToast(res.msg, 'error'); return; }
+          socket.emit('playMelds', { meldActions: [{ type: 'add', meldIndex: mi, cards: [dragCardId] }] }, (res) => {
+            if (!res.ok) {
+              showToast(res.msg, 'error');
+              return;
+            }
             showToast('Carta adicionada!', 'success', 1400);
             clearSelection();
           });
@@ -643,21 +708,22 @@ function renderMelds(state) {
 function updateButtons(state) {
   const isMyTurn = state.currentPlayerIndex === mySeatIndex;
   const drawn = state.drawnThisTurn;
-  const hasCanastra = state.melds[state.myTeam]?.some(m => m.cards.length >= 7);
-  document.getElementById('btn-draw').disabled          = !isMyTurn || drawn;
-  document.getElementById('btn-take-discard').disabled  = !isMyTurn || drawn || !state.discardTop;
-  document.getElementById('btn-play-melds').disabled    = !isMyTurn || !drawn || selectedCards.length === 0;
-  document.getElementById('btn-discard').disabled       = !isMyTurn || !drawn;
-  document.getElementById('btn-bater').disabled         = !isMyTurn || !drawn || !hasCanastra;
+  const hasCanastra = state.melds[state.myTeam]?.some((m) => m.cards.length >= 7);
+  document.getElementById('btn-draw').disabled = !isMyTurn || drawn;
+  document.getElementById('btn-take-discard').disabled = !isMyTurn || drawn || !state.discardTop;
+  document.getElementById('btn-play-melds').disabled = !isMyTurn || !drawn || selectedCards.length === 0;
+  document.getElementById('btn-discard').disabled = !isMyTurn || !drawn;
+  document.getElementById('btn-bater').disabled = !isMyTurn || !drawn || !hasCanastra;
 }
 
 // ─── CARD CLICK ──────────────────────────────────────────────────────────────
 function onCardClick(cardId) {
   if (!gameState || gameState.currentPlayerIndex !== mySeatIndex || !gameState.drawnThisTurn) {
-    showToast('Não é sua vez ou você ainda não comprou.', 'error'); return;
+    showToast('Não é sua vez ou você ainda não comprou.', 'error');
+    return;
   }
   selectedCards = selectedCards.includes(cardId)
-    ? selectedCards.filter(id => id !== cardId)
+    ? selectedCards.filter((id) => id !== cardId)
     : [...selectedCards, cardId];
 
   renderMe(gameState);
@@ -666,8 +732,8 @@ function onCardClick(cardId) {
 
 // ─── ACTIONS ─────────────────────────────────────────────────────────────────
 document.getElementById('btn-draw').addEventListener('click', () => {
-  const prevIds = new Set(gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('drawFromDeck', {}, res => {
+  const prevIds = new Set(gameState?.myHand?.map((c) => c.id) || []);
+  socket.emit('drawFromDeck', {}, (res) => {
     if (!res.ok) showToast(res.msg, 'error');
     // justDrawnCardId will be set in next gameState update via prevIds comparison
     window._prevHandIds = prevIds;
@@ -675,54 +741,79 @@ document.getElementById('btn-draw').addEventListener('click', () => {
 });
 
 document.getElementById('btn-take-discard').addEventListener('click', () => {
-  window._prevHandIds = new Set(gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('takeDiscard', {}, res => { if (!res.ok) showToast(res.msg, 'error'); });
+  window._prevHandIds = new Set(gameState?.myHand?.map((c) => c.id) || []);
+  socket.emit('takeDiscard', {}, (res) => {
+    if (!res.ok) showToast(res.msg, 'error');
+  });
 });
 
 document.getElementById('btn-play-melds').addEventListener('click', () => {
-  if (selectedCards.length < 3) { showToast('Selecione pelo menos 3 cartas.', 'error'); return; }
-  socket.emit('playMelds', { meldActions: [{ type: 'new', cards: [...selectedCards] }] }, res => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
-    showToast('Grupo baixado!', 'success'); clearSelection();
+  if (selectedCards.length < 3) {
+    showToast('Selecione pelo menos 3 cartas.', 'error');
+    return;
+  }
+  socket.emit('playMelds', { meldActions: [{ type: 'new', cards: [...selectedCards] }] }, (res) => {
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
+    showToast('Grupo baixado!', 'success');
+    clearSelection();
   });
 });
 
 document.getElementById('btn-discard').addEventListener('click', () => {
-  if (selectedCards.length !== 1) { showToast('Selecione exatamente 1 carta para descartar.', 'error'); return; }
-  socket.emit('discard', { cardId: selectedCards[0] }, res => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+  if (selectedCards.length !== 1) {
+    showToast('Selecione exatamente 1 carta para descartar.', 'error');
+    return;
+  }
+  socket.emit('discard', { cardId: selectedCards[0] }, (res) => {
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     clearSelection();
   });
 });
 
 document.getElementById('btn-bater').addEventListener('click', () => {
   const discardCardId = selectedCards.length === 1 ? selectedCards[0] : null;
-  socket.emit('bater', { discardCardId }, res => {
-    if (!res?.ok) { showToast(res?.msg || 'Erro ao bater.', 'error'); return; }
+  socket.emit('bater', { discardCardId }, (res) => {
+    if (!res?.ok) {
+      showToast(res?.msg || 'Erro ao bater.', 'error');
+      return;
+    }
     clearSelection();
   });
 });
 
 document.getElementById('btn-sort-hand').addEventListener('click', () => {
   if (!gameState) return;
-  myHandOrder = autoSortHand(gameState.myHand).map(c => c.id);
+  myHandOrder = autoSortHand(gameState.myHand).map((c) => c.id);
   renderMe(gameState);
   showToast('Cartas reordenadas!', 'success', 1400);
 });
 
 document.getElementById('deck-pile').addEventListener('click', () => {
   if (!gameState || gameState.currentPlayerIndex !== mySeatIndex || gameState.drawnThisTurn) return;
-  window._prevHandIds = new Set(gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('drawFromDeck', {}, res => { if (!res.ok) showToast(res.msg, 'error'); });
+  window._prevHandIds = new Set(gameState?.myHand?.map((c) => c.id) || []);
+  socket.emit('drawFromDeck', {}, (res) => {
+    if (!res.ok) showToast(res.msg, 'error');
+  });
 });
 
 document.getElementById('discard-pile').addEventListener('click', (e) => {
   // Don't trigger take-discard if clicking the expand button
   if (e.target.id === 'btn-expand-discard') return;
   if (!gameState || gameState.currentPlayerIndex !== mySeatIndex || gameState.drawnThisTurn) return;
-  if (!gameState.discardTop) { showToast('O lixo está vazio.', 'error'); return; }
-  window._prevHandIds = new Set(gameState?.myHand?.map(c => c.id) || []);
-  socket.emit('takeDiscard', {}, res => { if (!res.ok) showToast(res.msg, 'error'); });
+  if (!gameState.discardTop) {
+    showToast('O lixo está vazio.', 'error');
+    return;
+  }
+  window._prevHandIds = new Set(gameState?.myHand?.map((c) => c.id) || []);
+  socket.emit('takeDiscard', {}, (res) => {
+    if (!res.ok) showToast(res.msg, 'error');
+  });
 });
 
 function clearSelection() {
@@ -758,16 +849,17 @@ function toggleDiscardExpand() {
 
 function renderDiscardDropdown(cards) {
   const container = document.getElementById('discard-dropdown-cards');
-  const countEl   = document.getElementById('discard-dropdown-count');
+  const countEl = document.getElementById('discard-dropdown-count');
   countEl.textContent = `Pilha de descarte (${cards.length} cartas)`;
   container.innerHTML = '';
-  cards.forEach(card => {
+  cards.forEach((card) => {
     const red = isRed(card.suit) ? 'red' : '';
-    container.insertAdjacentHTML('beforeend',
+    container.insertAdjacentHTML(
+      'beforeend',
       `<div class="discard-view-card ${red}">
         <span class="card-rank">${card.rank}</span>
         <span class="card-suit">${card.suit}</span>
-      </div>`
+      </div>`,
     );
   });
 }
@@ -808,8 +900,11 @@ discardPileEl.addEventListener('drop', (e) => {
   discardPileEl.classList.remove('drop-target');
   if (!dragCardId) return;
   if (!gameState || gameState.currentPlayerIndex !== mySeatIndex || !gameState.drawnThisTurn) return;
-  socket.emit('discard', { cardId: dragCardId }, res => {
-    if (!res.ok) { showToast(res.msg, 'error'); return; }
+  socket.emit('discard', { cardId: dragCardId }, (res) => {
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      return;
+    }
     clearSelection();
   });
 });
@@ -830,43 +925,56 @@ function showRoundModal(result) {
     const col = document.getElementById(`round-team-col-${t}`);
     col.className = `round-team-col ${isWinner ? 'winner' : 'loser'}`;
 
-    document.getElementById(`round-team-name-${t}`).textContent =
-      `Dupla ${t+1}${isWinner ? ' 🏆' : ''}`;
+    document.getElementById(`round-team-name-${t}`).textContent = `Dupla ${t + 1}${isWinner ? ' 🏆' : ''}`;
 
     // Breakdown lines
     const bd = document.getElementById(`round-breakdown-${t}`);
-    const sign = v => v > 0 ? `+${v}` : `${v}`;
+    const sign = (v) => (v > 0 ? `+${v}` : `${v}`);
     bd.innerHTML = `
       <div class="breakdown-line">
         <span class="bl-label">Cartas na mesa</span>
         <span class="bl-val positive">+${d.cardsPoints}</span>
       </div>
-      ${d.canastrasLimpas > 0 ? `<div class="breakdown-line">
-        <span class="bl-label">Canastra${d.canastrasLimpas>1?'s':''} limpa${d.canastrasLimpas>1?'s':''} ×${d.canastrasLimpas}</span>
+      ${
+        d.canastrasLimpas > 0
+          ? `<div class="breakdown-line">
+        <span class="bl-label">Canastra${d.canastrasLimpas > 1 ? 's' : ''} limpa${d.canastrasLimpas > 1 ? 's' : ''} ×${d.canastrasLimpas}</span>
         <span class="bl-val bonus">+${d.canastrasLimpas * 200}</span>
-      </div>` : ''}
-      ${d.canastrasSujas > 0 ? `<div class="breakdown-line">
-        <span class="bl-label">Canastra${d.canastrasSujas>1?'s':''} suja${d.canastrasSujas>1?'s':''} ×${d.canastrasSujas}</span>
+      </div>`
+          : ''
+      }
+      ${
+        d.canastrasSujas > 0
+          ? `<div class="breakdown-line">
+        <span class="bl-label">Canastra${d.canastrasSujas > 1 ? 's' : ''} suja${d.canastrasSujas > 1 ? 's' : ''} ×${d.canastrasSujas}</span>
         <span class="bl-val bonus">+${d.canastrasSujas * 100}</span>
-      </div>` : ''}
-      ${d.baterBonus > 0 ? `<div class="breakdown-line">
+      </div>`
+          : ''
+      }
+      ${
+        d.baterBonus > 0
+          ? `<div class="breakdown-line">
         <span class="bl-label">${d.baterBonus >= 100 ? 'Batida limpa' : 'Bônus bater'}</span>
         <span class="bl-val bonus">+${d.baterBonus}</span>
-      </div>` : ''}`;
+      </div>`
+          : ''
+      }`;
 
     // Subtotal from melds
     const meldTotal = d.cardsPoints + d.canastrasBonus + d.baterBonus;
 
     // Hand losses for this team
-    const teamLosses = result.playerHandLoss
-      .filter(p => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
+    const teamLosses = result.playerHandLoss.filter((p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
     if (teamLosses.length > 0) {
-      teamLosses.forEach(p => {
-        bd.insertAdjacentHTML('beforeend', `
+      teamLosses.forEach((p) => {
+        bd.insertAdjacentHTML(
+          'beforeend',
+          `
           <div class="breakdown-line">
             <span class="bl-label">Mão de ${p.playerName}</span>
             <span class="bl-val negative">−${p.handPoints}</span>
-          </div>`);
+          </div>`,
+        );
       });
     }
 
@@ -875,7 +983,7 @@ function showRoundModal(result) {
     const roundPts = result.roundPoints[t];
     document.getElementById(`round-subtotal-${t}`).innerHTML = `
       <span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>
-      <span style="color:${roundPts>=0?'#6de89a':'#e74c3c'};font-weight:700">${roundPts>=0?'+':''}${roundPts}</span>`;
+      <span style="color:${roundPts >= 0 ? '#6de89a' : '#e74c3c'};font-weight:700">${roundPts >= 0 ? '+' : ''}${roundPts}</span>`;
 
     document.getElementById(`round-total-${t}`).innerHTML = `
       <span class="total-label">Total geral</span>
@@ -885,7 +993,7 @@ function showRoundModal(result) {
   // Player chips (who lost hand / who bateu)
   const losses = document.getElementById('round-hand-losses');
   losses.innerHTML = '<span style="font-size:0.7rem;opacity:0.4;margin-right:4px">Mãos:</span>';
-  result.playerHandLoss.forEach(p => {
+  result.playerHandLoss.forEach((p) => {
     const chip = p.isBatter
       ? `<span class="hand-loss-chip safe">✅ ${p.playerName} bateu</span>`
       : p.handPoints > 0
@@ -899,7 +1007,7 @@ function showRoundModal(result) {
 
 document.getElementById('btn-continue-round').addEventListener('click', () => {
   closeModal('modal-round');
-  socket.emit('continueRound', {}, res => {
+  socket.emit('continueRound', {}, (res) => {
     if (!res.ok) showToast(res.msg || 'Erro ao continuar.', 'error');
   });
 });
@@ -914,21 +1022,25 @@ function showGameOverModal(state) {
 }
 
 document.getElementById('btn-new-game').addEventListener('click', () => {
-  socket.emit('newGame', {}, res => {
+  socket.emit('newGame', {}, (res) => {
     if (!res.ok) showToast(res.msg, 'error');
-    else { closeModal('modal-gameover'); teamsInitialized = false; }
+    else {
+      closeModal('modal-gameover');
+      teamsInitialized = false;
+    }
   });
 });
 
-function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+function closeModal(id) {
+  document.getElementById(id)?.classList.add('hidden');
+}
 
 // ─── PAUSE / RECONNECT ───────────────────────────────────────────────────────
 let pauseCountdownInterval = null;
 
 socket.on('gamePaused', ({ playerName, timeoutMs }) => {
   closeModal('modal-round'); // don't interrupt with round modal
-  document.getElementById('paused-msg').textContent =
-    `${playerName} desconectou. Aguardando reconexão…`;
+  document.getElementById('paused-msg').textContent = `${playerName} desconectou. Aguardando reconexão…`;
   startPauseCountdown(timeoutMs);
   document.getElementById('modal-paused').classList.remove('hidden');
   showToast(`⏸ ${playerName} desconectou. Jogo pausado.`, 'error', 6000);
@@ -942,8 +1054,7 @@ socket.on('gameResumed', ({ playerName }) => {
 
 socket.on('playerAbandoned', ({ playerName }) => {
   stopPauseCountdown();
-  document.getElementById('paused-msg').textContent =
-    `${playerName} não reconectou a tempo. A partida foi encerrada.`;
+  document.getElementById('paused-msg').textContent = `${playerName} não reconectou a tempo. A partida foi encerrada.`;
   document.getElementById('paused-timer').textContent = '';
 });
 
@@ -952,7 +1063,10 @@ function startPauseCountdown(ms) {
   let remaining = ms;
   const el = document.getElementById('paused-timer');
   function tick() {
-    if (remaining <= 0) { el.textContent = '00:00'; return; }
+    if (remaining <= 0) {
+      el.textContent = '00:00';
+      return;
+    }
     const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
     const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
     el.textContent = `${m}:${s}`;

@@ -8,15 +8,13 @@ self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   // Assume controle de todas as abas abertas imediatamente
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   // Passa tudo direto para a rede; se falhar (offline), tenta cache do browser
   if (event.request.method !== 'GET') return;
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });

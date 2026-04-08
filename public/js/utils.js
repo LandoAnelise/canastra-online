@@ -1,6 +1,6 @@
 // Suit interleaved by color: ♠(black) ♦(red) ♣(black) ♥(red)
 export const SUIT_ORDER = { '♠': 0, '♦': 1, '♣': 2, '♥': 3 };
-export const RANK_ORDER_SORT = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+export const RANK_ORDER_SORT = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 export function autoSortHand(hand) {
   return [...hand].sort((a, b) => {
@@ -18,10 +18,14 @@ export function sortHandByRank(hand) {
   });
 }
 
-export function isRed(suit) { return suit === '♥' || suit === '♦'; }
-export function isWild(card) { return card.rank === '2'; }
+export function isRed(suit) {
+  return suit === '♥' || suit === '♦';
+}
+export function isWild(card) {
+  return card.rank === '2';
+}
 
-const FACE_GLYPH = { 'K': '♚', 'Q': '♛', 'J': '♞', 'A': '' };
+const FACE_GLYPH = { K: '♚', Q: '♛', J: '♞', A: '' };
 
 export function cardHTML(card, extra = '') {
   const red = isRed(card.suit) ? 'red' : '';
@@ -50,45 +54,47 @@ export function discardCardHTML(card) {
   </div>`;
 }
 
-export function isCanastra(meld) { return meld.cards.length >= 7; }
+export function isCanastra(meld) {
+  return meld.cards.length >= 7;
+}
 
-const _RANK_VAL = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13};
+const _RANK_VAL = { A: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, J: 11, Q: 12, K: 13 };
 
 function _wildsActingInSequence(meld) {
-  const naturals = meld.cards.filter(c => !isWild(c));
-  const wilds    = meld.cards.filter(c => isWild(c));
+  const naturals = meld.cards.filter((c) => !isWild(c));
+  const wilds = meld.cards.filter((c) => isWild(c));
   if (wilds.length === 0) return 0;
   const suit = naturals[0]?.suit;
   if (!suit) return wilds.length;
-  const hasAce = naturals.some(c => c.rank === 'A');
+  const hasAce = naturals.some((c) => c.rank === 'A');
 
   // Determine if Ace should be high or low (same logic as server)
   let aceHigh = false;
   if (hasAce) {
-    const vLow  = naturals.map(c => (c.rank === 'A' ? 1  : _RANK_VAL[c.rank])).sort((a,b) => a-b);
-    const vHigh = naturals.map(c => (c.rank === 'A' ? 14 : _RANK_VAL[c.rank])).sort((a,b) => a-b);
-    aceHigh = (vHigh[vHigh.length-1] - vHigh[0]) < (vLow[vLow.length-1] - vLow[0]);
+    const vLow = naturals.map((c) => (c.rank === 'A' ? 1 : _RANK_VAL[c.rank])).sort((a, b) => a - b);
+    const vHigh = naturals.map((c) => (c.rank === 'A' ? 14 : _RANK_VAL[c.rank])).sort((a, b) => a - b);
+    aceHigh = vHigh[vHigh.length - 1] - vHigh[0] < vLow[vLow.length - 1] - vLow[0];
   }
-  const valFn = r => (r === 'A' ? (aceHigh ? 14 : 1) : _RANK_VAL[r]);
+  const valFn = (r) => (r === 'A' ? (aceHigh ? 14 : 1) : _RANK_VAL[r]);
 
-  const sortedVals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
+  const sortedVals = naturals.map((c) => valFn(c.rank)).sort((a, b) => a - b);
   const minVal = sortedVals[0];
   const maxVal = sortedVals[sortedVals.length - 1];
-  const internalGaps = (maxVal - minVal) - (naturals.length - 1);
-  const borderWilds  = wilds.length - internalGaps;
-  const minPossible  = hasAce ? (aceHigh ? 2 : 1) : 2;
-  const leftBorder   = Math.min(Math.max(0, borderWilds), minVal - minPossible);
-  const startVal     = minVal - leftBorder;
-  const endVal       = maxVal + (borderWilds - leftBorder);
+  const internalGaps = maxVal - minVal - (naturals.length - 1);
+  const borderWilds = wilds.length - internalGaps;
+  const minPossible = hasAce ? (aceHigh ? 2 : 1) : 2;
+  const leftBorder = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+  const startVal = minVal - leftBorder;
+  const endVal = maxVal + (borderWilds - leftBorder);
   const rank2InRange = startVal <= 2 && 2 <= endVal;
-  const suitedWilds  = wilds.filter(c => c.suit === suit).length;
-  const naturalWilds = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+  const suitedWilds = wilds.filter((c) => c.suit === suit).length;
+  const naturalWilds = rank2InRange && suitedWilds > 0 ? 1 : 0;
   return Math.max(0, wilds.length - naturalWilds);
 }
 
 export function isCanastraLimpa(meld) {
   if (!isCanastra(meld)) return false;
-  const wilds = meld.cards.filter(c => isWild(c));
+  const wilds = meld.cards.filter((c) => isWild(c));
   if (wilds.length === 0) return true;
   if (meld.type !== 'sequence') return false;
   return _wildsActingInSequence(meld) === 0;
@@ -96,7 +102,7 @@ export function isCanastraLimpa(meld) {
 
 export function isCanastraSuja(meld) {
   if (!isCanastra(meld)) return false;
-  const wilds = meld.cards.filter(c => isWild(c));
+  const wilds = meld.cards.filter((c) => isWild(c));
   if (wilds.length === 0) return false;
   if (meld.type !== 'sequence') return true;
   return _wildsActingInSequence(meld) > 0;
@@ -111,8 +117,21 @@ export function showToast(msg, type = '', duration = 2800) {
 }
 
 export function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-export function closeModal(id) { document.getElementById(id)?.classList.add('hidden'); }
+export function closeModal(id) {
+  document.getElementById(id)?.classList.add('hidden');
+}
+
+/** Escape a string for safe insertion into HTML to prevent XSS. */
+export function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}

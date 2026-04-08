@@ -1,5 +1,5 @@
 import socket from '../socket.js';
-import { isRed } from '../utils.js';
+import { isRed, escapeHtml } from '../utils.js';
 
 // ─── INLINE DISCARD PILE EXPAND ──────────────────────────────────────────────
 let discardExpanded = false;
@@ -28,16 +28,17 @@ function toggleDiscardExpand() {
 
 function renderDiscardDropdown(cards) {
   const container = document.getElementById('discard-dropdown-cards');
-  const countEl   = document.getElementById('discard-dropdown-count');
+  const countEl = document.getElementById('discard-dropdown-count');
   countEl.textContent = `Pilha de descarte (${cards.length} cartas)`;
   container.innerHTML = '';
-  cards.forEach(card => {
+  cards.forEach((card) => {
     const red = isRed(card.suit) ? 'red' : '';
-    container.insertAdjacentHTML('beforeend',
+    container.insertAdjacentHTML(
+      'beforeend',
       `<div class="discard-view-card ${red}">
-        <span class="card-rank">${card.rank}</span>
-        <span class="card-suit">${card.suit}</span>
-      </div>`
+        <span class="card-rank">${escapeHtml(card.rank)}</span>
+        <span class="card-suit">${escapeHtml(card.suit)}</span>
+      </div>`,
     );
   });
 }

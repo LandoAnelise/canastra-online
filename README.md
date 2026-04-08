@@ -37,7 +37,6 @@ npm start
 
 O servidor sobe em `http://localhost:3000`
 
-
 ## Estrutura do projeto
 
 ```

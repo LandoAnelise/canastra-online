@@ -5,10 +5,19 @@ const SUITS = ['♠', '♥', '♦', '♣'];
 const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 const CARD_POINTS = {
-  'A': 15,
-  '2': 10,
-  'K': 10, 'Q': 10, 'J': 10, '10': 10, '9': 10, '8': 10, '7': 10,
-  '6': 5, '5': 5, '4': 5, '3': 5,
+  A: 15,
+  2: 10,
+  K: 10,
+  Q: 10,
+  J: 10,
+  10: 10,
+  9: 10,
+  8: 10,
+  7: 10,
+  6: 5,
+  5: 5,
+  4: 5,
+  3: 5,
 };
 
 const CLEAN_CANASTA_POINTS = 200;
@@ -51,7 +60,9 @@ function shuffle(arr) {
 // ─── MELD VALIDATION ─────────────────────────────────────────────────────────
 // Ás pode ser baixo (A-2-3) ou alto (Q-K-A). Usamos índice 1..13 para 2..K, e A pode ser 0 ou 14.
 const RANK_ORDER = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-function rankIndex(rank) { return RANK_ORDER.indexOf(rank); }
+function rankIndex(rank) {
+  return RANK_ORDER.indexOf(rank);
+}
 
 // Retorna índices numéricos tentando A como alto (14) ou baixo (1)
 // Para sequência: tenta as duas interpretações do Ás
@@ -70,15 +81,15 @@ function rankVal(rank, aceHigh) {
 function isValidTripletGroup(cards) {
   if (cards.length < 3) return false;
   // Checar se todas as cartas tem o mesmo rank (incluindo 2s)
-  const allSameRank = cards.every(c => c.rank === cards[0].rank);
+  const allSameRank = cards.every((c) => c.rank === cards[0].rank);
   if (allSameRank) return true; // grupo puro (ex: tres 2s, tres As, etc.) sempre valido
 
   // Grupos mistos: separar naturais (nao-2s) e coringas (2s)
-  const naturals = cards.filter(c => !isWild(c));
-  const wilds = cards.filter(c => isWild(c));
+  const naturals = cards.filter((c) => !isWild(c));
+  const wilds = cards.filter((c) => isWild(c));
   if (naturals.length === 0) return false;
   const rank = naturals[0].rank;
-  if (!naturals.every(c => c.rank === rank)) return false;
+  if (!naturals.every((c) => c.rank === rank)) return false;
   // Máximo 1 coringa por grupo misto
   if (wilds.length > 1) return false;
   // Coringas nao podem ser maioria
@@ -87,19 +98,20 @@ function isValidTripletGroup(cards) {
 }
 
 // Mapeamento consistente: 2=2, 3=3 ... K=13, A=1(baixo) ou A=14(alto)
-const RANK_VAL = {'A':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13};
+const RANK_VAL = { A: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, J: 11, Q: 12, K: 13 };
 
 function _testSeq(naturals, wilds, valFn, minPossible, maxPossible) {
-  const rankSet = new Set(naturals.map(c => c.rank));
+  const rankSet = new Set(naturals.map((c) => c.rank));
   if (rankSet.size !== naturals.length) return false;
-  const vals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
-  const minV = vals[0], maxV = vals[vals.length-1];
+  const vals = naturals.map((c) => valFn(c.rank)).sort((a, b) => a - b);
+  const minV = vals[0],
+    maxV = vals[vals.length - 1];
   const span = maxV - minV;
   const internalGaps = span - (naturals.length - 1);
   if (internalGaps < 0) return false;
   if (wilds.length < internalGaps) return false;
   const wildcardBorders = wilds.length - internalGaps;
-  const leftRoom  = minV - minPossible;
+  const leftRoom = minV - minPossible;
   const rightRoom = maxPossible - maxV;
   if (wildcardBorders > leftRoom + rightRoom) return false;
   return true;
@@ -112,47 +124,48 @@ function _testSeq(naturals, wilds, valFn, minPossible, maxPossible) {
 // portanto a razao wilds/naturais e verificada via actingWilds, nao por contagem bruta.
 function isValidSequence(cards) {
   if (cards.length < 3) return false;
-  const naturals = cards.filter(c => !isWild(c));
-  const wilds    = cards.filter(c => isWild(c));
+  const naturals = cards.filter((c) => !isWild(c));
+  const wilds = cards.filter((c) => isWild(c));
   if (naturals.length === 0) return false;
   const suit = naturals[0].suit;
-  if (!naturals.every(c => c.suit === suit)) return false;
+  if (!naturals.every((c) => c.suit === suit)) return false;
 
   // Conta quantos 2s estao atuando como coringas (substituindo outro rank)
   // para uma dada funcao de valor e minimo possivel do range.
   const actingWilds = (valFn, minPossible) => {
     if (wilds.length === 0) return 0;
-    const vals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
-    const minVal = vals[0], maxVal = vals[vals.length-1];
-    const internalGaps = (maxVal - minVal) - (naturals.length - 1);
-    const borderWilds  = wilds.length - internalGaps;
-    const leftBorder   = Math.min(Math.max(0, borderWilds), minVal - minPossible);
-    const startVal     = minVal - leftBorder;
-    const endVal       = maxVal + (borderWilds - leftBorder);
+    const vals = naturals.map((c) => valFn(c.rank)).sort((a, b) => a - b);
+    const minVal = vals[0],
+      maxVal = vals[vals.length - 1];
+    const internalGaps = maxVal - minVal - (naturals.length - 1);
+    const borderWilds = wilds.length - internalGaps;
+    const leftBorder = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+    const startVal = minVal - leftBorder;
+    const endVal = maxVal + (borderWilds - leftBorder);
     // Um 2 do mesmo naipe que cai no slot do rank 2 e natural (nao e coringa)
     const rank2InRange = startVal <= 2 && 2 <= endVal;
-    const suitedWilds  = wilds.filter(c => c.suit === suit).length;
-    const naturalCount = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+    const suitedWilds = wilds.filter((c) => c.suit === suit).length;
+    const naturalCount = rank2InRange && suitedWilds > 0 ? 1 : 0;
     return Math.max(0, wilds.length - naturalCount);
   };
 
-  const hasAce = naturals.some(c => c.rank === 'A');
+  const hasAce = naturals.some((c) => c.rank === 'A');
 
   if (hasAce) {
-    const valLow  = r => RANK_VAL[r];
-    const valHigh = r => r === 'A' ? 14 : RANK_VAL[r];
-    const validLow  = _testSeq(naturals, wilds, valLow,  1, 13);
+    const valLow = (r) => RANK_VAL[r];
+    const valHigh = (r) => (r === 'A' ? 14 : RANK_VAL[r]);
+    const validLow = _testSeq(naturals, wilds, valLow, 1, 13);
     const validHigh = _testSeq(naturals, wilds, valHigh, 2, 14);
     if (!validLow && !validHigh) return false;
     // Usar o arranjo com menos coringas atuando
-    const awLow  = validLow  ? actingWilds(valLow,  1) : Infinity;
+    const awLow = validLow ? actingWilds(valLow, 1) : Infinity;
     const awHigh = validHigh ? actingWilds(valHigh, 2) : Infinity;
     return Math.min(awLow, awHigh) <= 1;
   }
 
   // Sem As: 2=2 ... K=13
-  if (!_testSeq(naturals, wilds, r => RANK_VAL[r], 2, 13)) return false;
-  return actingWilds(r => RANK_VAL[r], 2) <= 1;
+  if (!_testSeq(naturals, wilds, (r) => RANK_VAL[r], 2, 13)) return false;
+  return actingWilds((r) => RANK_VAL[r], 2) <= 1;
 }
 
 // Valida qualquer tipo de meld (grupo ou sequencia)
@@ -167,47 +180,47 @@ function sortGroupCards(cards) {
 
 // Ordena as cartas de uma sequencia colocando coringas nos slots que eles preenchem
 function sortSequenceCards(cards) {
-  const naturals = cards.filter(c => !isWild(c));
-  const wilds    = cards.filter(c => isWild(c));
+  const naturals = cards.filter((c) => !isWild(c));
+  const wilds = cards.filter((c) => isWild(c));
   if (wilds.length === 0) {
     // Sem coringas: ordenar naturais detectando se As e alto ou baixo
-    const hasAce = naturals.some(c => c.rank === 'A');
+    const hasAce = naturals.some((c) => c.rank === 'A');
     let aceHigh = false;
     if (hasAce) {
-      const vLow  = naturals.map(c => RANK_VAL[c.rank]).sort((a,b)=>a-b);
-      const vHigh = naturals.map(c => c.rank==='A'?14:RANK_VAL[c.rank]).sort((a,b)=>a-b);
-      aceHigh = (vHigh[vHigh.length-1]-vHigh[0]) < (vLow[vLow.length-1]-vLow[0]);
+      const vLow = naturals.map((c) => RANK_VAL[c.rank]).sort((a, b) => a - b);
+      const vHigh = naturals.map((c) => (c.rank === 'A' ? 14 : RANK_VAL[c.rank])).sort((a, b) => a - b);
+      aceHigh = vHigh[vHigh.length - 1] - vHigh[0] < vLow[vLow.length - 1] - vLow[0];
     }
-    return [...naturals].sort((a,b) => {
-      const va = a.rank==='A' ? (aceHigh?14:1) : RANK_VAL[a.rank];
-      const vb = b.rank==='A' ? (aceHigh?14:1) : RANK_VAL[b.rank];
+    return [...naturals].sort((a, b) => {
+      const va = a.rank === 'A' ? (aceHigh ? 14 : 1) : RANK_VAL[a.rank];
+      const vb = b.rank === 'A' ? (aceHigh ? 14 : 1) : RANK_VAL[b.rank];
       return va - vb;
     });
   }
 
   // Detectar se As e alto ou baixo
-  const hasAce = naturals.some(c => c.rank === 'A');
+  const hasAce = naturals.some((c) => c.rank === 'A');
   let aceHigh = false;
   if (hasAce) {
-    const vLow  = naturals.map(c => RANK_VAL[c.rank]).sort((a,b)=>a-b);
-    const vHigh = naturals.map(c => c.rank==='A'?14:RANK_VAL[c.rank]).sort((a,b)=>a-b);
-    aceHigh = (vHigh[vHigh.length-1]-vHigh[0]) < (vLow[vLow.length-1]-vLow[0]);
+    const vLow = naturals.map((c) => RANK_VAL[c.rank]).sort((a, b) => a - b);
+    const vHigh = naturals.map((c) => (c.rank === 'A' ? 14 : RANK_VAL[c.rank])).sort((a, b) => a - b);
+    aceHigh = vHigh[vHigh.length - 1] - vHigh[0] < vLow[vLow.length - 1] - vLow[0];
   }
-  const val = r => r==='A' ? (aceHigh?14:1) : RANK_VAL[r];
+  const val = (r) => (r === 'A' ? (aceHigh ? 14 : 1) : RANK_VAL[r]);
 
   // Ordenar naturais
-  const sortedNaturals = [...naturals].sort((a,b) => val(a.rank)-val(b.rank));
+  const sortedNaturals = [...naturals].sort((a, b) => val(a.rank) - val(b.rank));
   const minVal = val(sortedNaturals[0].rank);
-  const maxVal = val(sortedNaturals[sortedNaturals.length-1].rank);
+  const maxVal = val(sortedNaturals[sortedNaturals.length - 1].rank);
 
   // Construir array de slots: tamanho total = naturals + wilds
   const totalSlots = cards.length;
   // Determinar o valor inicial da sequencia
   // Coringas extras (alem das lacunas internas) vao para as bordas
-  const internalGaps = (maxVal - minVal) - (naturals.length - 1);
-  const borderWilds  = wilds.length - internalGaps;
+  const internalGaps = maxVal - minVal - (naturals.length - 1);
+  const borderWilds = wilds.length - internalGaps;
   // Distribuir border wilds: preferir esquerda se ha espaco
-  const leftBorder  = Math.min(borderWilds, aceHigh ? minVal-2 : minVal-1);
+  const leftBorder = Math.min(borderWilds, aceHigh ? minVal - 2 : minVal - 1);
   const rightBorder = borderWilds - leftBorder;
 
   const startVal = minVal - leftBorder;
@@ -225,7 +238,7 @@ function sortSequenceCards(cards) {
     } else {
       // Para o slot do rank 2, preferir um coringa do mesmo naipe (2 natural)
       if (slotVal === 2 && suit) {
-        const suitedIdx = wildsArr.findIndex(c => c.suit === suit);
+        const suitedIdx = wildsArr.findIndex((c) => c.suit === suit);
         if (suitedIdx !== -1) {
           result.push(wildsArr.splice(suitedIdx, 1)[0]);
           continue;
@@ -259,54 +272,54 @@ function isCanastra(meld) {
 function countWildsActing(meld) {
   if (!meld.type) {
     // fallback: assume todos os 2s sao coringas
-    return meld.cards.filter(c => isWild(c)).length;
+    return meld.cards.filter((c) => isWild(c)).length;
   }
 
   if (meld.type === 'group') {
     // Grupo de 2s: nenhum coringa. Grupo de outro rank: todos os 2s sao coringas.
-    return meld.cards[0]?.rank === '2' ? 0 : meld.cards.filter(c => isWild(c)).length;
+    return meld.cards[0]?.rank === '2' ? 0 : meld.cards.filter((c) => isWild(c)).length;
   }
 
   if (meld.type === 'sequence') {
     // Um 2 e natural numa sequencia se o range completo da sequencia (incluindo
     // extensoes de borda por coringas) passa pelo valor 2 E o 2 e do mesmo naipe.
-    const naturals = meld.cards.filter(c => !isWild(c));
-    const wilds    = meld.cards.filter(c => isWild(c));
+    const naturals = meld.cards.filter((c) => !isWild(c));
+    const wilds = meld.cards.filter((c) => isWild(c));
     if (wilds.length === 0) return 0;
 
     const suit = naturals[0]?.suit;
-    const hasAce = naturals.some(c => c.rank === 'A');
+    const hasAce = naturals.some((c) => c.rank === 'A');
 
     let aceHigh = false;
     if (hasAce) {
-      const vLow  = naturals.map(c => RANK_VAL[c.rank]).sort((a,b)=>a-b);
-      const vHigh = naturals.map(c => c.rank==='A'?14:RANK_VAL[c.rank]).sort((a,b)=>a-b);
-      aceHigh = (vHigh[vHigh.length-1]-vHigh[0]) < (vLow[vLow.length-1]-vLow[0]);
+      const vLow = naturals.map((c) => RANK_VAL[c.rank]).sort((a, b) => a - b);
+      const vHigh = naturals.map((c) => (c.rank === 'A' ? 14 : RANK_VAL[c.rank])).sort((a, b) => a - b);
+      aceHigh = vHigh[vHigh.length - 1] - vHigh[0] < vLow[vLow.length - 1] - vLow[0];
     }
-    const valFn = r => (r==='A' ? (aceHigh?14:1) : RANK_VAL[r]);
+    const valFn = (r) => (r === 'A' ? (aceHigh ? 14 : 1) : RANK_VAL[r]);
 
-    const sortedVals = naturals.map(c => valFn(c.rank)).sort((a,b) => a-b);
+    const sortedVals = naturals.map((c) => valFn(c.rank)).sort((a, b) => a - b);
     const minVal = sortedVals[0];
     const maxVal = sortedVals[sortedVals.length - 1];
 
-    const internalGaps = (maxVal - minVal) - (naturals.length - 1);
-    const borderWilds  = wilds.length - internalGaps;
+    const internalGaps = maxVal - minVal - (naturals.length - 1);
+    const borderWilds = wilds.length - internalGaps;
 
     // Calcular o range completo da sequencia (com extensoes de borda)
     const minPossible = hasAce ? (aceHigh ? 2 : 1) : 2;
-    const leftBorder  = Math.min(Math.max(0, borderWilds), minVal - minPossible);
-    const startVal    = minVal - leftBorder;
-    const endVal      = maxVal + (borderWilds - leftBorder);
+    const leftBorder = Math.min(Math.max(0, borderWilds), minVal - minPossible);
+    const startVal = minVal - leftBorder;
+    const endVal = maxVal + (borderWilds - leftBorder);
 
     // Um coringa do mesmo naipe que ocupa o slot do rank 2 e natural
-    const rank2InRange   = startVal <= 2 && 2 <= endVal;
-    const suitedWilds    = suit ? wilds.filter(c => c.suit === suit).length : 0;
-    const naturalWilds   = (rank2InRange && suitedWilds > 0) ? 1 : 0;
+    const rank2InRange = startVal <= 2 && 2 <= endVal;
+    const suitedWilds = suit ? wilds.filter((c) => c.suit === suit).length : 0;
+    const naturalWilds = rank2InRange && suitedWilds > 0 ? 1 : 0;
 
     return Math.max(0, wilds.length - naturalWilds);
   }
 
-  return meld.cards.filter(c => isWild(c)).length;
+  return meld.cards.filter((c) => isWild(c)).length;
 }
 
 function isCanastraLimpa(meld) {
@@ -337,6 +350,8 @@ function calcHandPoints(hand) {
 class Game {
   constructor(roomId) {
     this.roomId = roomId;
+    this._createdAt = Date.now();
+    this._lastActivity = Date.now();
     this.players = []; // [{id, name, teamIndex}]
     this.status = 'waiting'; // waiting | playing | finished
     this.scores = [0, 0]; // team 0, team 1
@@ -389,28 +404,32 @@ class Game {
     for (const { seatIndex, teamIndex } of teams) {
       this.players[seatIndex].teamIndex = teamIndex;
     }
-    this.teamNames = [0, 1].map(t =>
-      this.players.filter(p => p.teamIndex === t).map(p => p.name).join(' e ')
+    this.teamNames = [0, 1].map((t) =>
+      this.players
+        .filter((p) => p.teamIndex === t)
+        .map((p) => p.name)
+        .join(' e '),
     );
     // Ordem dos jogadores dentro de cada time (usa ordem definida pelo líder, ou seatIndex crescente)
-    this.teamOrders = [0, 1].map(t => {
+    this.teamOrders = [0, 1].map((t) => {
       const provided = providedTeamOrders?.[t];
       if (Array.isArray(provided) && provided.length === 2) return provided;
-      return teams.filter(a => a.teamIndex === t).map(a => a.seatIndex).sort((a, b) => a - b);
+      return teams
+        .filter((a) => a.teamIndex === t)
+        .map((a) => a.seatIndex)
+        .sort((a, b) => a - b);
     });
     // Ordem de jogo intercalada entre os times: T0P0, T1P0, T0P1, T1P1
-    this.playOrder = [
-      this.teamOrders[0][0],
-      this.teamOrders[1][0],
-      this.teamOrders[0][1],
-      this.teamOrders[1][1],
-    ];
+    this.playOrder = [this.teamOrders[0][0], this.teamOrders[1][0], this.teamOrders[0][1], this.teamOrders[1][1]];
     return { ok: true };
   }
 
   reconnectPlayer(oldId, newId) {
-    const p = this.players.find(p => p.id === oldId);
-    if (p) { p.id = newId; return true; }
+    const p = this.players.find((p) => p.id === oldId);
+    if (p) {
+      p.id = newId;
+      return true;
+    }
     return false;
   }
 
@@ -452,6 +471,8 @@ class Game {
 
   // Pescar do monte
   drawFromDeck(playerIndex) {
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (this.drawnThisTurn) return { ok: false, msg: 'Você já comprou neste turno.' };
     if (this.deck.length === 0) return { ok: false, msg: 'Monte vazio.' };
@@ -466,6 +487,8 @@ class Game {
 
   // Pegar o lixo inteiro
   takeDiscard(playerIndex) {
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (this.drawnThisTurn) return { ok: false, msg: 'Você já comprou neste turno.' };
     if (this.discard.length === 0) return { ok: false, msg: 'Lixo vazio.' };
@@ -489,6 +512,8 @@ class Game {
   // Baixar cartas (first meld ou adicionar a meld existente)
   // meldActions: [{type: 'new', cards: [cardIds]} | {type: 'add', meldIndex: N, cards: [cardIds]}]
   playMelds(playerIndex, meldActions) {
+    if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex >= 4)
+      return { ok: false, msg: 'Índice de jogador inválido.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de baixar.' };
 
@@ -502,18 +527,18 @@ class Game {
 
     for (const action of meldActions) {
       // Resolver IDs → objetos carta da mão
-      const cards = action.cards.map(id => {
-        const card = hand.find(c => c.id === id && !usedIds.has(c.id));
+      const cards = action.cards.map((id) => {
+        const card = hand.find((c) => c.id === id && !usedIds.has(c.id));
         if (!card) return null;
         return card;
       });
-      if (cards.some(c => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
+      if (cards.some((c) => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
 
       if (action.type === 'new') {
         const type = meldType(cards);
         if (!type) return { ok: false, msg: 'Combinação inválida.' };
-        const refCard = cards.find(c => c.rank !== '2') || cards[0];
-        cards.forEach(c => usedIds.add(c.id));
+        const refCard = cards.find((c) => c.rank !== '2') || cards[0];
+        cards.forEach((c) => usedIds.add(c.id));
         // Sort cards so wilds land in the right position
         const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : sortGroupCards(cards);
         melds.push({ rank: refCard.rank, suit: refCard.suit, type, cards: sortedCards });
@@ -524,7 +549,7 @@ class Game {
         let newCards = [...meld.cards, ...cards];
         const newType = meldType(newCards);
         if (!newType || newType !== meld.type) return { ok: false, msg: 'Adição inválida' };
-        cards.forEach(c => usedIds.add(c.id));
+        cards.forEach((c) => usedIds.add(c.id));
         // Sort cards so wilds land in the right position
         newCards = newType === 'sequence' ? sortSequenceCards(newCards) : sortGroupCards(newCards);
         meld.cards = newCards;
@@ -558,12 +583,15 @@ class Game {
       this.hasFirstMeld[teamIndex] = true;
     }
 
-    const remainingHand = hand.filter(c => !usedIds.has(c.id));
-    const hasCanastraAfter = melds.some(m => isCanastra(m));
+    const remainingHand = hand.filter((c) => !usedIds.has(c.id));
+    const hasCanastraAfter = melds.some((m) => isCanastra(m));
 
     // Não pode baixar e ficar sem cartas suficientes se não tiver canastra
     if (remainingHand.length < 2 && !hasCanastraAfter) {
-      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+      return {
+        ok: false,
+        msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.',
+      };
     }
 
     // Aplicar
@@ -588,8 +616,8 @@ class Game {
     if (this.hasFirstMeld[teamIndex]) return { ok: false, msg: 'Sua dupla já baixou. Use o botão Baixar normalmente.' };
 
     const hand = this.hands[playerIndex];
-    const cards = cardIds.map(id => hand.find(c => c.id === id));
-    if (cards.some(c => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
+    const cards = cardIds.map((id) => hand.find((c) => c.id === id));
+    if (cards.some((c) => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
     if (cards.length < 3) return { ok: false, msg: 'Selecione pelo menos 3 cartas.' };
 
     const type = meldType(cards);
@@ -598,7 +626,7 @@ class Game {
     const sortedCards = type === 'sequence' ? sortSequenceCards(cards) : sortGroupCards(cards);
 
     const usedIds = new Set(cardIds);
-    this.hands[playerIndex] = hand.filter(c => !usedIds.has(c.id));
+    this.hands[playerIndex] = hand.filter((c) => !usedIds.has(c.id));
     this.stagedMelds[playerIndex].push({ cards: sortedCards, type });
 
     return { ok: true };
@@ -614,8 +642,8 @@ class Game {
     if (!entry) return { ok: false, msg: 'Jogo em espera não encontrado.' };
 
     const hand = this.hands[playerIndex];
-    const cards = cardIds.map(id => hand.find(c => c.id === id));
-    if (cards.some(c => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
+    const cards = cardIds.map((id) => hand.find((c) => c.id === id));
+    if (cards.some((c) => !c)) return { ok: false, msg: 'Carta não encontrada na mão.' };
 
     const combined = [...entry.cards, ...cards];
     const newType = meldType(combined);
@@ -623,7 +651,7 @@ class Game {
 
     const sortedCombined = newType === 'sequence' ? sortSequenceCards(combined) : combined;
     const usedIds = new Set(cardIds);
-    this.hands[playerIndex] = hand.filter(c => !usedIds.has(c.id));
+    this.hands[playerIndex] = hand.filter((c) => !usedIds.has(c.id));
     staged[stagedMeldIdx] = { ...entry, cards: sortedCombined };
 
     return { ok: true };
@@ -650,7 +678,7 @@ class Game {
 
     if (totalPoints < required) {
       // Devolver cartas à mão
-      const allCards = staged.flatMap(m => m.cards);
+      const allCards = staged.flatMap((m) => m.cards);
       this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
       this.stagedMelds[playerIndex] = [];
 
@@ -669,12 +697,15 @@ class Game {
 
     // Verificar regra de mão mínima antes de commitar
     const newMelds = [...this.melds[teamIndex], ...staged];
-    const hasCanastraAfter = newMelds.some(m => isCanastra(m));
+    const hasCanastraAfter = newMelds.some((m) => isCanastra(m));
     if (this.hands[playerIndex].length < 2 && !hasCanastraAfter) {
-      const allCards = staged.flatMap(m => m.cards);
+      const allCards = staged.flatMap((m) => m.cards);
       this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
       this.stagedMelds[playerIndex] = [];
-      return { ok: false, msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.' };
+      return {
+        ok: false,
+        msg: 'Você precisa guardar pelo menos 2 cartas na mão para baixar (1 para descartar e 1 extra). Sua dupla ainda não tem canastra.',
+      };
     }
 
     // Commitar
@@ -688,7 +719,7 @@ class Game {
       return this._autoBater(playerIndex, teamIndex, this._turnStartedNeverPlayed);
     }
 
-    return { ok: true, meldTypes: staged.map(m => m.type) };
+    return { ok: true, meldTypes: staged.map((m) => m.type) };
   }
 
   // Descartar e encerrar turno
@@ -703,7 +734,7 @@ class Game {
     }
 
     const hand = this.hands[playerIndex];
-    const idx = hand.findIndex(c => c.id === cardId);
+    const idx = hand.findIndex((c) => c.id === cardId);
     if (idx === -1) return { ok: false, msg: 'Carta não encontrada na mão.' };
 
     const [card] = hand.splice(idx, 1);
@@ -711,7 +742,7 @@ class Game {
     // Descartou a última carta → bater automático (exige canastra)
     if (hand.length === 0) {
       const teamIndex = this.players[playerIndex].teamIndex;
-      const hasCanastra = this.melds[teamIndex].some(m => isCanastra(m));
+      const hasCanastra = this.melds[teamIndex].some((m) => isCanastra(m));
       if (!hasCanastra) {
         hand.splice(idx, 0, card); // desfaz
         return { ok: false, msg: 'Sua dupla precisa ter pelo menos 1 canastra para descartar a última carta.' };
@@ -744,13 +775,13 @@ class Game {
     const teamIndex = this.players[playerIndex].teamIndex;
 
     // Precisa de pelo menos 1 canastra
-    const hasCanastra = this.melds[teamIndex].some(m => isCanastra(m));
+    const hasCanastra = this.melds[teamIndex].some((m) => isCanastra(m));
     if (!hasCanastra) return { ok: false, msg: 'Sua dupla precisa ter pelo menos 1 canastra para bater.' };
 
     // Descartar se quiser
     if (discardCardId) {
       const hand = this.hands[playerIndex];
-      const idx = hand.findIndex(c => c.id === discardCardId);
+      const idx = hand.findIndex((c) => c.id === discardCardId);
       if (idx === -1) return { ok: false, msg: 'Carta para descartar não encontrada.' };
       const [card] = hand.splice(idx, 1);
       this.discard.push(card);
@@ -797,11 +828,11 @@ class Game {
     }
 
     // Build detailed per-team meld breakdown
-    const teamMeldDetails = [0, 1].map(t => {
+    const teamMeldDetails = [0, 1].map((t) => {
       let cardsPoints = 0;
       let canastrasLimpas = 0;
       let canastrasSujas = 0;
-      this.melds[t].forEach(m => {
+      this.melds[t].forEach((m) => {
         cardsPoints += meldBasePoints(m.cards);
         if (isCanastraLimpa(m)) canastrasLimpas++;
         else if (isCanastraSuja(m)) canastrasSujas++;
@@ -811,7 +842,7 @@ class Game {
         canastrasLimpas,
         canastrasSujas,
         canastrasBonus: canastrasLimpas * CLEAN_CANASTA_POINTS + canastrasSujas * DIRTY_CANASTA_POINTS,
-        baterBonus: (t === winningTeam && !noBaterBonus) ? baterBonus : 0,
+        baterBonus: t === winningTeam && !noBaterBonus ? baterBonus : 0,
       };
     });
 
@@ -857,12 +888,12 @@ class Game {
       status: this.status,
       round: this.round,
       scores: this.scores,
-      players: this.players.map(p => ({ name: p.name, teamIndex: p.teamIndex })),
+      players: this.players.map((p) => ({ name: p.name, teamIndex: p.teamIndex })),
       currentPlayerIndex: this.currentPlayerIndex,
       drawnThisTurn: this.drawnThisTurn,
       hasFirstMeld: this.hasFirstMeld,
       myHand: this.hands[playerIndex] || [],
-      handSizes: this.hands.map(h => h.length),
+      handSizes: this.hands.map((h) => h.length),
       melds: this.melds,
       discardTop: this.discard.length > 0 ? this.discard[this.discard.length - 1] : null,
       discardPile: this.discard.slice(-20),

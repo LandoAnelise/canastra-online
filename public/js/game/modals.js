@@ -1,17 +1,21 @@
 import socket from '../socket.js';
 import { state } from '../state.js';
-import { showToast, closeModal, showScreen } from '../utils.js';
+import { showToast, closeModal, showScreen, escapeHtml } from '../utils.js';
 import { clearSelection } from './render.js';
 import { playWin, playLose, playChime } from '../sounds.js';
 import { clearSession } from '../session.js';
 
 export function showRoundModal(result) {
-  if (result.gameOver) { showGameOverModal(result); return; }
+  if (result.gameOver) {
+    showGameOverModal(result);
+    return;
+  }
 
   playChime();
 
   // Header
-  const winnerTeamName = (result.teamNames && result.teamNames[result.winningTeam]) || ('Dupla ' + (result.winningTeam + 1));
+  const winnerTeamName =
+    (result.teamNames && result.teamNames[result.winningTeam]) || 'Dupla ' + (result.winningTeam + 1);
   document.getElementById('round-winner-badge').textContent =
     result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
   document.getElementById('round-modal-number').textContent = 'Rodada ' + result.round;
@@ -22,43 +26,73 @@ export function showRoundModal(result) {
     const col = document.getElementById('round-team-col-' + t);
     col.className = 'round-team-col';
 
-    const teamName = (result.teamNames && result.teamNames[t]) || ('Dupla ' + (t + 1));
+    const teamName = (result.teamNames && result.teamNames[t]) || 'Dupla ' + (t + 1);
     document.getElementById('round-team-name-' + t).textContent = teamName;
 
     // Breakdown lines
     const bd = document.getElementById('round-breakdown-' + t);
-    const sign = v => v > 0 ? '+' + v : '' + v;
+    const sign = (v) => (v > 0 ? '+' + v : '' + v);
     bd.innerHTML =
       '<div class="breakdown-line">' +
-        '<span class="bl-label">Cartas na mesa</span>' +
-        '<span class="bl-val positive">+' + d.cardsPoints + '</span>' +
+      '<span class="bl-label">Cartas na mesa</span>' +
+      '<span class="bl-val positive">+' +
+      d.cardsPoints +
+      '</span>' +
       '</div>' +
-      (d.canastrasLimpas > 0 ?
-        '<div class="breakdown-line">' +
-          '<span class="bl-label">Canastra' + (d.canastrasLimpas > 1 ? 's' : '') + ' limpa' + (d.canastrasLimpas > 1 ? 's' : '') + ' \xd7' + d.canastrasLimpas + '</span>' +
-          '<span class="bl-val bonus">+' + (d.canastrasLimpas * 200) + '</span>' +
-        '</div>' : '') +
-      (d.canastrasSujas > 0 ?
-        '<div class="breakdown-line">' +
-          '<span class="bl-label">Canastra' + (d.canastrasSujas > 1 ? 's' : '') + ' suja' + (d.canastrasSujas > 1 ? 's' : '') + ' \xd7' + d.canastrasSujas + '</span>' +
-          '<span class="bl-val bonus">+' + (d.canastrasSujas * 100) + '</span>' +
-        '</div>' : '') +
-      (d.baterBonus > 0 ?
-        '<div class="breakdown-line">' +
-          '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' +
-          '<span class="bl-val bonus">+' + d.baterBonus + '</span>' +
-        '</div>' : '');
+      (d.canastrasLimpas > 0
+        ? '<div class="breakdown-line">' +
+          '<span class="bl-label">Canastra' +
+          (d.canastrasLimpas > 1 ? 's' : '') +
+          ' limpa' +
+          (d.canastrasLimpas > 1 ? 's' : '') +
+          ' \xd7' +
+          d.canastrasLimpas +
+          '</span>' +
+          '<span class="bl-val bonus">+' +
+          d.canastrasLimpas * 200 +
+          '</span>' +
+          '</div>'
+        : '') +
+      (d.canastrasSujas > 0
+        ? '<div class="breakdown-line">' +
+          '<span class="bl-label">Canastra' +
+          (d.canastrasSujas > 1 ? 's' : '') +
+          ' suja' +
+          (d.canastrasSujas > 1 ? 's' : '') +
+          ' \xd7' +
+          d.canastrasSujas +
+          '</span>' +
+          '<span class="bl-val bonus">+' +
+          d.canastrasSujas * 100 +
+          '</span>' +
+          '</div>'
+        : '') +
+      (d.baterBonus > 0
+        ? '<div class="breakdown-line">' +
+          '<span class="bl-label">' +
+          (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') +
+          '</span>' +
+          '<span class="bl-val bonus">+' +
+          d.baterBonus +
+          '</span>' +
+          '</div>'
+        : '');
 
     // Hand losses for this team
-    const teamLosses = result.playerHandLoss
-      .filter(p => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
+    const teamLosses = result.playerHandLoss.filter((p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
     if (teamLosses.length > 0) {
-      teamLosses.forEach(p => {
-        bd.insertAdjacentHTML('beforeend',
+      teamLosses.forEach((p) => {
+        bd.insertAdjacentHTML(
+          'beforeend',
           '<div class="breakdown-line">' +
-            '<span class="bl-label">M\xe3o de ' + p.playerName + '</span>' +
-            '<span class="bl-val negative">\u2212' + p.handPoints + '</span>' +
-          '</div>');
+            '<span class="bl-label">M\xe3o de ' +
+            escapeHtml(p.playerName) +
+            '</span>' +
+            '<span class="bl-val negative">\u2212' +
+            p.handPoints +
+            '</span>' +
+            '</div>',
+        );
       });
     }
 
@@ -67,22 +101,27 @@ export function showRoundModal(result) {
     const roundPts = result.roundPoints[t];
     document.getElementById('round-subtotal-' + t).innerHTML =
       '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' +
-      '<span style="color:' + (roundPts >= 0 ? '#6de89a' : '#e74c3c') + ';font-weight:700">' + (roundPts >= 0 ? '+' : '') + roundPts + '</span>';
+      '<span style="color:' +
+      (roundPts >= 0 ? '#6de89a' : '#e74c3c') +
+      ';font-weight:700">' +
+      (roundPts >= 0 ? '+' : '') +
+      roundPts +
+      '</span>';
 
     document.getElementById('round-total-' + t).innerHTML =
-      '<span class="total-label">Total geral</span>' +
-      '<span class="total-val">' + result.scores[t] + '</span>';
+      '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
   }
 
   // Player chips (who lost hand / who bateu)
   const losses = document.getElementById('round-hand-losses');
   losses.innerHTML = '<span style="font-size:0.7rem;opacity:0.4;margin-right:4px">M\xe3os:</span>';
-  result.playerHandLoss.forEach(p => {
+  result.playerHandLoss.forEach((p) => {
+    const safeName = escapeHtml(p.playerName);
     const chip = p.isBatter
-      ? '<span class="hand-loss-chip safe">\u2705 ' + p.playerName + ' bateu</span>'
+      ? '<span class="hand-loss-chip safe">\u2705 ' + safeName + ' bateu</span>'
       : p.handPoints > 0
-        ? '<span class="hand-loss-chip lost">' + p.playerName + ' \u2212' + p.handPoints + '</span>'
-        : '<span class="hand-loss-chip safe">' + p.playerName + ' m\xe3o vazia</span>';
+        ? '<span class="hand-loss-chip lost">' + safeName + ' \u2212' + p.handPoints + '</span>'
+        : '<span class="hand-loss-chip safe">' + safeName + ' m\xe3o vazia</span>';
     losses.insertAdjacentHTML('beforeend', chip);
   });
 
@@ -96,7 +135,7 @@ export function showRoundModal(result) {
 
 document.getElementById('btn-continue-round').addEventListener('click', () => {
   closeModal('modal-round');
-  socket.emit('continueRound', {}, res => {
+  socket.emit('continueRound', {}, (res) => {
     if (!res.ok) showToast(res.msg || 'Erro ao continuar.', 'error');
   });
 });
@@ -106,7 +145,8 @@ export function showGameOverModal(result) {
   const tNames = result.teamNames || ['Dupla 1', 'Dupla 2'];
   const hasBreakdown = Array.isArray(result.teamMeldDetails);
 
-  if ((result.myTeam ?? state.gameState?.myTeam) === winner) playWin(); else playLose();
+  if ((result.myTeam ?? state.gameState?.myTeam) === winner) playWin();
+  else playLose();
 
   document.getElementById('modal-go-title').textContent = tNames[winner] + ' venceram! 🎉';
 
@@ -122,33 +162,65 @@ export function showGameOverModal(result) {
     if (d) {
       bd.innerHTML =
         '<div class="breakdown-line">' +
-          '<span class="bl-label">Cartas na mesa</span>' +
-          '<span class="bl-val positive">+' + d.cardsPoints + '</span>' +
+        '<span class="bl-label">Cartas na mesa</span>' +
+        '<span class="bl-val positive">+' +
+        d.cardsPoints +
+        '</span>' +
         '</div>' +
-        (d.canastrasLimpas > 0 ?
-          '<div class="breakdown-line">' +
-            '<span class="bl-label">Canastra' + (d.canastrasLimpas > 1 ? 's' : '') + ' limpa' + (d.canastrasLimpas > 1 ? 's' : '') + ' \xd7' + d.canastrasLimpas + '</span>' +
-            '<span class="bl-val bonus">+' + (d.canastrasLimpas * 200) + '</span>' +
-          '</div>' : '') +
-        (d.canastrasSujas > 0 ?
-          '<div class="breakdown-line">' +
-            '<span class="bl-label">Canastra' + (d.canastrasSujas > 1 ? 's' : '') + ' suja' + (d.canastrasSujas > 1 ? 's' : '') + ' \xd7' + d.canastrasSujas + '</span>' +
-            '<span class="bl-val bonus">+' + (d.canastrasSujas * 100) + '</span>' +
-          '</div>' : '') +
-        (d.baterBonus > 0 ?
-          '<div class="breakdown-line">' +
-            '<span class="bl-label">' + (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') + '</span>' +
-            '<span class="bl-val bonus">+' + d.baterBonus + '</span>' +
-          '</div>' : '');
+        (d.canastrasLimpas > 0
+          ? '<div class="breakdown-line">' +
+            '<span class="bl-label">Canastra' +
+            (d.canastrasLimpas > 1 ? 's' : '') +
+            ' limpa' +
+            (d.canastrasLimpas > 1 ? 's' : '') +
+            ' \xd7' +
+            d.canastrasLimpas +
+            '</span>' +
+            '<span class="bl-val bonus">+' +
+            d.canastrasLimpas * 200 +
+            '</span>' +
+            '</div>'
+          : '') +
+        (d.canastrasSujas > 0
+          ? '<div class="breakdown-line">' +
+            '<span class="bl-label">Canastra' +
+            (d.canastrasSujas > 1 ? 's' : '') +
+            ' suja' +
+            (d.canastrasSujas > 1 ? 's' : '') +
+            ' \xd7' +
+            d.canastrasSujas +
+            '</span>' +
+            '<span class="bl-val bonus">+' +
+            d.canastrasSujas * 100 +
+            '</span>' +
+            '</div>'
+          : '') +
+        (d.baterBonus > 0
+          ? '<div class="breakdown-line">' +
+            '<span class="bl-label">' +
+            (d.baterBonus >= 100 ? 'Batida limpa' : 'B\xf4nus bater') +
+            '</span>' +
+            '<span class="bl-val bonus">+' +
+            d.baterBonus +
+            '</span>' +
+            '</div>'
+          : '');
 
-      const teamLosses = (result.playerHandLoss || [])
-        .filter(p => p.teamIndex === t && !p.isBatter && p.handPoints > 0);
-      teamLosses.forEach(p => {
-        bd.insertAdjacentHTML('beforeend',
+      const teamLosses = (result.playerHandLoss || []).filter(
+        (p) => p.teamIndex === t && !p.isBatter && p.handPoints > 0,
+      );
+      teamLosses.forEach((p) => {
+        bd.insertAdjacentHTML(
+          'beforeend',
           '<div class="breakdown-line">' +
-            '<span class="bl-label">M\xe3o de ' + p.playerName + '</span>' +
-            '<span class="bl-val negative">\u2212' + p.handPoints + '</span>' +
-          '</div>');
+            '<span class="bl-label">M\xe3o de ' +
+            escapeHtml(p.playerName) +
+            '</span>' +
+            '<span class="bl-val negative">\u2212' +
+            p.handPoints +
+            '</span>' +
+            '</div>',
+        );
       });
 
       bd.insertAdjacentHTML('beforeend', '<hr class="breakdown-sep">');
@@ -156,15 +228,19 @@ export function showGameOverModal(result) {
       const roundPts = result.roundPoints[t];
       document.getElementById('go-subtotal-' + t).innerHTML =
         '<span style="opacity:0.6;font-size:0.72rem">Esta rodada</span>' +
-        '<span style="color:' + (roundPts >= 0 ? '#6de89a' : '#e74c3c') + ';font-weight:700">' + (roundPts >= 0 ? '+' : '') + roundPts + '</span>';
+        '<span style="color:' +
+        (roundPts >= 0 ? '#6de89a' : '#e74c3c') +
+        ';font-weight:700">' +
+        (roundPts >= 0 ? '+' : '') +
+        roundPts +
+        '</span>';
     } else {
       bd.innerHTML = '';
       document.getElementById('go-subtotal-' + t).innerHTML = '';
     }
 
     document.getElementById('go-total-' + t).innerHTML =
-      '<span class="total-label">Total geral</span>' +
-      '<span class="total-val">' + result.scores[t] + '</span>';
+      '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
   }
 
   // Player chips
@@ -172,7 +248,7 @@ export function showGameOverModal(result) {
   losses.innerHTML = '';
   if (result.playerHandLoss?.length) {
     losses.innerHTML = '<span style="font-size:0.7rem;opacity:0.4;margin-right:4px">M\xe3os:</span>';
-    result.playerHandLoss.forEach(p => {
+    result.playerHandLoss.forEach((p) => {
       const chip = p.isBatter
         ? '<span class="hand-loss-chip safe">\u2705 ' + p.playerName + ' bateu</span>'
         : p.handPoints > 0
@@ -200,8 +276,7 @@ let pauseCountdownInterval = null;
 
 socket.on('gamePaused', ({ playerName, timeoutMs }) => {
   closeModal('modal-round'); // don't interrupt with round modal
-  document.getElementById('paused-msg').textContent =
-    playerName + ' desconectou. Aguardando reconex\xe3o\u2026';
+  document.getElementById('paused-msg').textContent = playerName + ' desconectou. Aguardando reconex\xe3o\u2026';
   startPauseCountdown(timeoutMs);
   document.getElementById('modal-paused').classList.remove('hidden');
   showToast('\u23f8 ' + playerName + ' desconectou. Jogo pausado.', 'error', 6000);
@@ -225,7 +300,10 @@ function startPauseCountdown(ms) {
   let remaining = ms;
   const el = document.getElementById('paused-timer');
   function tick() {
-    if (remaining <= 0) { el.textContent = '00:00'; return; }
+    if (remaining <= 0) {
+      el.textContent = '00:00';
+      return;
+    }
     const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
     const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
     el.textContent = m + ':' + s;

@@ -1,540 +1,628 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="color-scheme" content="light" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Canastra" />
-  <!-- Ícone PWA -->
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
-  <!-- Splash screens iOS -->
-  <link rel="apple-touch-startup-image" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-2048x2732.png" />
-  <link rel="apple-touch-startup-image" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-1668x2388.png" />
-  <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1290x2796.png" />
-  <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1179x2556.png" />
-  <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/icons/splash-1170x2532.png" />
-  <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/icons/splash-750x1334.png" />
-  <title>Canastra Online</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/base.css" />
-  <link rel="stylesheet" href="/css/lobby.css" />
-  <link rel="stylesheet" href="/css/game.css" />
-  <link rel="stylesheet" href="/css/modals.css" />
-  <link rel="stylesheet" href="/css/utils.css" />
-</head>
-<body>
-
-<!-- ══════════ LOBBY ══════════ -->
-<div id="screen-lobby" class="screen active">
-  <div class="lobby-bg">
-    <div class="suit-float s1">♠</div>
-    <div class="suit-float s2">♥</div>
-    <div class="suit-float s3">♦</div>
-    <div class="suit-float s4">♣</div>
-  </div>
-  <div class="lobby-card">
-    <div class="lobby-logo">
-      <span class="logo-suit red">♥</span>
-      <h1>Canastra</h1>
-      <span class="logo-suit red">♦</span>
-    </div>
-    <p class="lobby-sub">Online · 2 duplas</p>
-
-    <div class="form-group">
-      <label>Seu nome</label>
-      <input id="input-name" type="text" placeholder="Como quer ser chamado?" maxlength="10" autocomplete="off" />
-    </div>
-
-    <!-- Mode tabs -->
-    <div class="lobby-tabs">
-      <button class="lobby-tab active" data-tab="browse">🌐 Públicas</button>
-      <button class="lobby-tab" data-tab="join">🔑 Código</button>
-      <button class="lobby-tab" data-tab="create">✦ Criar Sala</button>
-    </div>
-
-    <!-- Panel: Browse public rooms (default) -->
-    <div class="lobby-panel" id="panel-browse">
-      <div class="public-rooms-header">
-        <span class="public-rooms-title">Salas disponíveis</span>
-        <button id="btn-refresh-rooms" class="btn-ghost" style="font-size:0.8rem;padding:5px 10px">↻ Atualizar</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Canastra" />
+    <!-- Ícone PWA -->
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+    <!-- Splash screens iOS -->
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-2048x2732.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-1668x2388.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1290x2796.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1179x2556.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+      href="/icons/splash-1170x2532.png"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+      href="/icons/splash-750x1334.png"
+    />
+    <title>Canastra Online</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws: wss:; img-src 'self' data:;"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/lobby.css" />
+    <link rel="stylesheet" href="/css/game.css" />
+    <link rel="stylesheet" href="/css/modals.css" />
+    <link rel="stylesheet" href="/css/utils.css" />
+  </head>
+  <body>
+    <!-- ══════════ LOBBY ══════════ -->
+    <div id="screen-lobby" class="screen active">
+      <div class="lobby-bg">
+        <div class="suit-float s1">♠</div>
+        <div class="suit-float s2">♥</div>
+        <div class="suit-float s3">♦</div>
+        <div class="suit-float s4">♣</div>
       </div>
-      <div id="public-rooms-list" class="public-rooms-list">
-        <div class="rooms-loading">Clique em Atualizar para carregar</div>
-      </div>
-    </div>
-
-    <!-- Panel: Join by code -->
-    <div class="lobby-panel hidden" id="panel-join">
-      <div class="form-group" style="margin:0">
-        <label>Código da sala</label>
-        <div class="room-row">
-          <input id="input-room" type="text" placeholder="Ex: FAMILIA01" maxlength="12" autocomplete="off" />
+      <div class="lobby-card">
+        <div class="lobby-logo">
+          <span class="logo-suit red">♥</span>
+          <h1>Canastra</h1>
+          <span class="logo-suit red">♦</span>
         </div>
-      </div>
-      <button id="btn-join" class="btn-primary">Entrar na Sala</button>
-    </div>
+        <p class="lobby-sub">Online · 2 duplas</p>
 
-    <!-- Panel: Create Room -->
-    <div class="lobby-panel hidden" id="panel-create">
-      <div class="room-type-grid">
-        <button class="room-type-btn active" id="type-private">
-          <span style="font-size:1.4rem">🔒</span>
-          <span class="rt-name">Privada</span>
-          <span class="rt-desc">Compartilhe o código com amigos</span>
-        </button>
-        <button class="room-type-btn" id="type-public">
-          <span style="font-size:1.4rem">🌐</span>
-          <span class="rt-name">Pública</span>
-          <span class="rt-desc">Aparece na lista para qualquer um entrar</span>
-        </button>
-      </div>
-      <button id="btn-create" class="btn-primary">Criar Sala</button>
-    </div>
+        <div class="form-group">
+          <label>Seu nome</label>
+          <input id="input-name" type="text" placeholder="Como quer ser chamado?" maxlength="10" autocomplete="off" />
+        </div>
 
-    <button id="btn-show-rules" class="btn-ghost" style="text-align:center;margin-top:4px">📋 Ver regras do jogo</button>
-    <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
+        <!-- Mode tabs -->
+        <div class="lobby-tabs">
+          <button class="lobby-tab active" data-tab="browse">🌐 Públicas</button>
+          <button class="lobby-tab" data-tab="join">🔑 Código</button>
+          <button class="lobby-tab" data-tab="create">✦ Criar Sala</button>
+        </div>
 
-    <!--DEV_BLOCK_START-->
-    <!-- Sala de Teste -->
-    <div class="dev-room-section">
-      <button id="btn-toggle-test-room" class="btn-dev-toggle">🧪 Sala de Teste (dev)</button>
-      <div id="test-room-panel" class="test-room-panel hidden">
-        <p class="test-room-hint">Jogue sozinho com 3 bots. Defina a pontuação inicial para testar regras do buraco.</p>
-        <div class="test-scores-row">
-          <div class="test-score-field">
-            <label>Dupla 1</label>
-            <input type="number" id="test-score-0" value="0" min="0" max="1990" step="50" />
+        <!-- Panel: Browse public rooms (default) -->
+        <div class="lobby-panel" id="panel-browse">
+          <div class="public-rooms-header">
+            <span class="public-rooms-title">Salas disponíveis</span>
+            <button id="btn-refresh-rooms" class="btn-ghost" style="font-size: 0.8rem; padding: 5px 10px">
+              ↻ Atualizar
+            </button>
           </div>
-          <div class="test-score-field">
-            <label>Dupla 2</label>
-            <input type="number" id="test-score-1" value="0" min="0" max="1990" step="50" />
+          <div id="public-rooms-list" class="public-rooms-list">
+            <div class="rooms-loading">Clique em Atualizar para carregar</div>
           </div>
         </div>
-        <div class="test-scores-row">
-          <div class="test-score-field" style="flex:1">
-            <label>Dificuldade dos Bots</label>
-            <select id="test-bot-difficulty">
+
+        <!-- Panel: Join by code -->
+        <div class="lobby-panel hidden" id="panel-join">
+          <div class="form-group" style="margin: 0">
+            <label>Código da sala</label>
+            <div class="room-row">
+              <input id="input-room" type="text" placeholder="Ex: FAMILIA01" maxlength="12" autocomplete="off" />
+            </div>
+          </div>
+          <button id="btn-join" class="btn-primary">Entrar na Sala</button>
+        </div>
+
+        <!-- Panel: Create Room -->
+        <div class="lobby-panel hidden" id="panel-create">
+          <div class="room-type-grid">
+            <button class="room-type-btn active" id="type-private">
+              <span style="font-size: 1.4rem">🔒</span>
+              <span class="rt-name">Privada</span>
+              <span class="rt-desc">Compartilhe o código com amigos</span>
+            </button>
+            <button class="room-type-btn" id="type-public">
+              <span style="font-size: 1.4rem">🌐</span>
+              <span class="rt-name">Pública</span>
+              <span class="rt-desc">Aparece na lista para qualquer um entrar</span>
+            </button>
+          </div>
+          <button id="btn-create" class="btn-primary">Criar Sala</button>
+        </div>
+
+        <button id="btn-show-rules" class="btn-ghost" style="text-align: center; margin-top: 4px">
+          📋 Ver regras do jogo
+        </button>
+        <p class="lobby-hint">4 jogadores · 2 duplas · O jogo começa quando todos estiverem prontos</p>
+
+        <!--DEV_BLOCK_START-->
+        <!-- Sala de Teste -->
+        <div class="dev-room-section">
+          <button id="btn-toggle-test-room" class="btn-dev-toggle">🧪 Sala de Teste (dev)</button>
+          <div id="test-room-panel" class="test-room-panel hidden">
+            <p class="test-room-hint">
+              Jogue sozinho com 3 bots. Defina a pontuação inicial para testar regras do buraco.
+            </p>
+            <div class="test-scores-row">
+              <div class="test-score-field">
+                <label>Dupla 1</label>
+                <input type="number" id="test-score-0" value="0" min="0" max="1990" step="50" />
+              </div>
+              <div class="test-score-field">
+                <label>Dupla 2</label>
+                <input type="number" id="test-score-1" value="0" min="0" max="1990" step="50" />
+              </div>
+            </div>
+            <div class="test-scores-row">
+              <div class="test-score-field" style="flex: 1">
+                <label>Dificuldade dos Bots</label>
+                <select id="test-bot-difficulty">
+                  <option value="easy">Fácil</option>
+                  <option value="medium" selected>Médio</option>
+                  <option value="hard">Difícil</option>
+                </select>
+              </div>
+            </div>
+            <button id="btn-create-test" class="btn-primary">Criar Sala de Teste</button>
+          </div>
+        </div>
+        <!--DEV_BLOCK_END-->
+      </div>
+    </div>
+
+    <!-- ══════════ WAITING ROOM ══════════ -->
+    <div id="screen-waiting" class="screen">
+      <div class="waiting-card">
+        <h2>Aguardando jogadores…</h2>
+        <div id="waiting-room-code" class="room-code-badge"></div>
+        <div id="waiting-seats" class="seats-grid"></div>
+        <p class="waiting-hint">Envie o código acima para seus parceiros!</p>
+        <div id="waiting-bot-controls" class="waiting-bot-controls hidden">
+          <span class="waiting-bot-label">Completar com bots:</span>
+          <div class="waiting-bot-row">
+            <select id="waiting-bot-difficulty" class="waiting-bot-select">
               <option value="easy">Fácil</option>
               <option value="medium" selected>Médio</option>
               <option value="hard">Difícil</option>
             </select>
+            <button id="btn-add-bot" class="btn-secondary waiting-btn-bot">🤖 Adicionar Bot</button>
           </div>
         </div>
-        <button id="btn-create-test" class="btn-primary">Criar Sala de Teste</button>
+        <button id="btn-leave-waiting" class="btn-secondary">← Voltar para a Tela Inicial</button>
       </div>
     </div>
-    <!--DEV_BLOCK_END-->
-  </div>
-</div>
 
-<!-- ══════════ WAITING ROOM ══════════ -->
-<div id="screen-waiting" class="screen">
-  <div class="waiting-card">
-    <h2>Aguardando jogadores…</h2>
-    <div id="waiting-room-code" class="room-code-badge"></div>
-    <div id="waiting-seats" class="seats-grid"></div>
-    <p class="waiting-hint">Envie o código acima para seus parceiros!</p>
-    <div id="waiting-bot-controls" class="waiting-bot-controls hidden">
-      <span class="waiting-bot-label">Completar com bots:</span>
-      <div class="waiting-bot-row">
-        <select id="waiting-bot-difficulty" class="waiting-bot-select">
-          <option value="easy">Fácil</option>
-          <option value="medium" selected>Médio</option>
-          <option value="hard">Difícil</option>
-        </select>
-        <button id="btn-add-bot" class="btn-secondary waiting-btn-bot">🤖 Adicionar Bot</button>
-      </div>
-    </div>
-    <button id="btn-leave-waiting" class="btn-secondary">← Voltar para a Tela Inicial</button>
-  </div>
-</div>
-
-<!-- ══════════ TEAM SELECTION ══════════ -->
-<div id="screen-teams" class="screen">
-  <div class="waiting-card">
-    <h2>Montar Duplas</h2>
-    <p id="teams-leader-notice" class="teams-leader-notice">Aguardando o líder montar as duplas…</p>
-    <div id="teams-grid">
-      <div class="team-column" id="team-col-unassigned">
-        <div class="team-col-label">Sem dupla</div>
-        <div class="team-col-slots" id="unassigned-slots"></div>
-      </div>
-      <div class="team-column" id="team-col-0">
-        <div class="team-col-label team0-label">🔵 Dupla 1</div>
-        <div class="team-col-slots" id="team0-slots"></div>
-      </div>
-      <div class="team-column" id="team-col-1">
-        <div class="team-col-label team1-label">🔴 Dupla 2</div>
-        <div class="team-col-slots" id="team1-slots"></div>
-      </div>
-    </div>
-    <div id="teams-leader-actions" style="display:none;gap:8px;flex-direction:column">
-      <button id="btn-random-teams" class="btn-secondary">🎲 Duplas Aleatórias</button>
-      <button id="btn-confirm-teams" class="btn-primary" disabled>Confirmar e Iniciar Jogo</button>
-    </div>
-    <p id="teams-hint" class="waiting-hint">Distribua 2 jogadores em cada dupla</p>
-    <button id="btn-leave-teams" class="btn-ghost" style="margin-top:4px">← Voltar para a Tela Inicial</button>
-  </div>
-</div>
-
-<!-- ══════════ READY CHECK ══════════ -->
-<div id="screen-ready" class="screen">
-  <div class="waiting-card">
-    <h2>Prontos para jogar?</h2>
-    <div id="ready-room-code" class="room-code-badge"></div>
-    <div id="ready-players-list" class="ready-list"></div>
-    <button id="btn-ready" class="btn-primary">✅ Estou Pronto!</button>
-    <p id="ready-hint" class="waiting-hint">Aguardando todos marcarem pronto…</p>
-    <button id="btn-leave-ready" class="btn-ghost" style="margin-top:4px">← Voltar para a Tela Inicial</button>
-  </div>
-</div>
-
-<!-- ══════════ GAME ══════════ -->
-<div id="screen-game" class="screen">
-
-  <!-- Top bar — apenas placar -->
-  <div id="game-topbar">
-    <div id="score-team0" class="score-block">
-      <span class="score-label" id="score-label-0">Dupla 1</span>
-      <span class="score-value" id="val-score-0">0</span>
-    </div>
-    <div id="game-status-label">Rodada 1</div>
-    <div id="score-team1" class="score-block right">
-      <span class="score-label" id="score-label-1">Dupla 2</span>
-      <span class="score-value" id="val-score-1">0</span>
-    </div>
-  </div>
-
-  <!-- Painel de controles (desktop: fixo no topbar; mobile: aba recolhível) -->
-  <div id="game-side-panel">
-    <button id="side-panel-open">Placar ▾</button>
-    <div id="side-panel-content">
-      <button id="btn-mute" class="btn-side-icon" title="Mutar/desmutar sons">🔊</button>
-      <button id="btn-fullscreen" class="btn-side-icon" title="Tela cheia">⛶</button>
-      <button id="btn-leave-game" class="btn-side-icon btn-side-leave" title="Sair da partida">↩</button>
-      <button id="side-panel-tab" class="btn-side-close">Fechar ▴</button>
-    </div>
-  </div>
-
-  <!-- Players around table -->
-  <div id="table-area">
-
-    <!-- Opponent top -->
-    <div id="player-top" class="player-slot opponent top">
-      <div class="player-info"><span class="player-name" id="name-top">—</span><span class="hand-count" id="count-top">0</span></div>
-      <div class="hand-fan" id="hand-top"></div>
-    </div>
-
-    <!-- Left opponent -->
-    <div id="player-left" class="player-slot opponent left">
-      <div class="player-info vertical"><span class="player-name" id="name-left">—</span><span class="hand-count" id="count-left">0</span></div>
-      <div class="hand-fan vertical" id="hand-left"></div>
-    </div>
-
-    <!-- Center: melds split by decks divider -->
-    <div id="center-area">
-      <div id="melds-area">
-        <!-- Opponent melds (order set dynamically) -->
-        <div class="melds-group" id="melds-team0">
-          <div class="melds-label" id="melds-label-0">
-            <span class="melds-label-dot"></span>
-            <span class="melds-label-text" id="melds-label-text-0">Dupla 1</span>
-            <span class="melds-label-you hidden">— sua mesa</span>
+    <!-- ══════════ TEAM SELECTION ══════════ -->
+    <div id="screen-teams" class="screen">
+      <div class="waiting-card">
+        <h2>Montar Duplas</h2>
+        <p id="teams-leader-notice" class="teams-leader-notice">Aguardando o líder montar as duplas…</p>
+        <div id="teams-grid">
+          <div class="team-column" id="team-col-unassigned">
+            <div class="team-col-label">Sem dupla</div>
+            <div class="team-col-slots" id="unassigned-slots"></div>
           </div>
-          <div class="melds-list" id="melds-list-0"></div>
+          <div class="team-column" id="team-col-0">
+            <div class="team-col-label team0-label">🔵 Dupla 1</div>
+            <div class="team-col-slots" id="team0-slots"></div>
+          </div>
+          <div class="team-column" id="team-col-1">
+            <div class="team-col-label team1-label">🔴 Dupla 2</div>
+            <div class="team-col-slots" id="team1-slots"></div>
+          </div>
+        </div>
+        <div id="teams-leader-actions" style="display: none; gap: 8px; flex-direction: column">
+          <button id="btn-random-teams" class="btn-secondary">🎲 Duplas Aleatórias</button>
+          <button id="btn-confirm-teams" class="btn-primary" disabled>Confirmar e Iniciar Jogo</button>
+        </div>
+        <p id="teams-hint" class="waiting-hint">Distribua 2 jogadores em cada dupla</p>
+        <button id="btn-leave-teams" class="btn-ghost" style="margin-top: 4px">← Voltar para a Tela Inicial</button>
+      </div>
+    </div>
+
+    <!-- ══════════ READY CHECK ══════════ -->
+    <div id="screen-ready" class="screen">
+      <div class="waiting-card">
+        <h2>Prontos para jogar?</h2>
+        <div id="ready-room-code" class="room-code-badge"></div>
+        <div id="ready-players-list" class="ready-list"></div>
+        <button id="btn-ready" class="btn-primary">✅ Estou Pronto!</button>
+        <p id="ready-hint" class="waiting-hint">Aguardando todos marcarem pronto…</p>
+        <button id="btn-leave-ready" class="btn-ghost" style="margin-top: 4px">← Voltar para a Tela Inicial</button>
+      </div>
+    </div>
+
+    <!-- ══════════ GAME ══════════ -->
+    <div id="screen-game" class="screen">
+      <!-- Top bar — apenas placar -->
+      <div id="game-topbar">
+        <div id="score-team0" class="score-block">
+          <span class="score-label" id="score-label-0">Dupla 1</span>
+          <span class="score-value" id="val-score-0">0</span>
+        </div>
+        <div id="game-status-label">Rodada 1</div>
+        <div id="score-team1" class="score-block right">
+          <span class="score-label" id="score-label-1">Dupla 2</span>
+          <span class="score-value" id="val-score-1">0</span>
+        </div>
+      </div>
+
+      <!-- Painel de controles (desktop: fixo no topbar; mobile: aba recolhível) -->
+      <div id="game-side-panel">
+        <button id="side-panel-open">Placar ▾</button>
+        <div id="side-panel-content">
+          <button id="btn-mute" class="btn-side-icon" title="Mutar/desmutar sons">🔊</button>
+          <button id="btn-fullscreen" class="btn-side-icon" title="Tela cheia">⛶</button>
+          <button id="btn-leave-game" class="btn-side-icon btn-side-leave" title="Sair da partida">↩</button>
+          <button id="side-panel-tab" class="btn-side-close">Fechar ▴</button>
+        </div>
+      </div>
+
+      <!-- Players around table -->
+      <div id="table-area">
+        <!-- Opponent top -->
+        <div id="player-top" class="player-slot opponent top">
+          <div class="player-info">
+            <span class="player-name" id="name-top">—</span><span class="hand-count" id="count-top">0</span>
+          </div>
+          <div class="hand-fan" id="hand-top"></div>
         </div>
 
-        <!-- Deck + discard divider (always center) -->
-        <div id="decks-row">
-          <div id="deck-pile" class="pile" title="Pescar do monte">
-            <div class="pile-card back">🂠</div>
-            <span id="deck-count" class="pile-count">0</span>
+        <!-- Left opponent -->
+        <div id="player-left" class="player-slot opponent left">
+          <div class="player-info vertical">
+            <span class="player-name" id="name-left">—</span><span class="hand-count" id="count-left">0</span>
           </div>
-          <div id="discard-pile" class="pile" title="Pegar o lixo">
-            <div id="discard-stack" class="discard-stack-row"></div>
-            <span id="discard-count" class="pile-count">0 no lixo</span>
-            <button id="btn-expand-discard" class="hidden" title="Ver lixo">▼ ver lixo</button>
+          <div class="hand-fan vertical" id="hand-left"></div>
+        </div>
+
+        <!-- Center: melds split by decks divider -->
+        <div id="center-area">
+          <div id="melds-area">
+            <!-- Opponent melds (order set dynamically) -->
+            <div class="melds-group" id="melds-team0">
+              <div class="melds-label" id="melds-label-0">
+                <span class="melds-label-dot"></span>
+                <span class="melds-label-text" id="melds-label-text-0">Dupla 1</span>
+                <span class="melds-label-you hidden">— sua mesa</span>
+              </div>
+              <div class="melds-list" id="melds-list-0"></div>
+            </div>
+
+            <!-- Deck + discard divider (always center) -->
+            <div id="decks-row">
+              <div id="deck-pile" class="pile" title="Pescar do monte">
+                <div class="pile-card back">🂠</div>
+                <span id="deck-count" class="pile-count">0</span>
+              </div>
+              <div id="discard-pile" class="pile" title="Pegar o lixo">
+                <div id="discard-stack" class="discard-stack-row"></div>
+                <span id="discard-count" class="pile-count">0 no lixo</span>
+                <button id="btn-expand-discard" class="hidden" title="Ver lixo">▼ ver lixo</button>
+              </div>
+            </div>
+
+            <!-- My team melds (order set dynamically) -->
+            <div class="melds-group" id="melds-team1">
+              <div class="melds-label" id="melds-label-1">
+                <span class="melds-label-dot"></span>
+                <span class="melds-label-text" id="melds-label-text-1">Dupla 2</span>
+                <span class="melds-label-you hidden">— sua mesa</span>
+              </div>
+              <div class="melds-list" id="melds-list-1"></div>
+            </div>
+          </div>
+
+          <!-- Discard dropdown (kept for JS compatibility) -->
+          <div id="discard-dropdown" class="discard-dropdown hidden">
+            <div class="discard-dropdown-header">
+              <span id="discard-dropdown-count">Pilha de descarte</span>
+              <button id="btn-close-discard-dropdown">✕</button>
+            </div>
+            <div id="discard-dropdown-cards" class="discard-dropdown-cards"></div>
           </div>
         </div>
 
-        <!-- My team melds (order set dynamically) -->
-        <div class="melds-group" id="melds-team1">
-          <div class="melds-label" id="melds-label-1">
-            <span class="melds-label-dot"></span>
-            <span class="melds-label-text" id="melds-label-text-1">Dupla 2</span>
-            <span class="melds-label-you hidden">— sua mesa</span>
+        <!-- Right opponent -->
+        <div id="player-right" class="player-slot opponent right">
+          <div class="player-info vertical">
+            <span class="player-name" id="name-right">—</span><span class="hand-count" id="count-right">0</span>
           </div>
-          <div class="melds-list" id="melds-list-1"></div>
+          <div class="hand-fan vertical" id="hand-right"></div>
+        </div>
+
+        <!-- My hand (bottom) -->
+        <div id="player-bottom" class="player-slot me bottom">
+          <div class="player-info">
+            <span class="player-name" id="name-me">Você</span><span class="hand-count" id="count-me">0</span>
+          </div>
+          <div id="my-hand" class="my-hand"></div>
         </div>
       </div>
 
-      <!-- Discard dropdown (kept for JS compatibility) -->
-      <div id="discard-dropdown" class="discard-dropdown hidden">
-        <div class="discard-dropdown-header">
-          <span id="discard-dropdown-count">Pilha de descarte</span>
-          <button id="btn-close-discard-dropdown">✕</button>
+      <!-- Action bar -->
+      <div id="action-bar">
+        <div class="action-group main-actions">
+          <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
+          <button id="btn-confirm-melds" class="btn-action confirm-melds hidden" disabled>✔ Confirmar</button>
+          <button id="btn-cancel-melds" class="btn-action cancel-melds hidden">✖ Cancelar</button>
+          <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
+          <button id="btn-bater" class="btn-action bater hidden" disabled>🏆 Bater!</button>
         </div>
-        <div id="discard-dropdown-cards" class="discard-dropdown-cards"></div>
-      </div>
-    </div>
-
-    <!-- Right opponent -->
-    <div id="player-right" class="player-slot opponent right">
-      <div class="player-info vertical"><span class="player-name" id="name-right">—</span><span class="hand-count" id="count-right">0</span></div>
-      <div class="hand-fan vertical" id="hand-right"></div>
-    </div>
-
-    <!-- My hand (bottom) -->
-    <div id="player-bottom" class="player-slot me bottom">
-      <div class="player-info"><span class="player-name" id="name-me">Você</span><span class="hand-count" id="count-me">0</span></div>
-      <div id="my-hand" class="my-hand"></div>
-    </div>
-
-  </div>
-
-  <!-- Action bar -->
-  <div id="action-bar">
-    <div class="action-group main-actions">
-      <button id="btn-play-melds" class="btn-action" disabled>⬇️ Baixar</button>
-      <button id="btn-confirm-melds" class="btn-action confirm-melds hidden" disabled>✔ Confirmar</button>
-      <button id="btn-cancel-melds" class="btn-action cancel-melds hidden">✖ Cancelar</button>
-      <button id="btn-discard" class="btn-action" disabled>🗑️ Descartar</button>
-      <button id="btn-bater" class="btn-action bater hidden" disabled>🏆 Bater!</button>
-    </div>
-    <div class="action-sep"></div>
-    <div class="action-group util-actions">
-      <button id="btn-sort-hand" class="btn-action sort-hand" title="Ordenar por naipe e valor">♠ Naipe</button>
-      <button id="btn-sort-rank" class="btn-action sort-hand" title="Ordenar por número (para grupos)">🔢 Número</button>
-    </div>
-  </div>
-
-  <!-- Turn indicator -->
-  <div id="turn-banner" class="hidden"></div>
-
-  <!-- DEV Panel (apenas em sala de teste) -->
-  <div id="dev-panel" class="dev-panel hidden">
-    <button id="dev-panel-toggle" class="dev-panel-toggle">🧪 DEV</button>
-    <div id="dev-panel-body" class="dev-panel-body hidden">
-      <div class="dev-section">
-        <div class="dev-section-title">Ajustar Pontuação</div>
-        <div class="dev-score-row">
-          <label>Dupla 1</label>
-          <input type="number" id="dev-score-0" min="0" max="1990" step="50" />
+        <div class="action-sep"></div>
+        <div class="action-group util-actions">
+          <button id="btn-sort-hand" class="btn-action sort-hand" title="Ordenar por naipe e valor">♠ Naipe</button>
+          <button id="btn-sort-rank" class="btn-action sort-hand" title="Ordenar por número (para grupos)">
+            🔢 Número
+          </button>
         </div>
-        <div class="dev-score-row">
-          <label>Dupla 2</label>
-          <input type="number" id="dev-score-1" min="0" max="1990" step="50" />
+      </div>
+
+      <!-- Turn indicator -->
+      <div id="turn-banner" class="hidden"></div>
+
+      <!-- DEV Panel (apenas em sala de teste) -->
+      <div id="dev-panel" class="dev-panel hidden">
+        <button id="dev-panel-toggle" class="dev-panel-toggle">🧪 DEV</button>
+        <div id="dev-panel-body" class="dev-panel-body hidden">
+          <div class="dev-section">
+            <div class="dev-section-title">Ajustar Pontuação</div>
+            <div class="dev-score-row">
+              <label>Dupla 1</label>
+              <input type="number" id="dev-score-0" min="0" max="1990" step="50" />
+            </div>
+            <div class="dev-score-row">
+              <label>Dupla 2</label>
+              <input type="number" id="dev-score-1" min="0" max="1990" step="50" />
+            </div>
+            <button id="dev-apply-scores" class="dev-btn">Aplicar</button>
+          </div>
+          <div class="dev-section">
+            <div class="dev-section-title">Visibilidade</div>
+            <label class="dev-toggle-label">
+              <input type="checkbox" id="dev-show-hands" />
+              Ver todas as mãos
+            </label>
+          </div>
         </div>
-        <button id="dev-apply-scores" class="dev-btn">Aplicar</button>
-      </div>
-      <div class="dev-section">
-        <div class="dev-section-title">Visibilidade</div>
-        <label class="dev-toggle-label">
-          <input type="checkbox" id="dev-show-hands" />
-          Ver todas as mãos
-        </label>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- ══════════ CONFIRM MELDS MODAL ══════════ -->
-<div id="modal-confirm-melds" class="modal hidden">
-  <div class="modal-box small" style="text-align:center">
-    <div style="font-size:2rem;margin-bottom:4px">✔</div>
-    <h3>Confirmar baixa?</h3>
-    <p class="modal-hint" style="margin:8px 0 20px">As cartas na mesa serão confirmadas<br>e não poderão ser alteradas.</p>
-    <div style="display:flex;gap:10px">
-      <button id="btn-confirm-melds-cancel" class="btn-action" style="flex:1">Continuar baixando</button>
-      <button id="btn-confirm-melds-ok" class="btn-action" style="flex:1;background:rgba(40,120,60,0.35);border-color:rgba(80,180,100,0.5)">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ GAME ABANDONED MODAL ══════════ -->
-<div id="modal-abandoned" class="modal hidden">
-  <div class="modal-box small" style="text-align:center">
-    <div style="font-size:2rem;margin-bottom:4px">🏳️</div>
-    <h3>Jogo encerrado</h3>
-    <p class="modal-hint" id="modal-abandoned-msg" style="margin:8px 0 20px"></p>
-    <button id="btn-abandoned-menu" class="btn-primary" style="width:100%">Menu Inicial</button>
-  </div>
-</div>
-
-<!-- ══════════ LEAVE GAME MODAL ══════════ -->
-<div id="modal-leave" class="modal hidden">
-  <div class="modal-box small" style="text-align:center">
-    <div style="font-size:2rem;margin-bottom:4px">↩</div>
-    <h3>Sair da partida?</h3>
-    <p class="modal-hint" style="margin:8px 0 20px">Você quer mesmo desistir?<br>Um bot irá assumir seu lugar caso você saia.</p>
-    <div style="display:flex;gap:10px">
-      <button id="btn-leave-cancel" class="btn-action" style="flex:1">Cancelar</button>
-      <button id="btn-leave-confirm" class="btn-action" style="flex:1;background:rgba(160,40,40,0.35);border-color:rgba(200,80,80,0.5)">Sair</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════ PAUSED MODAL ══════════ -->
-<div id="modal-paused" class="modal hidden">
-  <div class="modal-box">
-    <div style="font-size:2.5rem">⏸</div>
-    <h2>Jogo Pausado</h2>
-    <p id="paused-msg" style="opacity:0.75;font-size:0.9rem"></p>
-    <div id="paused-timer" class="paused-countdown"></div>
-    <p style="font-size:0.75rem;opacity:0.45">O jogo continua automaticamente quando o jogador reconectar.</p>
-  </div>
-</div>
-
-<!-- ══════════ ROUND END MODAL ══════════ -->
-<div id="modal-round" class="modal hidden">
-  <div class="modal-box round-modal-box">
-    <div class="round-modal-header">
-      <div class="round-winner-badge" id="round-winner-badge">🏆 Dupla 1 bateu!</div>
-      <div class="round-number" id="round-modal-number">Rodada 1</div>
-    </div>
-
-    <div class="round-scores-grid">
-      <!-- Team 0 -->
-      <div class="round-team-col" id="round-team-col-0">
-        <div class="round-team-name" id="round-team-name-0">Dupla 1</div>
-        <div class="round-breakdown" id="round-breakdown-0"></div>
-        <div class="round-team-subtotal" id="round-subtotal-0"></div>
-        <div class="round-team-total" id="round-total-0"></div>
-      </div>
-      <!-- Divider -->
-      <div class="round-divider">VS</div>
-      <!-- Team 1 -->
-      <div class="round-team-col" id="round-team-col-1">
-        <div class="round-team-name" id="round-team-name-1">Dupla 2</div>
-        <div class="round-breakdown" id="round-breakdown-1"></div>
-        <div class="round-team-subtotal" id="round-subtotal-1"></div>
-        <div class="round-team-total" id="round-total-1"></div>
       </div>
     </div>
 
-    <!-- Player hand losses -->
-    <div class="round-hand-losses" id="round-hand-losses"></div>
-
-    <button id="btn-continue-round" class="btn-primary round-continue-btn">
-      Próxima Rodada →
-    </button>
-    <p id="round-waiting-leader" class="waiting-hint hidden">⏳ Aguardando o líder iniciar a próxima rodada…</p>
-  </div>
-</div>
-
-<!-- ══════════ GAME OVER MODAL ══════════ -->
-<div id="modal-gameover" class="modal hidden">
-  <div class="modal-box round-modal-box">
-    <div class="round-modal-header">
-      <div class="round-winner-badge" id="modal-go-title">Jogo Encerrado!</div>
-      <div class="round-number">Resultado Final</div>
-    </div>
-
-    <div class="round-scores-grid">
-      <!-- Team 0 -->
-      <div class="round-team-col" id="go-team-col-0">
-        <div class="round-team-name" id="go-team-name-0">Dupla 1</div>
-        <div class="round-breakdown" id="go-breakdown-0"></div>
-        <div class="round-team-subtotal" id="go-subtotal-0"></div>
-        <div class="round-team-total" id="go-total-0"></div>
-      </div>
-      <!-- Divider -->
-      <div class="round-divider">VS</div>
-      <!-- Team 1 -->
-      <div class="round-team-col" id="go-team-col-1">
-        <div class="round-team-name" id="go-team-name-1">Dupla 2</div>
-        <div class="round-breakdown" id="go-breakdown-1"></div>
-        <div class="round-team-subtotal" id="go-subtotal-1"></div>
-        <div class="round-team-total" id="go-total-1"></div>
+    <!-- ══════════ CONFIRM MELDS MODAL ══════════ -->
+    <div id="modal-confirm-melds" class="modal hidden">
+      <div class="modal-box small" style="text-align: center">
+        <div style="font-size: 2rem; margin-bottom: 4px">✔</div>
+        <h3>Confirmar baixa?</h3>
+        <p class="modal-hint" style="margin: 8px 0 20px">
+          As cartas na mesa serão confirmadas<br />e não poderão ser alteradas.
+        </p>
+        <div style="display: flex; gap: 10px">
+          <button id="btn-confirm-melds-cancel" class="btn-action" style="flex: 1">Continuar baixando</button>
+          <button
+            id="btn-confirm-melds-ok"
+            class="btn-action"
+            style="flex: 1; background: rgba(40, 120, 60, 0.35); border-color: rgba(80, 180, 100, 0.5)"
+          >
+            Confirmar
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="round-hand-losses" id="go-hand-losses"></div>
-
-    <button id="btn-new-game" class="btn-primary round-continue-btn">Voltar para a Tela Inicial</button>
-  </div>
-</div>
-
-<!-- ══════════ RULES MODAL ══════════ -->
-<div id="modal-rules" class="modal hidden">
-  <div class="modal-box rules-box">
-    <h2>📋 Regras</h2>
-    <div class="rules-content">
-      <section>
-        <h4>Configuração</h4>
-        <p>2 baralhos (104 cartas), 4 jogadores em 2 duplas, alternados (J1→J2→J3→J4). Cada jogador recebe <strong>13 cartas</strong>.</p>
-      </section>
-      <section>
-        <h4>Coringas</h4>
-        <p>Todos os <strong>2s</strong> são coringas (10 pts). As naturais devem ser maioria em qualquer combinação. Exceção: o 2 numa sequência que passa pelo rank 2 é natural (ex: A♥ 2♥ 3♥).</p>
-      </section>
-      <section>
-        <h4>Pontuação das cartas</h4>
-        <p>Ás = 15 pts &nbsp;|&nbsp; 7 ao K = 10 pts &nbsp;|&nbsp; 3 ao 6 = 5 pts &nbsp;|&nbsp; 2 = 10 pts</p>
-      </section>
-      <section>
-        <h4>Turno</h4>
-        <p>Primeiro <strong>compre</strong> (monte ou lixo inteiro). Depois baixe combinações ou adicione à mesa. Termine <strong>descartando</strong> uma carta (ou não, ao bater).</p>
-      </section>
-      <section>
-        <h4>Pegar o lixo</h4>
-        <p>Sempre permitido, exceto se você tiver <strong>1 carta na mão</strong> e o lixo tiver <strong>1 carta</strong> — nesse caso é obrigado a pescar do monte.</p>
-      </section>
-      <section>
-        <h4>Combinações válidas</h4>
-        <p><strong>Grupo:</strong> 3+ cartas do mesmo rank (ex: K♥ K♠ K♦).<br/>
-        <strong>Sequência:</strong> 3+ cartas consecutivas do mesmo naipe (ex: 5♥ 6♥ 7♥).<br/>
-        Coringas preenchem lacunas, mas as naturais devem ser maioria.</p>
-      </section>
-      <section>
-        <h4>Primeira baixa — Buraco</h4>
-        <p><strong>Fora do buraco</strong> (&lt; 1000 pts): qualquer combinação válida com 3+ cartas.<br/>
-        <strong>No buraco</strong> (≥ 1000 pts): a primeira baixa é feita <em>em espera</em> — as cartas saem da mão, ficam visíveis a todos, e só são confirmadas ao clicar em <strong>Confirmar Baixa</strong>. Os jogos em espera precisam somar <strong>≥ 100 pts</strong> (contando bônus de canastra). Você pode adicionar mais cartas aos jogos em espera antes de confirmar.<br/>
-        <strong>Penalidade:</strong> se confirmar com pontos insuficientes, as cartas voltam à mão e a dupla passa a exigir <strong>≥ 150 pts</strong> na próxima tentativa (a penalidade não acumula).</p>
-      </section>
-      <section>
-        <h4>Canastras (7+ cartas)</h4>
-        <p><strong>Limpa</strong> (sem coringa atuando como coringa) = +200 pts<br/>
-        <strong>Suja</strong> (com coringa) = +100 pts</p>
-      </section>
-      <section>
-        <h4>Bater</h4>
-        <p>Precisa de <strong>≥ 1 canastra</strong> na mesa. Pode ou não descartar ao bater.<br/>
-        <strong>Bônus de batida = +50 pts</strong> — ou <strong>+100 pts</strong> se for <em>batida limpa</em>: o jogador bate sem ter baixado cartas em nenhum turno anterior dessa rodada (nem pelo botão Baixar nem pelo Confirmar Baixa).</p>
-      </section>
-      <section>
-        <h4>Monte vazio</h4>
-        <p>Quando o monte acaba, o jogador que pescou a última carta joga normalmente seu turno e <strong>ao descartar a rodada encerra automaticamente</strong> — sem bônus de batida.</p>
-      </section>
-      <section>
-        <h4>Fim da rodada</h4>
-        <p>Todos que não bateram (inclusive o parceiro de quem bateu) <strong>perdem os pontos das cartas na mão</strong>.</p>
-      </section>
-      <section>
-        <h4>Vitória</h4>
-        <p>Primeira dupla a atingir <strong>2000 pontos</strong> vence!</p>
-      </section>
+    <!-- ══════════ GAME ABANDONED MODAL ══════════ -->
+    <div id="modal-abandoned" class="modal hidden">
+      <div class="modal-box small" style="text-align: center">
+        <div style="font-size: 2rem; margin-bottom: 4px">🏳️</div>
+        <h3>Jogo encerrado</h3>
+        <p class="modal-hint" id="modal-abandoned-msg" style="margin: 8px 0 20px"></p>
+        <button id="btn-abandoned-menu" class="btn-primary" style="width: 100%">Menu Inicial</button>
+      </div>
     </div>
-    <button id="btn-close-rules" class="btn-primary">Fechar</button>
-  </div>
-</div>
 
-<!-- Toast -->
-<div id="toast" class="hidden"></div>
+    <!-- ══════════ LEAVE GAME MODAL ══════════ -->
+    <div id="modal-leave" class="modal hidden">
+      <div class="modal-box small" style="text-align: center">
+        <div style="font-size: 2rem; margin-bottom: 4px">↩</div>
+        <h3>Sair da partida?</h3>
+        <p class="modal-hint" style="margin: 8px 0 20px">
+          Você quer mesmo desistir?<br />Um bot irá assumir seu lugar caso você saia.
+        </p>
+        <div style="display: flex; gap: 10px">
+          <button id="btn-leave-cancel" class="btn-action" style="flex: 1">Cancelar</button>
+          <button
+            id="btn-leave-confirm"
+            class="btn-action"
+            style="flex: 1; background: rgba(160, 40, 40, 0.35); border-color: rgba(200, 80, 80, 0.5)"
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+    </div>
 
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
-</script>
-<script src="/socket.io/socket.io.js"></script>
-<script type="module" src="/js/main.js"></script>
-<!--DEV_SCRIPT-->
-</body>
+    <!-- ══════════ PAUSED MODAL ══════════ -->
+    <div id="modal-paused" class="modal hidden">
+      <div class="modal-box">
+        <div style="font-size: 2.5rem">⏸</div>
+        <h2>Jogo Pausado</h2>
+        <p id="paused-msg" style="opacity: 0.75; font-size: 0.9rem"></p>
+        <div id="paused-timer" class="paused-countdown"></div>
+        <p style="font-size: 0.75rem; opacity: 0.45">O jogo continua automaticamente quando o jogador reconectar.</p>
+      </div>
+    </div>
+
+    <!-- ══════════ ROUND END MODAL ══════════ -->
+    <div id="modal-round" class="modal hidden">
+      <div class="modal-box round-modal-box">
+        <div class="round-modal-header">
+          <div class="round-winner-badge" id="round-winner-badge">🏆 Dupla 1 bateu!</div>
+          <div class="round-number" id="round-modal-number">Rodada 1</div>
+        </div>
+
+        <div class="round-scores-grid">
+          <!-- Team 0 -->
+          <div class="round-team-col" id="round-team-col-0">
+            <div class="round-team-name" id="round-team-name-0">Dupla 1</div>
+            <div class="round-breakdown" id="round-breakdown-0"></div>
+            <div class="round-team-subtotal" id="round-subtotal-0"></div>
+            <div class="round-team-total" id="round-total-0"></div>
+          </div>
+          <!-- Divider -->
+          <div class="round-divider">VS</div>
+          <!-- Team 1 -->
+          <div class="round-team-col" id="round-team-col-1">
+            <div class="round-team-name" id="round-team-name-1">Dupla 2</div>
+            <div class="round-breakdown" id="round-breakdown-1"></div>
+            <div class="round-team-subtotal" id="round-subtotal-1"></div>
+            <div class="round-team-total" id="round-total-1"></div>
+          </div>
+        </div>
+
+        <!-- Player hand losses -->
+        <div class="round-hand-losses" id="round-hand-losses"></div>
+
+        <button id="btn-continue-round" class="btn-primary round-continue-btn">Próxima Rodada →</button>
+        <p id="round-waiting-leader" class="waiting-hint hidden">⏳ Aguardando o líder iniciar a próxima rodada…</p>
+      </div>
+    </div>
+
+    <!-- ══════════ GAME OVER MODAL ══════════ -->
+    <div id="modal-gameover" class="modal hidden">
+      <div class="modal-box round-modal-box">
+        <div class="round-modal-header">
+          <div class="round-winner-badge" id="modal-go-title">Jogo Encerrado!</div>
+          <div class="round-number">Resultado Final</div>
+        </div>
+
+        <div class="round-scores-grid">
+          <!-- Team 0 -->
+          <div class="round-team-col" id="go-team-col-0">
+            <div class="round-team-name" id="go-team-name-0">Dupla 1</div>
+            <div class="round-breakdown" id="go-breakdown-0"></div>
+            <div class="round-team-subtotal" id="go-subtotal-0"></div>
+            <div class="round-team-total" id="go-total-0"></div>
+          </div>
+          <!-- Divider -->
+          <div class="round-divider">VS</div>
+          <!-- Team 1 -->
+          <div class="round-team-col" id="go-team-col-1">
+            <div class="round-team-name" id="go-team-name-1">Dupla 2</div>
+            <div class="round-breakdown" id="go-breakdown-1"></div>
+            <div class="round-team-subtotal" id="go-subtotal-1"></div>
+            <div class="round-team-total" id="go-total-1"></div>
+          </div>
+        </div>
+
+        <div class="round-hand-losses" id="go-hand-losses"></div>
+
+        <button id="btn-new-game" class="btn-primary round-continue-btn">Voltar para a Tela Inicial</button>
+      </div>
+    </div>
+
+    <!-- ══════════ RULES MODAL ══════════ -->
+    <div id="modal-rules" class="modal hidden">
+      <div class="modal-box rules-box">
+        <h2>📋 Regras</h2>
+        <div class="rules-content">
+          <section>
+            <h4>Configuração</h4>
+            <p>
+              2 baralhos (104 cartas), 4 jogadores em 2 duplas, alternados (J1→J2→J3→J4). Cada jogador recebe
+              <strong>13 cartas</strong>.
+            </p>
+          </section>
+          <section>
+            <h4>Coringas</h4>
+            <p>
+              Todos os <strong>2s</strong> são coringas (10 pts). As naturais devem ser maioria em qualquer combinação.
+              Exceção: o 2 numa sequência que passa pelo rank 2 é natural (ex: A♥ 2♥ 3♥).
+            </p>
+          </section>
+          <section>
+            <h4>Pontuação das cartas</h4>
+            <p>Ás = 15 pts &nbsp;|&nbsp; 7 ao K = 10 pts &nbsp;|&nbsp; 3 ao 6 = 5 pts &nbsp;|&nbsp; 2 = 10 pts</p>
+          </section>
+          <section>
+            <h4>Turno</h4>
+            <p>
+              Primeiro <strong>compre</strong> (monte ou lixo inteiro). Depois baixe combinações ou adicione à mesa.
+              Termine <strong>descartando</strong> uma carta (ou não, ao bater).
+            </p>
+          </section>
+          <section>
+            <h4>Pegar o lixo</h4>
+            <p>
+              Sempre permitido, exceto se você tiver <strong>1 carta na mão</strong> e o lixo tiver
+              <strong>1 carta</strong> — nesse caso é obrigado a pescar do monte.
+            </p>
+          </section>
+          <section>
+            <h4>Combinações válidas</h4>
+            <p>
+              <strong>Grupo:</strong> 3+ cartas do mesmo rank (ex: K♥ K♠ K♦).<br />
+              <strong>Sequência:</strong> 3+ cartas consecutivas do mesmo naipe (ex: 5♥ 6♥ 7♥).<br />
+              Coringas preenchem lacunas, mas as naturais devem ser maioria.
+            </p>
+          </section>
+          <section>
+            <h4>Primeira baixa — Buraco</h4>
+            <p>
+              <strong>Fora do buraco</strong> (&lt; 1000 pts): qualquer combinação válida com 3+ cartas.<br />
+              <strong>No buraco</strong> (≥ 1000 pts): a primeira baixa é feita <em>em espera</em> — as cartas saem da
+              mão, ficam visíveis a todos, e só são confirmadas ao clicar em <strong>Confirmar Baixa</strong>. Os jogos
+              em espera precisam somar <strong>≥ 100 pts</strong> (contando bônus de canastra). Você pode adicionar mais
+              cartas aos jogos em espera antes de confirmar.<br />
+              <strong>Penalidade:</strong> se confirmar com pontos insuficientes, as cartas voltam à mão e a dupla passa
+              a exigir <strong>≥ 150 pts</strong> na próxima tentativa (a penalidade não acumula).
+            </p>
+          </section>
+          <section>
+            <h4>Canastras (7+ cartas)</h4>
+            <p>
+              <strong>Limpa</strong> (sem coringa atuando como coringa) = +200 pts<br />
+              <strong>Suja</strong> (com coringa) = +100 pts
+            </p>
+          </section>
+          <section>
+            <h4>Bater</h4>
+            <p>
+              Precisa de <strong>≥ 1 canastra</strong> na mesa. Pode ou não descartar ao bater.<br />
+              <strong>Bônus de batida = +50 pts</strong> — ou <strong>+100 pts</strong> se for <em>batida limpa</em>: o
+              jogador bate sem ter baixado cartas em nenhum turno anterior dessa rodada (nem pelo botão Baixar nem pelo
+              Confirmar Baixa).
+            </p>
+          </section>
+          <section>
+            <h4>Monte vazio</h4>
+            <p>
+              Quando o monte acaba, o jogador que pescou a última carta joga normalmente seu turno e
+              <strong>ao descartar a rodada encerra automaticamente</strong> — sem bônus de batida.
+            </p>
+          </section>
+          <section>
+            <h4>Fim da rodada</h4>
+            <p>
+              Todos que não bateram (inclusive o parceiro de quem bateu)
+              <strong>perdem os pontos das cartas na mão</strong>.
+            </p>
+          </section>
+          <section>
+            <h4>Vitória</h4>
+            <p>Primeira dupla a atingir <strong>2000 pontos</strong> vence!</p>
+          </section>
+        </div>
+        <button id="btn-close-rules" class="btn-primary">Fechar</button>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden"></div>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js');
+      }
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="/js/main.js"></script>
+    <!--DEV_SCRIPT-->
+  </body>
 </html>

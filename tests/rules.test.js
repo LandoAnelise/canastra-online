@@ -20,7 +20,7 @@ function setupGame() {
       { seatIndex: 2, teamIndex: 0 },
       { seatIndex: 3, teamIndex: 1 },
     ],
-    { 0: [0, 2], 1: [1, 3] }
+    { 0: [0, 2], 1: [1, 3] },
   );
   g.startRound();
   return g;
@@ -32,20 +32,24 @@ function fakeDraw(g, playerIndex) {
 }
 
 function playNew(g, playerIndex, cards) {
-  return g.playMelds(playerIndex, [{ type: 'new', cards: cards.map(c => c.id) }]);
+  return g.playMelds(playerIndex, [{ type: 'new', cards: cards.map((c) => c.id) }]);
 }
 
 function group7(rank) {
   return [
-    card(rank, '♠', 1), card(rank, '♥', 1), card(rank, '♦', 1), card(rank, '♣', 1),
-    card(rank, '♠', 2), card(rank, '♥', 2), card(rank, '♦', 2),
+    card(rank, '♠', 1),
+    card(rank, '♥', 1),
+    card(rank, '♦', 1),
+    card(rank, '♣', 1),
+    card(rank, '♠', 2),
+    card(rank, '♥', 2),
+    card(rank, '♦', 2),
   ];
 }
 
 // ─── 1. Configuração ─────────────────────────────────────────────────────────
 
 describe('Configuração da partida', () => {
-
   test('1.1 Não pode adicionar 5º jogador', () => {
     const g = new Game('t');
     for (let i = 0; i < 4; i++) g.addPlayer(`p${i}`, `J${i}`);
@@ -88,13 +92,11 @@ describe('Configuração da partida', () => {
     assert.equal(g.players[g.playOrder[2]].teamIndex, 0);
     assert.equal(g.players[g.playOrder[3]].teamIndex, 1);
   });
-
 });
 
 // ─── 2. Turno ────────────────────────────────────────────────────────────────
 
 describe('Regras de turno', () => {
-
   test('2.1 Não pode jogar fora da sua vez', () => {
     const g = setupGame();
     fakeDraw(g, 0);
@@ -144,13 +146,11 @@ describe('Regras de turno', () => {
     g.discard_(0, g.hands[0][0].id);
     assert.equal(g.drawnThisTurn, false);
   });
-
 });
 
 // ─── 3. Compra ───────────────────────────────────────────────────────────────
 
 describe('Compra do monte e do lixo', () => {
-
   test('3.1 Pescar do monte adiciona 1 carta à mão', () => {
     const g = setupGame();
     const before = g.hands[0].length;
@@ -160,7 +160,7 @@ describe('Compra do monte e do lixo', () => {
 
   test('3.2 Pegar lixo adiciona todas as cartas do lixo à mão', () => {
     const g = setupGame();
-    g.discard = [card('5','♠'), card('6','♠'), card('7','♠')];
+    g.discard = [card('5', '♠'), card('6', '♠'), card('7', '♠')];
     const before = g.hands[0].length;
     const res = g.takeDiscard(0);
     assert.ok(res.ok);
@@ -178,8 +178,8 @@ describe('Compra do monte e do lixo', () => {
 
   test('3.4 Com 1 carta na mão e 1 no lixo: obrigado a pescar do monte', () => {
     const g = setupGame();
-    g.hands[0] = [card('3','♠')];
-    g.discard = [card('4','♠')];
+    g.hands[0] = [card('3', '♠')];
+    g.discard = [card('4', '♠')];
     const res = g.takeDiscard(0);
     assert.ok(!res.ok);
     assert.match(res.msg, /obrigado/i);
@@ -187,9 +187,9 @@ describe('Compra do monte e do lixo', () => {
 
   test('3.5 Carta única do lixo não pode ser descartada de volta no mesmo turno', () => {
     const g = setupGame();
-    const lixoCard = card('7','♥');
+    const lixoCard = card('7', '♥');
     g.discard = [lixoCard];
-    g.hands[0] = [lixoCard, card('3','♠'), card('4','♠')];
+    g.hands[0] = [lixoCard, card('3', '♠'), card('4', '♠')];
     g.takeDiscard(0);
     const res = g.discard_(0, lixoCard.id);
     assert.ok(!res.ok);
@@ -203,19 +203,17 @@ describe('Compra do monte e do lixo', () => {
     assert.ok(!res.ok);
     assert.match(res.msg, /vazio/i);
   });
-
 });
 
 // ─── 4. Grupos válidos ────────────────────────────────────────────────────────
 
 describe('Validação de grupos', () => {
-
   test('4.1 Trinca pura é válida', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('K','♥'), card('K','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -223,8 +221,8 @@ describe('Validação de grupos', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('K','♥')];
-    g.hands[0] = [...t, card('3','♠')];
+    const t = [card('K', '♠'), card('K', '♥')];
+    g.hands[0] = [...t, card('3', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -232,8 +230,8 @@ describe('Validação de grupos', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('Q','♥'), card('J','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('Q', '♥'), card('J', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -241,8 +239,8 @@ describe('Validação de grupos', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('K','♥'), card('2','♣')]; // 2 naturais, 1 coringa
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('K', '♥'), card('2', '♣')]; // 2 naturais, 1 coringa
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -250,8 +248,8 @@ describe('Validação de grupos', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('2','♣'), card('2','♥')]; // 1 natural, 2 coringas
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('2', '♣'), card('2', '♥')]; // 1 natural, 2 coringas
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -259,23 +257,21 @@ describe('Validação de grupos', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('2','♠'), card('2','♥'), card('2','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('2', '♠'), card('2', '♥'), card('2', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
-
 });
 
 // ─── 5. Sequências válidas ────────────────────────────────────────────────────
 
 describe('Validação de sequências', () => {
-
   test('5.1 Sequência pura de 3 cartas: válida', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('5','♥'), card('6','♥'), card('7','♥')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('5', '♥'), card('6', '♥'), card('7', '♥')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -283,8 +279,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('5','♥'), card('6','♠'), card('7','♥')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('5', '♥'), card('6', '♠'), card('7', '♥')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -292,8 +288,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('5','♥'), card('7','♥'), card('9','♥')]; // duas lacunas, zero coringas
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('5', '♥'), card('7', '♥'), card('9', '♥')]; // duas lacunas, zero coringas
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -301,8 +297,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('5','♥'), card('2','♠'), card('7','♥')]; // 2♠ como coringa no slot 6♥
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('5', '♥'), card('2', '♠'), card('7', '♥')]; // 2♠ como coringa no slot 6♥
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -310,8 +306,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('5','♥'), card('2','♠'), card('2','♣'), card('8','♥')]; // 2 coringas atuando
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('5', '♥'), card('2', '♠'), card('2', '♣'), card('8', '♥')]; // 2 coringas atuando
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(!playNew(g, 0, t).ok);
   });
 
@@ -319,8 +315,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('A','♥'), card('2','♥'), card('3','♥')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('A', '♥'), card('2', '♥'), card('3', '♥')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -328,8 +324,8 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('Q','♦'), card('K','♦'), card('A','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('Q', '♦'), card('K', '♦'), card('A', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
 
@@ -338,17 +334,15 @@ describe('Validação de sequências', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const t = [card('A','♥'), card('2','♥'), card('3','♥'), card('4','♥')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('A', '♥'), card('2', '♥'), card('3', '♥'), card('4', '♥')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     assert.ok(playNew(g, 0, t).ok);
   });
-
 });
 
 // ─── 6. Pontuação das cartas ──────────────────────────────────────────────────
 
 describe('Pontuação das cartas', () => {
-
   // Testa indiretamente via teamMeldDetails após bater
   function baterComMelds(meldCards) {
     const g = setupGame();
@@ -364,24 +358,40 @@ describe('Pontuação das cartas', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    const aces = [card('A','♠',1), card('A','♥',1), card('A','♦',1), card('A','♣',1),
-                  card('A','♠',2), card('A','♥',2), card('A','♦',2)];
+    const aces = [
+      card('A', '♠', 1),
+      card('A', '♥', 1),
+      card('A', '♦', 1),
+      card('A', '♣', 1),
+      card('A', '♠', 2),
+      card('A', '♥', 2),
+      card('A', '♦', 2),
+    ];
     g.hands[0] = aces;
     fakeDraw(g, 0);
     const res = playNew(g, 0, aces);
     assert.ok(res.ok && res.autoBater);
     // 7 aces × 15 = 105 pts de cartas
-    assert.equal(res.teamMeldDetails[0].cardsPoints,
+    assert.equal(
+      res.teamMeldDetails[0].cardsPoints,
       7 * 10 + 7 * 15, // 7 Ks (10 pts) + 7 As (15 pts)
-      'Ás deve valer 15 pts');
+      'Ás deve valer 15 pts',
+    );
   });
 
   test('6.2 2 (coringa) vale 10 pts', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     // Grupo de 7 twos (puro — todos naturais)
-    const twos = [card('2','♠',1), card('2','♥',1), card('2','♦',1), card('2','♣',1),
-                  card('2','♠',2), card('2','♥',2), card('2','♦',2)];
+    const twos = [
+      card('2', '♠', 1),
+      card('2', '♥', 1),
+      card('2', '♦', 1),
+      card('2', '♣', 1),
+      card('2', '♠', 2),
+      card('2', '♥', 2),
+      card('2', '♦', 2),
+    ];
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
     g.hands[0] = twos;
     fakeDraw(g, 0);
@@ -392,7 +402,7 @@ describe('Pontuação das cartas', () => {
   });
 
   test('6.3 K, Q, J, 10, 9, 8, 7 valem 10 pts cada', () => {
-    const ranks = ['K','Q','J','10','9','8','7'];
+    const ranks = ['K', 'Q', 'J', '10', '9', '8', '7'];
     for (const rank of ranks) {
       const g = setupGame();
       g.hasFirstMeld[0] = true;
@@ -401,13 +411,16 @@ describe('Pontuação das cartas', () => {
       fakeDraw(g, 0);
       const res = playNew(g, 0, canasta);
       assert.ok(res.ok && res.autoBater, `${rank} falhou`);
-      assert.equal(res.teamMeldDetails[0].cardsPoints, 7 * 10,
-        `${rank} deve valer 10 pts, obtido: ${res.teamMeldDetails[0].cardsPoints / 7}`);
+      assert.equal(
+        res.teamMeldDetails[0].cardsPoints,
+        7 * 10,
+        `${rank} deve valer 10 pts, obtido: ${res.teamMeldDetails[0].cardsPoints / 7}`,
+      );
     }
   });
 
   test('6.4 3, 4, 5, 6 valem 5 pts cada', () => {
-    const ranks = ['3','4','5','6'];
+    const ranks = ['3', '4', '5', '6'];
     for (const rank of ranks) {
       const g = setupGame();
       g.hasFirstMeld[0] = true;
@@ -416,17 +429,14 @@ describe('Pontuação das cartas', () => {
       fakeDraw(g, 0);
       const res = playNew(g, 0, canasta);
       assert.ok(res.ok && res.autoBater, `${rank} falhou`);
-      assert.equal(res.teamMeldDetails[0].cardsPoints, 7 * 5,
-        `${rank} deve valer 5 pts`);
+      assert.equal(res.teamMeldDetails[0].cardsPoints, 7 * 5, `${rank} deve valer 5 pts`);
     }
   });
-
 });
 
 // ─── 7. Canastras ────────────────────────────────────────────────────────────
 
 describe('Canastras', () => {
-
   test('7.1 7 cartas do mesmo rank sem coringa = canastra limpa (+200)', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
@@ -443,8 +453,13 @@ describe('Canastras', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     const canasta = [
-      card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1),
-      card('K','♠',2), card('K','♥',2), card('2','♣',1), // coringa atuando
+      card('K', '♠', 1),
+      card('K', '♥', 1),
+      card('K', '♦', 1),
+      card('K', '♣', 1),
+      card('K', '♠', 2),
+      card('K', '♥', 2),
+      card('2', '♣', 1), // coringa atuando
     ];
     g.hands[0] = canasta;
     fakeDraw(g, 0);
@@ -458,7 +473,7 @@ describe('Canastras', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     const seis = group7('K').slice(0, 6); // 6 cartas
-    const junk = [card('3','♠'), card('4','♠')]; // 2 cartas sobrando (regra mão mínima)
+    const junk = [card('3', '♠'), card('4', '♠')]; // 2 cartas sobrando (regra mão mínima)
     g.hands[0] = [...seis, ...junk];
     fakeDraw(g, 0);
     const res = playNew(g, 0, seis);
@@ -470,8 +485,13 @@ describe('Canastras', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     const canasta = [
-      card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1),
-      card('K','♠',2), card('K','♥',2), card('2','♣',1),
+      card('K', '♠', 1),
+      card('K', '♥', 1),
+      card('K', '♦', 1),
+      card('K', '♣', 1),
+      card('K', '♠', 2),
+      card('K', '♥', 2),
+      card('2', '♣', 1),
     ];
     g.hands[0] = canasta;
     fakeDraw(g, 0);
@@ -490,19 +510,17 @@ describe('Canastras', () => {
     assert.ok(res.autoBater);
     assert.equal(res.teamMeldDetails[0].canastrasBonus, 200);
   });
-
 });
 
 // ─── 8. Regra da mão mínima ───────────────────────────────────────────────────
 
 describe('Regra da mão mínima', () => {
-
   test('8.1 Baixar ficando com 1 carta sem canastra: recusado', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const trinca = [card('K','♠'), card('K','♥'), card('K','♦')];
-    const junk   = card('3','♠'); // sobraria 1 carta — sem canastra: recusa
+    const trinca = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
+    const junk = card('3', '♠'); // sobraria 1 carta — sem canastra: recusa
     g.hands[0] = [...trinca, junk];
     const res = playNew(g, 0, trinca);
     assert.ok(!res.ok);
@@ -513,7 +531,7 @@ describe('Regra da mão mínima', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     fakeDraw(g, 0);
-    const trinca = [card('K','♠'), card('K','♥'), card('K','♦')];
+    const trinca = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
     g.hands[0] = trinca;
     const res = playNew(g, 0, trinca);
     assert.ok(!res.ok);
@@ -532,28 +550,25 @@ describe('Regra da mão mínima', () => {
   test('8.4 Descartar última carta sem canastra: recusado', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
-    const trinca = [card('K','♠'), card('K','♥'), card('K','♦')];
+    const trinca = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: trinca }]; // sem canastra
-    const junk = card('3','♠');
+    const junk = card('3', '♠');
     g.hands[0] = [junk];
     fakeDraw(g, 0);
     const res = g.discard_(0, junk.id);
     assert.ok(!res.ok);
     assert.match(res.msg, /canastra/i);
   });
-
 });
 
 // ─── 9. Bater ────────────────────────────────────────────────────────────────
 
 describe('Bater', () => {
-
   test('9.1 Bater sem canastra: recusado', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
-    g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group',
-      cards: [card('K','♠'), card('K','♥'), card('K','♦')] }]; // só 3 cartas, não é canastra
-    g.hands[0] = [card('3','♠')];
+    g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: [card('K', '♠'), card('K', '♥'), card('K', '♦')] }]; // só 3 cartas, não é canastra
+    g.hands[0] = [card('3', '♠')];
     fakeDraw(g, 0);
     const res = g.bater(0);
     assert.ok(!res.ok);
@@ -573,7 +588,7 @@ describe('Bater', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠'), card('4','♠')];
+    g.hands[0] = [card('3', '♠'), card('4', '♠')];
     fakeDraw(g, 0);
     const res = g.bater(0);
     assert.ok(res.ok);
@@ -583,7 +598,7 @@ describe('Bater', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠')];
+    g.hands[0] = [card('3', '♠')];
     g.hasPlayedMelds[0] = true; // já baixou antes
     fakeDraw(g, 0);
     const res = g.bater(0);
@@ -595,10 +610,10 @@ describe('Bater', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠')];
+    g.hands[0] = [card('3', '♠')];
     // hasPlayedMelds[0] = false (padrão)
     fakeDraw(g, 0); // _turnStartedNeverPlayed = true
-    const res = g.bater(0, card('3','♠').id);
+    const res = g.bater(0, card('3', '♠').id);
     assert.ok(res.ok);
     assert.equal(res.teamMeldDetails[0].baterBonus, 100);
   });
@@ -607,7 +622,7 @@ describe('Bater', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠')];
+    g.hands[0] = [card('3', '♠')];
     fakeDraw(g, 0);
     const res = g.bater(0);
     assert.ok(res.ok);
@@ -618,36 +633,34 @@ describe('Bater', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠')];
-    const junkForOthers = [card('A','♠'), card('A','♥')]; // 30 pts
+    g.hands[0] = [card('3', '♠')];
+    const junkForOthers = [card('A', '♠'), card('A', '♥')]; // 30 pts
     g.hands[1] = [...junkForOthers];
     g.hands[2] = [...junkForOthers];
     g.hands[3] = [...junkForOthers];
     fakeDraw(g, 0);
     const res = g.bater(0);
     // Jogadores 1 e 3 (dupla 1) devem ter perdido pontos de mão
-    const loser1 = res.playerHandLoss.find(p => p.teamIndex === 1);
+    const loser1 = res.playerHandLoss.find((p) => p.teamIndex === 1);
     assert.ok(loser1.handPoints > 0, 'Dupla adversária deve perder pontos de mão');
     // Parceiro (jogador 2, dupla 0) também perde mão
     const partner = res.playerHandLoss.find((p, i) => i === 2);
     assert.ok(partner.handPoints > 0, 'Parceiro também perde pontos de mão');
     // Quem bateu não perde mão
-    const batter = res.playerHandLoss.find(p => p.isBatter);
+    const batter = res.playerHandLoss.find((p) => p.isBatter);
     assert.equal(batter.handPoints, 0, 'Quem bateu não perde mão');
   });
-
 });
 
 // ─── 10. Primeira baixa / Buraco ─────────────────────────────────────────────
 
 describe('Primeira baixa e regra do buraco', () => {
-
   test('10.1 Fora do buraco: qualquer trinca é válida como primeira baixa', () => {
     const g = setupGame();
     g.scores[0] = 500; // < 1000
     fakeDraw(g, 0);
-    const t = [card('3','♠'), card('3','♥'), card('3','♦')];
-    g.hands[0] = [...t, card('4','♠'), card('5','♠')];
+    const t = [card('3', '♠'), card('3', '♥'), card('3', '♦')];
+    g.hands[0] = [...t, card('4', '♠'), card('5', '♠')];
     const res = playNew(g, 0, t);
     assert.ok(res.ok);
     assert.ok(g.hasFirstMeld[0]);
@@ -657,8 +670,8 @@ describe('Primeira baixa e regra do buraco', () => {
     const g = setupGame();
     g.scores[0] = 1000;
     fakeDraw(g, 0);
-    const t = [card('3','♠'), card('3','♥'), card('3','♦')];
-    g.hands[0] = [...t, card('4','♠'), card('5','♠')];
+    const t = [card('3', '♠'), card('3', '♥'), card('3', '♦')];
+    g.hands[0] = [...t, card('4', '♠'), card('5', '♠')];
     const res = playNew(g, 0, t);
     assert.ok(!res.ok);
     assert.match(res.msg, /100/);
@@ -668,13 +681,13 @@ describe('Primeira baixa e regra do buraco', () => {
     const g = setupGame();
     g.scores[0] = 1000;
     fakeDraw(g, 0);
-    const aces  = [card('A','♠',1), card('A','♥',1), card('A','♦',1), card('A','♣',1)];
-    const kings = [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1)];
-    const junk  = [card('3','♠'), card('4','♠')];
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)];
+    const junk = [card('3', '♠'), card('4', '♠')];
     g.hands[0] = [...aces, ...kings, ...junk];
     const res = g.playMelds(0, [
-      { type: 'new', cards: aces.map(c => c.id) },
-      { type: 'new', cards: kings.map(c => c.id) },
+      { type: 'new', cards: aces.map((c) => c.id) },
+      { type: 'new', cards: kings.map((c) => c.id) },
     ]);
     assert.ok(res.ok);
     assert.ok(g.hasFirstMeld[0]);
@@ -683,8 +696,8 @@ describe('Primeira baixa e regra do buraco', () => {
   test('10.4 Após primeira baixa, hasFirstMeld permanece true nas próximas rodadas', () => {
     const g = setupGame();
     fakeDraw(g, 0);
-    const t = [card('K','♠'), card('K','♥'), card('K','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     playNew(g, 0, t);
     assert.ok(g.hasFirstMeld[0]);
     // Na próxima rodada, hasFirstMeld é resetado
@@ -696,43 +709,50 @@ describe('Primeira baixa e regra do buraco', () => {
     const g = setupGame();
     // Jogador 0 (dupla 0) já abriu
     g.hasFirstMeld[0] = true;
-    g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group',
-      cards: [card('K','♠',1), card('K','♥',1), card('K','♦',1)] }];
+    g.melds[0] = [
+      { rank: 'K', suit: '♠', type: 'group', cards: [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)] },
+    ];
     // Agora é a vez do jogador 2 (parceiro, dupla 0)
     g.currentPlayerIndex = 2;
     fakeDraw(g, 2);
-    const addCard = card('K','♣',1);
-    g.hands[2] = [addCard, card('3','♠'), card('4','♠')];
+    const addCard = card('K', '♣', 1);
+    g.hands[2] = [addCard, card('3', '♠'), card('4', '♠')];
     const res = g.playMelds(2, [{ type: 'add', meldIndex: 0, cards: [addCard.id] }]);
     assert.ok(res.ok);
     assert.equal(g.melds[0][0].cards.length, 4);
   });
-
 });
 
 // ─── 11. Staging (buraco — em espera) ────────────────────────────────────────
 
 describe('Staging no buraco', () => {
-
   test('11.1 stageMeld remove cartas da mão imediatamente', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const t = [card('K','♠'), card('K','♥'), card('K','♦')];
-    const junk = [card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
+    const junk = [card('3', '♠'), card('4', '♠')];
     g.hands[0] = [...t, ...junk];
     fakeDraw(g, 0);
-    assert.ok(g.stageMeld(0, t.map(c => c.id)).ok);
+    assert.ok(
+      g.stageMeld(
+        0,
+        t.map((c) => c.id),
+      ).ok,
+    );
     assert.equal(g.hands[0].length, 2);
   });
 
   test('11.2 Confirmação com < 100 pts: penalidade + cartas voltam', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const t = [card('3','♠'), card('3','♥'), card('3','♦')]; // 15 pts
-    const junk = [card('4','♠'), card('5','♠')];
+    const t = [card('3', '♠'), card('3', '♥'), card('3', '♦')]; // 15 pts
+    const junk = [card('4', '♠'), card('5', '♠')];
     g.hands[0] = [...t, ...junk];
     fakeDraw(g, 0);
-    g.stageMeld(0, t.map(c => c.id));
+    g.stageMeld(
+      0,
+      t.map((c) => c.id),
+    );
     const res = g.confirmStagedMelds(0);
     assert.ok(!res.ok);
     assert.ok(res.penalized);
@@ -745,13 +765,19 @@ describe('Staging no buraco', () => {
     const g = setupGame();
     g.scores[0] = 1000;
     g.firstMeldPenalty[0] = true;
-    const aces  = [card('A','♠',1), card('A','♥',1), card('A','♦',1), card('A','♣',1)]; // 60
-    const kings = [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1)]; // 40
-    const junk  = [card('3','♠'), card('4','♠')];
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)]; // 60
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)]; // 40
+    const junk = [card('3', '♠'), card('4', '♠')];
     g.hands[0] = [...aces, ...kings, ...junk];
     fakeDraw(g, 0);
-    g.stageMeld(0, aces.map(c => c.id));
-    g.stageMeld(0, kings.map(c => c.id));
+    g.stageMeld(
+      0,
+      aces.map((c) => c.id),
+    );
+    g.stageMeld(
+      0,
+      kings.map((c) => c.id),
+    );
     const res = g.confirmStagedMelds(0); // 100 pts, mas precisa 150
     assert.ok(!res.ok);
     assert.equal(res.penalized, false, 'Não deve penalizar duas vezes');
@@ -760,12 +786,18 @@ describe('Staging no buraco', () => {
   test('11.4 Confirmação com ≥ 100 pts: melds comprometidos', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const aces  = [card('A','♠',1), card('A','♥',1), card('A','♦',1), card('A','♣',1)];
-    const kings = [card('K','♠',1), card('K','♥',1), card('K','♦',1), card('K','♣',1)];
-    g.hands[0] = [...aces, ...kings, card('3','♠'), card('4','♠')];
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)];
+    g.hands[0] = [...aces, ...kings, card('3', '♠'), card('4', '♠')];
     fakeDraw(g, 0);
-    g.stageMeld(0, aces.map(c => c.id));
-    g.stageMeld(0, kings.map(c => c.id));
+    g.stageMeld(
+      0,
+      aces.map((c) => c.id),
+    );
+    g.stageMeld(
+      0,
+      kings.map((c) => c.id),
+    );
     const res = g.confirmStagedMelds(0);
     assert.ok(res.ok);
     assert.ok(g.hasFirstMeld[0]);
@@ -775,12 +807,15 @@ describe('Staging no buraco', () => {
   test('11.5 addToStagedMeld adiciona cartas ao meld em espera', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const t = [card('K','♠',1), card('K','♥',1), card('K','♦',1)];
-    const extra = card('K','♣',1);
-    const junk  = [card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    const extra = card('K', '♣', 1);
+    const junk = [card('3', '♠'), card('4', '♠')];
     g.hands[0] = [...t, extra, ...junk];
     fakeDraw(g, 0);
-    g.stageMeld(0, t.map(c => c.id));
+    g.stageMeld(
+      0,
+      t.map((c) => c.id),
+    );
     const res = g.addToStagedMeld(0, 0, [extra.id]);
     assert.ok(res.ok);
     assert.equal(g.stagedMelds[0][0].cards.length, 4);
@@ -790,31 +825,32 @@ describe('Staging no buraco', () => {
   test('11.6 addToStagedMeld com tipo incompatível: recusado', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const t = [card('K','♠',1), card('K','♥',1), card('K','♦',1)]; // grupo
-    const incompatible = card('Q','♣',1); // rank diferente
-    g.hands[0] = [...t, incompatible, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)]; // grupo
+    const incompatible = card('Q', '♣', 1); // rank diferente
+    g.hands[0] = [...t, incompatible, card('3', '♠'), card('4', '♠')];
     fakeDraw(g, 0);
-    g.stageMeld(0, t.map(c => c.id));
+    g.stageMeld(
+      0,
+      t.map((c) => c.id),
+    );
     const res = g.addToStagedMeld(0, 0, [incompatible.id]);
     assert.ok(!res.ok);
   });
-
 });
 
 // ─── 12. Fim de jogo ──────────────────────────────────────────────────────────
 
 describe('Fim de jogo', () => {
-
   test('12.1 Pontuação aumenta corretamente após rodada', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     const canasta = group7('K'); // 7×10 + 200 = 270 pts de cartas+bônus
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: canasta }];
-    g.hands[0] = [card('3','♠')];
+    g.hands[0] = [card('3', '♠')];
     // Outros jogadores com cartas na mão (perdem pontos)
-    g.hands[1] = [card('A','♠')]; // -15
-    g.hands[2] = [card('A','♥')]; // -15
-    g.hands[3] = [card('A','♦')]; // -15
+    g.hands[1] = [card('A', '♠')]; // -15
+    g.hands[2] = [card('A', '♥')]; // -15
+    g.hands[3] = [card('A', '♦')]; // -15
     fakeDraw(g, 0);
     g.hasPlayedMelds[0] = true;
     const res = g.bater(0);
@@ -830,8 +866,10 @@ describe('Fim de jogo', () => {
     g.hasFirstMeld[0] = true;
     const canasta = group7('K');
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: canasta }];
-    g.hands[0] = [card('3','♠')];
-    g.hands[1] = []; g.hands[2] = []; g.hands[3] = [];
+    g.hands[0] = [card('3', '♠')];
+    g.hands[1] = [];
+    g.hands[2] = [];
+    g.hands[3] = [];
     fakeDraw(g, 0);
     const res = g.bater(0);
     assert.ok(res.gameOver);
@@ -845,8 +883,10 @@ describe('Fim de jogo', () => {
     g.hasFirstMeld[0] = true;
     const canasta = group7('3'); // 7×5 + 200 = 235
     g.melds[0] = [{ rank: '3', suit: '♠', type: 'group', cards: canasta }];
-    g.hands[0] = [card('4','♠')];
-    g.hands[1] = []; g.hands[2] = []; g.hands[3] = [];
+    g.hands[0] = [card('4', '♠')];
+    g.hands[1] = [];
+    g.hands[2] = [];
+    g.hands[3] = [];
     fakeDraw(g, 0);
     const res = g.bater(0);
     assert.ok(!res.gameOver);
@@ -857,19 +897,19 @@ describe('Fim de jogo', () => {
     const g = setupGame();
     g.hasFirstMeld[0] = true;
     g.melds[0] = [{ rank: 'K', suit: '♠', type: 'group', cards: group7('K') }];
-    g.hands[0] = [card('3','♠')];
-    g.hands[1] = []; g.hands[2] = []; g.hands[3] = [];
+    g.hands[0] = [card('3', '♠')];
+    g.hands[1] = [];
+    g.hands[2] = [];
+    g.hands[3] = [];
     fakeDraw(g, 0);
     g.bater(0);
     assert.equal(g.status, 'roundOver');
   });
-
 });
 
 // ─── 13. getStateFor ──────────────────────────────────────────────────────────
 
 describe('getStateFor — visibilidade do estado', () => {
-
   test('13.1 Jogador vê apenas sua própria mão', () => {
     const g = setupGame();
     const s0 = g.getStateFor(0);
@@ -899,14 +939,16 @@ describe('getStateFor — visibilidade do estado', () => {
   test('13.4 stagedMelds e firstMeldPenalty são visíveis a todos', () => {
     const g = setupGame();
     g.scores[0] = 1000;
-    const t = [card('K','♠'), card('K','♥'), card('K','♦')];
-    g.hands[0] = [...t, card('3','♠'), card('4','♠')];
+    const t = [card('K', '♠'), card('K', '♥'), card('K', '♦')];
+    g.hands[0] = [...t, card('3', '♠'), card('4', '♠')];
     fakeDraw(g, 0);
-    g.stageMeld(0, t.map(c => c.id));
+    g.stageMeld(
+      0,
+      t.map((c) => c.id),
+    );
     g.firstMeldPenalty[0] = true;
     const s1 = g.getStateFor(1);
     assert.equal(s1.stagedMelds[0].length, 1);
     assert.equal(s1.firstMeldPenalty[0], true);
   });
-
 });
