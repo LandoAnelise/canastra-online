@@ -272,50 +272,86 @@ document.getElementById('btn-new-game').addEventListener('click', () => {
 });
 
 // ─── PAUSE / RECONNECT ───────────────────────────────────────────────────────
-let pauseCountdownInterval = null;
+// Map: playerName → intervalId
+const pausedTimers = new Map();
 
-socket.on('gamePaused', ({ playerName, timeoutMs }) => {
-  closeModal('modal-round'); // don't interrupt with round modal
-  document.getElementById('paused-msg').textContent = playerName + ' desconectou. Aguardando reconex\xe3o\u2026';
-  startPauseCountdown(timeoutMs);
+socket.on('gamePaused', ({ playerName, timeoutMs, isResync }) => {
+  addPausedPlayer(playerName, timeoutMs);
+  document.getElementById('paused-room-code').textContent = state.myRoomId || '';
   document.getElementById('modal-paused').classList.remove('hidden');
-  showToast('\u23f8 ' + playerName + ' desconectou. Jogo pausado.', 'error', 6000);
+  if (!isResync) {
+    showToast('\u23f8 ' + playerName + ' desconectou. Jogo pausado.', 'error', 6000);
+  }
 });
 
-socket.on('gameResumed', ({ playerName }) => {
-  stopPauseCountdown();
-  closeModal('modal-paused');
-  showToast('\u25b6 ' + playerName + ' reconectou! Jogo retomado.', 'success', 1000);
+socket.on('gameResumed', ({ playerName, stillPaused }) => {
+  removePausedPlayer(playerName);
+  if (stillPaused) {
+    showToast('\u21a9 ' + playerName + ' reconectou!', 'success', 2000);
+  } else {
+    closeModal('modal-paused');
+    showToast('\u25b6 Jogo retomado!', 'success', 1000);
+  }
 });
 
 socket.on('playerAbandoned', ({ playerName }) => {
-  stopPauseCountdown();
-  document.getElementById('paused-msg').textContent =
-    playerName + ' n\xe3o reconectou a tempo. A partida foi encerrada.';
-  document.getElementById('paused-timer').textContent = '';
+  // Limpa todos os timers e mostra mensagem estática
+  for (const intervalId of pausedTimers.values()) clearInterval(intervalId);
+  pausedTimers.clear();
+  const list = document.getElementById('paused-players-list');
+  list.innerHTML =
+    '<p style="opacity:0.75;font-size:0.9rem">' +
+    escapeHtml(playerName) +
+    ' n\xe3o reconectou a tempo. A partida foi encerrada.</p>';
 });
 
-function startPauseCountdown(ms) {
-  stopPauseCountdown();
-  let remaining = ms;
-  const el = document.getElementById('paused-timer');
+function addPausedPlayer(playerName, timeoutMs) {
+  if (pausedTimers.has(playerName)) removePausedPlayer(playerName);
+
+  const list = document.getElementById('paused-players-list');
+  const entry = document.createElement('div');
+  entry.className = 'paused-player-entry';
+  entry.dataset.pausedPlayer = playerName;
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'paused-player-name';
+  nameEl.textContent = playerName + ' desconectou. Aguardando reconex\xe3o\u2026';
+
+  const timerEl = document.createElement('span');
+  timerEl.className = 'paused-countdown';
+
+  entry.appendChild(nameEl);
+  entry.appendChild(timerEl);
+  list.appendChild(entry);
+
+  let remaining = timeoutMs;
   function tick() {
     if (remaining <= 0) {
-      el.textContent = '00:00';
+      timerEl.textContent = '00:00';
       return;
     }
     const m = String(Math.floor(remaining / 60000)).padStart(2, '0');
     const s = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
-    el.textContent = m + ':' + s;
+    timerEl.textContent = m + ':' + s;
     remaining -= 1000;
   }
   tick();
-  pauseCountdownInterval = setInterval(tick, 1000);
+  pausedTimers.set(playerName, setInterval(tick, 1000));
 }
 
-function stopPauseCountdown() {
-  clearInterval(pauseCountdownInterval);
-  pauseCountdownInterval = null;
+function removePausedPlayer(playerName) {
+  const intervalId = pausedTimers.get(playerName);
+  if (intervalId !== undefined) {
+    clearInterval(intervalId);
+    pausedTimers.delete(playerName);
+  }
+  const list = document.getElementById('paused-players-list');
+  for (const entry of list.querySelectorAll('.paused-player-entry')) {
+    if (entry.dataset.pausedPlayer === playerName) {
+      entry.remove();
+      break;
+    }
+  }
 }
 
 // ─── RULES MODAL ─────────────────────────────────────────────────────────────

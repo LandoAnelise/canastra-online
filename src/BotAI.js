@@ -828,7 +828,7 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
       if (res.ok) {
         rm.broadcastToRoom(roomId, 'playerDealt', {});
         if (res.autoBater) {
-          rm.broadcastToRoom(roomId, 'roundEnded', res);
+          rm.broadcastRoundEnded(game, roomId, res);
           rm.broadcastState(game);
           return;
         }
@@ -845,7 +845,7 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
         if (!res.ok) continue; // carta pode já ter sido usada numa baixa anterior
         rm.broadcastToRoom(roomId, 'playerDealt', {});
         if (res.autoBater) {
-          rm.broadcastToRoom(roomId, 'roundEnded', res);
+          rm.broadcastRoundEnded(game, roomId, res);
           rm.broadcastState(game);
           return;
         }
@@ -862,7 +862,7 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   if (baterDec.bater) {
     const res = game.bater(botIdx, baterDec.discardCardId);
     if (res.ok) {
-      rm.broadcastToRoom(roomId, 'roundEnded', res);
+      rm.broadcastRoundEnded(game, roomId, res);
       rm.broadcastState(game);
       return;
     }
@@ -882,7 +882,7 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   }
 
   if (discardRes.autoBater || discardRes.deckEndRound) {
-    rm.broadcastToRoom(roomId, 'roundEnded', discardRes);
+    rm.broadcastRoundEnded(game, roomId, discardRes);
   }
   rm.broadcastState(game);
 }

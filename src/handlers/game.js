@@ -4,7 +4,7 @@ const { runBotTurns } = require('../BotAI');
 const { isValidCardId } = require('../validation');
 
 function registerGameHandlers(socket, io, rm) {
-  const { rooms, playerRoom, broadcastState, broadcastToRoom } = rm;
+  const { rooms, playerRoom, broadcastState, broadcastToRoom, broadcastRoundEnded } = rm;
 
   // ── GAME ACTIONS (guard: paused) ──
   function gameAction(handler) {
@@ -56,7 +56,7 @@ function registerGameHandlers(socket, io, rm) {
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
       cb?.({ ok: true, meldTypes: result.meldTypes });
       socket.to(info.roomId).emit('playerDealt', {});
-      if (result.autoBater) broadcastToRoom(info.roomId, 'roundEnded', result);
+      if (result.autoBater) broadcastRoundEnded(game, info.roomId, result);
       broadcastState(game);
     }),
   );
@@ -104,7 +104,7 @@ function registerGameHandlers(socket, io, rm) {
         return;
       }
       if (result.autoBater || result.deckEndRound) {
-        broadcastToRoom(info.roomId, 'roundEnded', result);
+        broadcastRoundEnded(game, info.roomId, result);
       } else {
         socket.to(info.roomId).emit('playerDealt', {});
       }
@@ -121,7 +121,7 @@ function registerGameHandlers(socket, io, rm) {
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
       cb?.({ ok: true });
       if (result.autoBater || result.deckEndRound) {
-        broadcastToRoom(info.roomId, 'roundEnded', result);
+        broadcastRoundEnded(game, info.roomId, result);
       } else {
         runBotTurns(game, info.roomId, rm);
       }
@@ -137,7 +137,7 @@ function registerGameHandlers(socket, io, rm) {
       const result = game.bater(info.seatIndex, discardCardId);
       if (!result.ok) return cb?.({ ok: false, msg: result.msg });
 
-      broadcastToRoom(info.roomId, 'roundEnded', result);
+      broadcastRoundEnded(game, info.roomId, result);
       broadcastState(game);
       cb?.({ ok: true, result });
 
