@@ -114,9 +114,19 @@ socket.on('roundEnded', (result) => {
     }
   });
 
+  if (!result.isResync && result.winnerPlayerName) {
+    const ann = document.getElementById('bater-announcement');
+    if (ann) {
+      ann.textContent = `${result.winnerPlayerName} bateu!`;
+      ann.classList.remove('hidden');
+    }
+  }
+
   window._roundEndedPending = true;
   setTimeout(() => {
     window._roundEndedPending = false;
+    const ann = document.getElementById('bater-announcement');
+    if (ann) ann.classList.add('hidden');
     showRoundModal(result);
   }, result.isResync ? 0 : 2500);
 });
