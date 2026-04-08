@@ -70,9 +70,9 @@ function isWild(card) {
  *
  * @param {number}   wildCount  número de coringas no meld (necessário para caso 3)
  */
-function cardFitsSequence(v, suit, meldNaturals, wildCount = 0) {
+function cardFitsSequence(v, suit, meldNaturals, wildCount = 0, highAce = false) {
   if (!meldNaturals.length || meldNaturals[0].suit !== suit) return false;
-  const vs = meldNaturals.map((c) => cardNumVal(c)).sort((a, b) => a - b);
+  const vs = meldNaturals.map((c) => (highAce && c.rank === 'A' ? 14 : cardNumVal(c))).sort((a, b) => a - b);
   const min = vs[0],
     max = vs[vs.length - 1];
   const naturalVals = new Set(vs);
@@ -208,17 +208,18 @@ function findSequenceCandidates(hand, difficulty) {
   const candidates = [];
   const seen = new Set();
 
-  for (const suitCards of Object.values(bySuit)) {
-    // Ordena por valor numérico (ás baixo)
-    const sorted = [...suitCards].sort((a, b) => cardNumVal(a) - cardNumVal(b));
+  // Roda a busca de sequências para um naipe com uma função de valor e máximo configuráveis.
+  // Isso permite rodar duas passagens: Às como 1 (baixo) e Às como 14 (alto).
+  function runSeqPass(suitCards, getVal, maxVal) {
+    const sorted = [...suitCards].sort((a, b) => getVal(a) - getVal(b));
 
     for (let i = 0; i < sorted.length; i++) {
       const seqNaturals = [sorted[i]];
       let wildsNeeded = 0;
 
       for (let j = i + 1; j < sorted.length; j++) {
-        const prevVal = cardNumVal(seqNaturals[seqNaturals.length - 1]);
-        const currVal = cardNumVal(sorted[j]);
+        const prevVal = getVal(seqNaturals[seqNaturals.length - 1]);
+        const currVal = getVal(sorted[j]);
         const gap = currVal - prevVal - 1;
 
         if (gap < 0) break; // rank duplicado
@@ -252,9 +253,9 @@ function findSequenceCandidates(hand, difficulty) {
 
       // Extensão de borda: usar 1 coringa para estender uma corrida de 2 naturais
       if (wildsNeeded === 0 && wilds.length >= 1 && seqNaturals.length === 2) {
-        const first = cardNumVal(seqNaturals[0]);
-        const last = cardNumVal(seqNaturals[seqNaturals.length - 1]);
-        if (first > 2 || last < 13) {
+        const first = getVal(seqNaturals[0]);
+        const last = getVal(seqNaturals[seqNaturals.length - 1]);
+        if (first > 2 || last < maxVal) {
           const all = [...seqNaturals, wilds[0]];
           const key = all
             .map((c) => c.id)
@@ -271,6 +272,17 @@ function findSequenceCandidates(hand, difficulty) {
           }
         }
       }
+    }
+  }
+
+  const highVal = (c) => (c.rank === 'A' ? 14 : cardNumVal(c));
+
+  for (const suitCards of Object.values(bySuit)) {
+    // Passagem 1: Às como baixo (valor 1) — sequências A-2-3...
+    runSeqPass(suitCards, cardNumVal, 13);
+    // Passagem 2: Às como alto (valor 14) — sequências Q-K-A
+    if (suitCards.some((c) => c.rank === 'A')) {
+      runSeqPass(suitCards, highVal, 14);
     }
   }
 
@@ -302,11 +314,14 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       if (matching.length > 0) {
         // Extensão natural: TODAS as dificuldades — cartas do mesmo rank sempre vão para o meld existente
         const extended = [...meld.cards, ...matching];
+        const newLen = extended.length;
         candidates.push({
           meldIndex: meldIdx,
           cardIds: matching.map((c) => c.id),
           pts: meldPtsWithBonus(extended) - meldPtsWithBonus(meld.cards),
-          resultsCanastra: extended.length >= 7 && meld.cards.length < 7,
+          resultsCanastra: newLen >= 7 && meld.cards.length < 7,
+          closesGroupTo6Natural: newLen === 6 && !matching.some((c) => isWild(c)),
+          isSequence: false,
           currentLen: meld.cards.length,
         });
       } else if (difficulty !== 'easy' && meldRank !== '2' && wilds.length > 0 && meld.cards.length === 6) {
@@ -319,6 +334,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
             cardIds: [wilds[0].id],
             pts: meldPtsWithBonus(extended) - meldPtsWithBonus(meld.cards),
             resultsCanastra: true,
+            closesGroupTo6Natural: false,
+            isSequence: false,
             currentLen: meld.cards.length,
           });
         }
@@ -333,10 +350,13 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       const minV = sortedVals[0];
       const maxV = sortedVals[sortedVals.length - 1];
 
+      const meldHasHighCard = meldNaturals.some((c) => RANK_VAL[c.rank] >= 11);
+      const meldAceIsHigh = meldHasHighCard && meldNaturals.some((c) => c.rank === 'A');
       const meldWildCount = meld.cards.filter((c) => isWild(c)).length;
       const extending = hand.filter((c) => {
         if (isWild(c) || c.suit !== meldSuit) return false;
-        return cardFitsSequence(cardNumVal(c), meldSuit, meldNaturals, meldWildCount);
+        const cardVals = c.rank === 'A' ? [1, 14] : [cardNumVal(c)];
+        return cardVals.some((cv) => cardFitsSequence(cv, meldSuit, meldNaturals, meldWildCount, meldAceIsHigh));
       });
 
       if (extending.length > 0) {
@@ -346,6 +366,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           cardIds: extending.map((c) => c.id),
           pts: meldPtsWithBonus(extended) - meldPtsWithBonus(meld.cards),
           resultsCanastra: extended.length >= 7 && meld.cards.length < 7,
+          closesGroupTo6Natural: false,
+          isSequence: true,
           currentLen: meld.cards.length,
         });
       }
@@ -371,12 +393,14 @@ function selectMeldActions(newCandidates, extCandidates, hand, hasCanastra) {
       isExt: true,
       // Prioridade de extensão: completar canastra > perto de canastra > normal
       priority: c.resultsCanastra
-        ? 2000
-        : c.currentLen >= 5
-          ? 1500 // 1 ou 2 cartas para canastra
-          : c.currentLen >= 4
-            ? 800 // 3 cartas para canastra
-            : 200 + c.pts,
+        ? 2000 // 1. completa canastra
+        : c.closesGroupTo6Natural
+          ? 1500 // 2. fecha grupo em 6 (natural)
+          : c.isSequence
+            ? 1200 // 3. encaixa em sequência imediatamente
+            : c.currentLen < 5
+              ? 300 + c.pts // 5. grupo com menos de 5 cartas
+              : 200 + c.pts,
     })),
     ...newCandidates.map((c) => ({
       ...c,
@@ -493,6 +517,84 @@ function decideMeldActions(game, botIdx, difficulty) {
   return actions;
 }
 
+// ─── CLASSIFICAÇÃO DE CARTA PARA MELDS ───────────────────────────────────────
+
+/**
+ * Classifica a melhor prioridade de uma carta da mão em relação a melds existentes do time.
+ * Retorna 1 (mais alta) a 5 (mais baixa), ou null se não encaixa em nenhum meld.
+ *
+ *  1 – Carta completa canastra (meld vai para 7 cartas)
+ *  2 – Carta fecha grupo em exatamente 6 cartas (não é coringa)
+ *  3 – Carta encaixa imediatamente em uma sequência
+ *  4 – Carta encaixará em sequência com gap de 1-2 na borda e seria no máximo a 7ª
+ *  5 – Carta encaixa em grupo com menos de 5 cartas
+ */
+function classifyCardForMeld(card, teamMelds) {
+  const v = cardNumVal(card);
+  let best = null;
+
+  for (const meld of teamMelds) {
+    if (meld.cards.length >= 7) continue;
+
+    if (meld.type === 'group') {
+      const meldRank = meld.cards.find((c) => !isWild(c))?.rank || meld.cards[0]?.rank;
+      if (!meldRank) continue;
+      const fits = meldRank === '2' ? isWild(card) : card.rank === meldRank;
+      if (!fits) continue;
+
+      const newLen = meld.cards.length + 1;
+      let p;
+      if (newLen >= 7) p = 1;
+      else if (newLen === 6 && !isWild(card)) p = 2;
+      else if (meld.cards.length < 5) p = 5;
+      else p = 5;
+      best = best === null ? p : Math.min(best, p);
+    } else if (meld.type === 'sequence') {
+      if (isWild(card)) continue;
+      const meldNaturals = meld.cards.filter((c) => !isWild(c));
+      if (!meldNaturals.length || meldNaturals[0].suit !== card.suit) continue;
+      const meldHasHighCard = meldNaturals.some((c) => RANK_VAL[c.rank] >= 11);
+      const meldAceIsHigh = meldHasHighCard && meldNaturals.some((c) => c.rank === 'A');
+      const meldWildCount = meld.cards.filter((c) => isWild(c)).length;
+      const natVals = meldNaturals
+        .map((c) => (meldAceIsHigh && c.rank === 'A' ? 14 : cardNumVal(c)))
+        .sort((a, b) => a - b);
+      const minV = natVals[0];
+      const maxV = natVals[natVals.length - 1];
+
+      // Testa ambos os valores possíveis do Às (1 e 14); outros ranks têm valor fixo
+      const cardVals = card.rank === 'A' ? [1, 14] : [v];
+      let foundImmediate = false;
+      for (const cv of cardVals) {
+        // Verifica encaixe imediato (prioridade 1 ou 3)
+        if (cardFitsSequence(cv, card.suit, meldNaturals, meldWildCount, meldAceIsHigh)) {
+          const p = meld.cards.length + 1 >= 7 ? 1 : 3;
+          best = best === null ? p : Math.min(best, p);
+          foundImmediate = true;
+          break;
+        }
+      }
+      if (foundImmediate) continue;
+
+      // Verifica encaixe futuro: gap de 1-2 na borda, resultado ≤ 7 cartas (prioridade 4)
+      for (const cv of cardVals) {
+        let edgeGap = null;
+        if (cv < minV) edgeGap = minV - cv - 1;
+        else if (cv > maxV) edgeGap = cv - maxV - 1;
+        if (edgeGap !== null && edgeGap >= 1 && edgeGap <= 2) {
+          const resultLen = meld.cards.length + edgeGap + 1;
+          if (resultLen <= 7) {
+            best = best === null ? 4 : Math.min(best, 4);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
 // ─── DECISÃO DE DESCARTAR ─────────────────────────────────────────────────────
 
 /**
@@ -521,23 +623,11 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
   if (adjSuit >= 2) score -= 18;
   else if (adjSuit >= 1) score -= 7;
 
-  // Penaliza se a carta pode estender um meld do próprio time
-  for (const meld of teamMelds) {
-    if (meld.cards.length >= 7) continue;
-    if (meld.type === 'group') {
-      const mr = meld.cards.find((c) => !isWild(c))?.rank;
-      if (mr && card.rank === mr) {
-        score -= 15;
-        break;
-      }
-    } else if (meld.type === 'sequence') {
-      const mn = meld.cards.filter((c) => !isWild(c));
-      const mw = meld.cards.filter((c) => isWild(c)).length;
-      if (cardFitsSequence(v, card.suit, mn, mw)) {
-        score -= 12;
-        break;
-      }
-    }
+  // Penaliza com base na prioridade de encaixe nos melds do time
+  const meldPriority = classifyCardForMeld(card, teamMelds);
+  if (meldPriority !== null) {
+    const penalties = { 1: 50, 2: 40, 3: 35, 4: 25, 5: 15 };
+    score -= penalties[meldPriority] ?? 15;
   }
 
   if (difficulty !== 'hard') return score;
@@ -554,7 +644,9 @@ function scoreForDiscard(card, hand, teamIndex, game, difficulty) {
     } else if (meld.type === 'sequence') {
       const mn = meld.cards.filter((c) => !isWild(c));
       const mw = meld.cards.filter((c) => isWild(c)).length;
-      if (cardFitsSequence(v, card.suit, mn, mw)) {
+      const oppMeldAceHigh = mn.some((c) => RANK_VAL[c.rank] >= 11) && mn.some((c) => c.rank === 'A');
+      const cardValsOpp = card.rank === 'A' ? [1, 14] : [v];
+      if (cardValsOpp.some((cv) => cardFitsSequence(cv, card.suit, mn, mw, oppMeldAceHigh))) {
         score -= 30;
         break;
       }
@@ -612,7 +704,9 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
       } else if (meld.type === 'sequence') {
         const mn = meld.cards.filter((c) => !isWild(c));
         const mw = meld.cards.filter((c) => isWild(c)).length;
-        if (cardFitsSequence(cardNumVal(topCard), topCard.suit, mn, mw)) return true;
+        const aceHigh = mn.some((c) => RANK_VAL[c.rank] >= 11) && mn.some((c) => c.rank === 'A');
+        const topVals = topCard.rank === 'A' ? [1, 14] : [cardNumVal(topCard)];
+        if (topVals.some((tv) => cardFitsSequence(tv, topCard.suit, mn, mw, aceHigh))) return true;
       }
     }
     return false;
@@ -628,32 +722,20 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
         continue;
       }
 
-      const v = cardNumVal(dc);
-      const sr = hand.filter((c) => c.rank === dc.rank && !isWild(c)).length;
-
-      // Forma grupo novo com cartas na mão
-      if (sr >= 2) value += 20;
-      else if (sr >= 1 && hand.some((c) => isWild(c))) value += 12;
-      else if (sr >= 1) value += 8;
-
-      // Estende meld do time (grupo ou sequência, incluindo lacunas de coringa)
-      for (const meld of teamMelds) {
-        if (meld.cards.length >= 7) continue;
-        if (meld.type === 'group') {
-          const mr = meld.cards.find((c) => !isWild(c))?.rank;
-          if (mr && dc.rank === mr) {
-            value += 15;
-            break;
-          }
-        } else if (meld.type === 'sequence') {
-          const mn = meld.cards.filter((c) => !isWild(c));
-          const mw = meld.cards.filter((c) => isWild(c)).length;
-          if (cardFitsSequence(v, dc.suit, mn, mw)) {
-            value += 15;
-            break;
-          }
-        }
+      // Bônus por extensão de meld existente, escalonado pela prioridade de encaixe
+      //  P1 (canastra): +40 | P2 (fecha grupo 6): +30 | P3 (seq. imediata): +25
+      //  P4 (seq. futura, gap 1-2): +22 | P5 (grupo < 5): +20
+      const meldPriority = classifyCardForMeld(dc, teamMelds);
+      if (meldPriority !== null) {
+        const meldBonus = { 1: 40, 2: 30, 3: 25, 4: 22, 5: 20 };
+        value += meldBonus[meldPriority] ?? 20;
       }
+
+      // Bônus por formação de novo grupo com cartas da mão
+      const sr = hand.filter((c) => c.rank === dc.rank && !isWild(c)).length;
+      if (sr >= 2) value += 15;
+      else if (sr >= 1 && hand.some((c) => isWild(c))) value += 10;
+      else if (sr >= 1) value += 6;
 
       // Valor base da carta
       value += cardPts(dc.rank) / 8;
