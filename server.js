@@ -36,15 +36,15 @@ const BUILD_HASH = (() => {
   }
 })();
 
-// Manifesto gerado pelo Vite — mapeia caminhos originais para nomes com hash
-// Ex: { "public/css/base.css": { "file": "assets/base-BsyD.css" } }
-// Carregado uma vez na inicialização; null quando o build não existe (dev local).
-const MANIFEST_PATH = path.join(__dirname, 'dist', '.vite', 'manifest.json');
+// Manifesto gerado pelo Vite — só é usado em produção
 let buildManifest = null;
-try {
-  buildManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
-} catch {
-  // Sem build disponível — modo dev, usa ?v=HASH como fallback
+if (process.env.NODE_ENV === 'production') {
+  const MANIFEST_PATH = path.join(__dirname, 'dist', '.vite', 'manifest.json');
+  try {
+    buildManifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+  } catch {
+    // Sem build disponível — fallback para ?v=HASH
+  }
 }
 
 // Features de desenvolvimento — ativadas via variável de ambiente DEV_MODE=true
@@ -60,8 +60,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Arquivos estáticos buildados pelo Vite — nomes com hash, cache longa duração
-if (buildManifest) {
+// Só serve /assets se em produção e buildManifest existe
+if (process.env.NODE_ENV === 'production' && buildManifest) {
   app.use(
     '/assets',
     express.static(path.join(__dirname, 'dist', 'assets'), {
@@ -69,7 +69,6 @@ if (buildManifest) {
       lastModified: true,
       index: false,
       setHeaders(res) {
-        // Hashes garantem unicidade: pode cachear indefinidamente
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       },
     }),
@@ -107,11 +106,10 @@ function serveVersionedHtml(res) {
     html = html.replace('<!--DEV_SCRIPT-->', '');
   }
 
-  if (buildManifest) {
+  if (process.env.NODE_ENV === 'production' && buildManifest) {
     // Substituir caminhos de CSS e JS pelos equivalentes com hash do Vite
-    // Ex: /css/base.css → /assets/base-BsyD.css
     html = html.replace(/(href|src)="(\/(?:css|js)[^"]+)"/g, (_, attr, url) => {
-      const key = `public${url}`; // /css/base.css → public/css/base.css
+      const key = `public${url}`;
       const entry = buildManifest[key];
       if (entry) {
         return `${attr}="/${entry.file}"`;
@@ -119,7 +117,7 @@ function serveVersionedHtml(res) {
       return `${attr}="${url}"`;
     });
   } else {
-    // Fallback (sem build): injetar ?v=HASH para invalidar cache por deploy
+    // Sempre usa ?v=HASH em dev
     html = html.replace(/(href|src)="(\/(?:css|js)[^"]+)"/g, (_, attr, url) => {
       const sep = url.includes('?') ? '&' : '?';
       return `${attr}="${url}${sep}v=${BUILD_HASH}"`;
