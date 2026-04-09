@@ -324,6 +324,19 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           isSequence: false,
           currentLen: meld.cards.length,
         });
+        // Se a extensão fecha o grupo em 6 e há coringa disponível → candidato composto (canastra suja)
+        if (difficulty !== 'easy' && newLen === 6 && meldRank !== '2' && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+          const extWithWild = [...extended, wilds[0]];
+          candidates.push({
+            meldIndex: meldIdx,
+            cardIds: [...matching.map((c) => c.id), wilds[0].id],
+            pts: meldPtsWithBonus(extWithWild) - meldPtsWithBonus(meld.cards),
+            resultsCanastra: true,
+            closesGroupTo6Natural: false,
+            isSequence: false,
+            currentLen: meld.cards.length,
+          });
+        }
       } else if (difficulty !== 'easy' && meldRank !== '2' && wilds.length > 0 && meld.cards.length === 6) {
         // Extensão com coringa para completar canastra (grupo com 6 cartas): medium/hard
         const alreadyHasWild = meld.cards.some((c) => isWild(c));
@@ -366,6 +379,32 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           cardIds: extending.map((c) => c.id),
           pts: meldPtsWithBonus(extended) - meldPtsWithBonus(meld.cards),
           resultsCanastra: extended.length >= 7 && meld.cards.length < 7,
+          closesGroupTo6Natural: false,
+          isSequence: true,
+          currentLen: meld.cards.length,
+        });
+        // Se a extensão fecha a sequência em 6 e há coringa disponível → candidato composto (canastra)
+        if (extended.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+          const extWithWild = [...extended, wilds[0]];
+          candidates.push({
+            meldIndex: meldIdx,
+            cardIds: [...extending.map((c) => c.id), wilds[0].id],
+            pts: meldPtsWithBonus(extWithWild) - meldPtsWithBonus(meld.cards),
+            resultsCanastra: true,
+            closesGroupTo6Natural: false,
+            isSequence: true,
+            currentLen: meld.cards.length,
+          });
+        }
+      }
+      // Sequência já com 6 cartas (sem coringas) → coringa completa a canastra
+      if (meld.cards.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+        const extended = [...meld.cards, wilds[0]];
+        candidates.push({
+          meldIndex: meldIdx,
+          cardIds: [wilds[0].id],
+          pts: meldPtsWithBonus(extended) - meldPtsWithBonus(meld.cards),
+          resultsCanastra: true,
           closesGroupTo6Natural: false,
           isSequence: true,
           currentLen: meld.cards.length,
