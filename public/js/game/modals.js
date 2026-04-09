@@ -141,7 +141,7 @@ document.getElementById('btn-continue-round').addEventListener('click', () => {
 });
 
 export function showGameOverModal(result) {
-  const winner = result.winnerTeam ?? (result.scores[0] >= 2000 ? 0 : 1);
+  const winner = result.winnerTeam ?? (result.scores[0] >= 2000 && result.scores[1] >= 2000 ? (result.scores[0] >= result.scores[1] ? 0 : 1) : result.scores[0] >= 2000 ? 0 : 1);
   const tNames = result.teamNames || ['Dupla 1', 'Dupla 2'];
   const hasBreakdown = Array.isArray(result.teamMeldDetails);
 

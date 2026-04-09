@@ -862,7 +862,7 @@ class Game {
       roundPoints,
       scores: [...this.scores],
       gameOver,
-      winnerTeam: gameOver ? (this.scores[0] >= WIN_SCORE ? 0 : 1) : null,
+      winnerTeam: gameOver ? (this.scores[0] >= WIN_SCORE && this.scores[1] >= WIN_SCORE ? (this.scores[0] >= this.scores[1] ? 0 : 1) : this.scores[0] >= WIN_SCORE ? 0 : 1) : null,
       teamMeldDetails,
       playerHandLoss,
       teamNames: this.teamNames,
