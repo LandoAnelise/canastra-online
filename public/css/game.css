@@ -429,15 +429,56 @@
 .melds-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   flex: 1 1 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   min-width: 0;
-  padding: 6px 10px;
   background: rgba(0, 0, 0, 0.14);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(201, 168, 76, 0.2) transparent;
+  position: relative;
+}
+.melds-scroll-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 6px 14px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.melds-scroll-content::-webkit-scrollbar {
+  display: none;
+}
+.melds-scrollbar-track {
+  position: absolute;
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 99px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.melds-group.is-scrollable .melds-scrollbar-track {
+  opacity: 1;
+  pointer-events: auto;
+}
+.melds-scrollbar-thumb {
+  position: absolute;
+  width: 100%;
+  min-height: 24px;
+  background: rgba(201, 168, 76, 0.5);
+  border-radius: 99px;
+  cursor: grab;
+  transition: background 0.15s;
+  top: 0;
+}
+.melds-scrollbar-thumb:hover,
+.melds-scrollbar-thumb.dragging {
+  background: rgba(201, 168, 76, 0.85);
+  cursor: grabbing;
 }
 
 .melds-label {
@@ -1428,25 +1469,9 @@
   }
 
   /* Melds area — scroll */
-  .melds-group {
-    padding: 4px 6px;
+  .melds-scroll-content {
+    padding: 4px 14px 4px 6px;
     gap: 3px;
-    overflow-y: scroll;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(201, 168, 76, 0.7) rgba(255, 255, 255, 0.1);
-  }
-  .melds-group::-webkit-scrollbar {
-    display: block;
-    width: 5px;
-  }
-  .melds-group::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-  }
-  .melds-group::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 76, 0.7);
-    border-radius: 3px;
-    min-height: 20px;
   }
   .melds-label {
     font-size: 0.55rem;
