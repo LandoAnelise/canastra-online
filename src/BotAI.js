@@ -827,9 +827,14 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   if (game.currentPlayerIndex !== botIdx) return;
 
   const d = difficulty || 'medium';
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // Hard: 1500 ms fixos entre cada ação visível. Outros: delays aleatórios originais.
+  const actionGap = d === 'hard' ? 1500 : Math.floor(randomDelay(d) * 0.5);
+  const meldGap = d === 'hard' ? 1500 : 800;
+  const endGap = d === 'hard' ? 1500 : Math.floor(randomDelay(d) * 0.3);
 
   // ── 1. Pesca / pega lixo ──
-  await new Promise((r) => setTimeout(r, randomDelay(d)));
+  await wait(randomDelay(d));
   if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
 
   let tookPile = false;
@@ -853,14 +858,14 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   }
 
   // ── 2. Baixa cartas ──
-  await new Promise((r) => setTimeout(r, Math.floor(randomDelay(d) * 0.5)));
-  if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
-
   const teamIndex = game.players[botIdx].teamIndex;
   const isFirstMeld = !game.hasFirstMeld[teamIndex];
   const meldActions = decideMeldActions(game, botIdx, d);
 
   if (meldActions.length > 0) {
+    await wait(actionGap);
+    if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
+
     if (isFirstMeld) {
       // Primeira baixa: submete tudo de uma vez (necessário para atingir o threshold no buraco)
       const res = game.playMelds(botIdx, meldActions);
@@ -874,13 +879,19 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
         rm.broadcastState(game);
       }
     } else {
-      // Baixas normais: uma por vez com 500 ms de intervalo para acompanhar visualmente
-      for (const action of meldActions) {
-        if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) break;
-        await new Promise((r) => setTimeout(r, 800));
+      // Baixas normais: uma por vez com delay entre cada ação
+      // Hard: delay após broadcast (ação → broadcast → delay → próxima ação)
+      // Outros: delay antes da ação (delay → ação → broadcast), exceto primeira que já tem actionGap
+      for (let i = 0; i < meldActions.length; i++) {
         if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) break;
 
-        const res = game.playMelds(botIdx, [action]);
+        // Non-hard: delay antes de cada ação (exceto a primeira, já coberta pelo actionGap acima)
+        if (d !== 'hard' && i > 0) {
+          await wait(800);
+          if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) break;
+        }
+
+        const res = game.playMelds(botIdx, [meldActions[i]]);
         if (!res.ok) continue; // carta pode já ter sido usada numa baixa anterior
         rm.broadcastToRoom(roomId, 'playerDealt', {});
         if (res.autoBater) {
@@ -889,12 +900,23 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
           return;
         }
         rm.broadcastState(game);
+
+        // Hard: delay após cada broadcast, exceto após o último meld (endGap cobre)
+        if (d === 'hard' && i < meldActions.length - 1) {
+          await wait(meldGap);
+          if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) break;
+        }
       }
     }
+  } else if (d !== 'hard') {
+    // Non-hard: aguarda mesmo sem melds para manter ritmo original antes do descarte
+    await wait(actionGap);
+    if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
   }
 
-  // ── 3. Bate? ──
-  await new Promise((r) => setTimeout(r, Math.floor(randomDelay(d) * 0.3)));
+  // ── 3. Bate? ou Descarta ──
+  // Um único delay antes da fase final — evita 3000ms quando não há bater.
+  await wait(endGap);
   if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
 
   const baterDec = decideBater(game, botIdx, d);
@@ -908,8 +930,11 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   }
 
   // ── 4. Descarta ──
-  await new Promise((r) => setTimeout(r, Math.floor(randomDelay(d) * 0.3)));
-  if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
+  // Non-hard: delay extra antes do descarte (hard já esperou endGap acima)
+  if (d !== 'hard') {
+    await wait(Math.floor(randomDelay(d) * 0.3));
+    if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
+  }
 
   const discardId = chooseDiscard(game, botIdx, d);
   const discardRes = game.discard_(botIdx, discardId);
