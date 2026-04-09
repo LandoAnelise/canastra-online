@@ -1,4 +1,19 @@
-# ── Stage 1: install dependencies ────────────────────────────────────────────
+# ── Stage 1: build frontend assets ───────────────────────────────────────────
+FROM node:lts-alpine AS builder
+
+WORKDIR /app
+
+# Install all deps (including devDeps for Vite)
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Only the public/ folder is needed for the frontend build
+COPY public/ ./public/
+COPY vite.config.js ./
+
+RUN npm run build
+
+# ── Stage 2: install production deps ─────────────────────────────────────────
 FROM node:lts-alpine AS deps
 
 WORKDIR /app
@@ -19,6 +34,9 @@ WORKDIR /app
 
 # Copy production node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules
+
+# Copy built frontend assets from builder stage
+COPY --from=builder /app/dist ./dist
 
 # Copy application source (excluding node_modules via .dockerignore)
 COPY . .
