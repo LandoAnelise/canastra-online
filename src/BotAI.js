@@ -828,10 +828,10 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
 
   const d = difficulty || 'medium';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  // Hard: 1500 ms fixos entre cada ação visível. Outros: delays aleatórios originais.
-  const actionGap = d === 'hard' ? 1500 : Math.floor(randomDelay(d) * 0.5);
-  const meldGap = d === 'hard' ? 1500 : 800;
-  const endGap = d === 'hard' ? 1500 : Math.floor(randomDelay(d) * 0.3);
+  // Hard: intervalo aleatório 1500-2500ms entre cada ação visível. Outros: delays aleatórios originais.
+  const hardGap = () => 1500 + Math.floor(Math.random() * 1001);
+  const actionGap = d === 'hard' ? hardGap() : Math.floor(randomDelay(d) * 0.5);
+  const endGap = d === 'hard' ? hardGap() : Math.floor(randomDelay(d) * 0.3);
 
   // ── 1. Pesca / pega lixo ──
   await wait(randomDelay(d));
@@ -901,9 +901,9 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
         }
         rm.broadcastState(game);
 
-        // Hard: delay após cada broadcast, exceto após o último meld (endGap cobre)
+        // Hard: delay aleatório após cada broadcast, exceto após o último meld (endGap cobre)
         if (d === 'hard' && i < meldActions.length - 1) {
-          await wait(meldGap);
+          await wait(hardGap());
           if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) break;
         }
       }
