@@ -769,6 +769,26 @@ function shouldTakeDiscard(game, botIdx, difficulty) {
   }
 
   if (difficulty === 'hard') {
+    const oppTeamIndex = 1 - teamIndex;
+    const oppMelds = game.melds[oppTeamIndex];
+
+    // Ajuste defensivo 1: se alguma carta do lixo é útil para os melds do adversário,
+    // pegar o lixo nega esse recurso ao oponente.
+    for (const dc of pile) {
+      if (isWild(dc)) continue; // coringas sempre valem, tratado abaixo
+      const oppPriority = classifyCardForMeld(dc, oppMelds);
+      if (oppPriority !== null && oppPriority <= 3) {
+        // Carta encaixaria imediatamente num meld adversário (prioridade 1-3): pegar defensivamente
+        return true;
+      }
+    }
+
+    // Ajuste defensivo 2: lixo com 3+ cartas e oponente no buraco sem ter baixado ainda →
+    // pegar para não dar mais munição ao oponente atingir o threshold de 100/150 pts.
+    if (pile.length >= 3 && !game.hasFirstMeld[oppTeamIndex] && requiredFirstMeldPts(game, oppTeamIndex) > 0) {
+      return true;
+    }
+
     // O lixo é aberto: avalia todas as cartas, não só o topo
     let value = 0;
     for (const dc of pile) {

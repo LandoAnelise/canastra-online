@@ -542,4 +542,79 @@ describe('shouldTakeDiscard', () => {
     g.discard = [topCard];
     assert.ok(!shouldTakeDiscard(g, 0, 'medium'), 'Regra especial: 1+1 obriga pescar do monte');
   });
+
+  // ── Ajustes defensivos do hard bot ──────────────────────────────────────────
+
+  test('T6 Hard: pega defensivamente se carta do lixo completaria canastra no meld adversário (grupo)', () => {
+    // Adversário tem grupo de Ks com 6 cartas (P1: próxima carta completa canastra)
+    const oppMelds = [{
+      type: 'group',
+      cards: [
+        card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1),
+        card('K', '♣', 2), card('K', '♣', 3), card('K', '♣', 4),
+      ],
+    }];
+    const hand = [card('3', '♠', 1), card('4', '♦', 1)];
+    const g = mockGame({ hand, oppMelds, hasFirstMeld: true });
+    // K♠ completaria a canastra dos adversários (P1)
+    g.discard = [card('K', '♠', 99)];
+    assert.ok(shouldTakeDiscard(g, 0, 'hard'), 'Hard deve pegar K♠ para negar canastra ao adversário');
+  });
+
+  test('T7 Hard: pega defensivamente se carta do lixo encaixa imediatamente em sequência adversária', () => {
+    // Adversário tem sequência J♥Q♥K♥; 10♥ encaixaria na borda esquerda
+    const oppMelds = [{ type: 'sequence', cards: [card('J', '♥', 1), card('Q', '♥', 1), card('K', '♥', 1)] }];
+    const hand = [card('3', '♠', 1), card('4', '♦', 1)];
+    const g = mockGame({ hand, oppMelds, hasFirstMeld: true });
+    g.discard = [card('10', '♥', 99)];
+    assert.ok(shouldTakeDiscard(g, 0, 'hard'), 'Hard deve pegar 10♥ para negar ao adversário');
+  });
+
+  test('T8 Hard: não pega defensivamente se carta só encaixa em sequência adversária com gap (prioridade 4)', () => {
+    // Adversário tem sequência J♥Q♥K♥; 8♥ encaixaria apenas com gap de 2 (prioridade 4)
+    // Regra: só pega defensivamente para prioridades 1-3 (encaixe imediato)
+    const oppMelds = [{ type: 'sequence', cards: [card('J', '♥', 1), card('Q', '♥', 1), card('K', '♥', 1)] }];
+    const hand = [card('3', '♠', 1), card('4', '♦', 1)];
+    const g = mockGame({ hand, oppMelds, hasFirstMeld: true });
+    g.discard = [card('8', '♥', 99)];
+    // Sem outros motivos para pegar (value abaixo de 20), não deve pegar
+    assert.ok(!shouldTakeDiscard(g, 0, 'hard'), 'Hard não deve pegar por gap futuro de prioridade 4');
+  });
+
+  test('T9 Hard: pega lixo com 3+ cartas se oponente está no buraco e ainda não baixou', () => {
+    // Oponente: scores >= 1000, hasFirstMeld=false → está no buraco aguardando 100 pts
+    // Lixo tem 3 cartas → risco de dar munição ao oponente
+    const g = mockGame({
+      hand: [card('3', '♠', 1), card('4', '♦', 1)],
+      hasFirstMeld: true,       // time do bot já baixou
+      scores: [500, 1200],      // oponente (team 1) está no buraco
+    });
+    // Força hasFirstMeld do oponente como false (mockGame inicializa time 1 com false)
+    g.discard = [card('5', '♣', 1), card('6', '♣', 1), card('7', '♣', 1)];
+    assert.ok(shouldTakeDiscard(g, 0, 'hard'), 'Hard deve pegar lixo com 3+ cartas para não dar munição ao oponente no buraco');
+  });
+
+  test('T10 Hard: não aplica regra do buraco se lixo tiver apenas 2 cartas', () => {
+    const g = mockGame({
+      hand: [card('3', '♠', 1), card('4', '♦', 1)],
+      hasFirstMeld: true,
+      scores: [500, 1200],
+    });
+    g.discard = [card('5', '♣', 1), card('6', '♣', 1)];
+    // Sem outros gatilhos, não deve pegar
+    assert.ok(!shouldTakeDiscard(g, 0, 'hard'), 'Hard não aplica regra do buraco com lixo de 2 cartas');
+  });
+
+  test('T11 Hard: não aplica regra do buraco se oponente já baixou os 100 pts', () => {
+    // Oponente já tem hasFirstMeld=true → não está mais no buraco aguardando
+    const g = mockGame({
+      hand: [card('3', '♠', 1), card('4', '♦', 1)],
+      hasFirstMeld: true,
+      scores: [500, 1200],
+    });
+    // Sobrescreve: ambos os times já baixaram
+    g.hasFirstMeld = [true, true];
+    g.discard = [card('5', '♣', 1), card('6', '♣', 1), card('7', '♣', 1)];
+    assert.ok(!shouldTakeDiscard(g, 0, 'hard'), 'Hard não aplica regra do buraco se oponente já baixou');
+  });
 });
