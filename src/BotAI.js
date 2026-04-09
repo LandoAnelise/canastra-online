@@ -359,18 +359,33 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       if (!meldNaturals.length) continue;
 
       const meldSuit = meldNaturals[0].suit;
-      const sortedVals = meldNaturals.map((c) => cardNumVal(c)).sort((a, b) => a - b);
-      const minV = sortedVals[0];
-      const maxV = sortedVals[sortedVals.length - 1];
-
-      const meldHasHighCard = meldNaturals.some((c) => RANK_VAL[c.rank] >= 11);
-      const meldAceIsHigh = meldHasHighCard && meldNaturals.some((c) => c.rank === 'A');
       const meldWildCount = meld.cards.filter((c) => isWild(c)).length;
-      const extending = hand.filter((c) => {
-        if (isWild(c) || c.suit !== meldSuit) return false;
-        const cardVals = c.rank === 'A' ? [1, 14] : [cardNumVal(c)];
-        return cardVals.some((cv) => cardFitsSequence(cv, meldSuit, meldNaturals, meldWildCount, meldAceIsHigh));
-      });
+
+      // Busca iterativa: adicionar uma carta pode habilitar outras cartas nas bordas.
+      // Ex: sequência J♥Q♥K♥+wild com 9♥ e 8♥ na mão:
+      //   - 1ª passagem: 9♥ encaixa → naturais passam a ser [9,11,12,13], wild preenche gap em 10
+      //   - 2ª passagem: 8♥ agora encaixa na borda → ambas incluídas no mesmo candidato
+      let currentNaturals = [...meldNaturals];
+      let currentAceIsHigh = currentNaturals.some((c) => RANK_VAL[c.rank] >= 11) && currentNaturals.some((c) => c.rank === 'A');
+      const extending = [];
+      const remaining = hand.filter((c) => !isWild(c) && c.suit === meldSuit);
+      const unusedIds = new Set(remaining.map((c) => c.id));
+
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const c of remaining) {
+          if (!unusedIds.has(c.id)) continue;
+          const cardVals = c.rank === 'A' ? [1, 14] : [cardNumVal(c)];
+          if (cardVals.some((cv) => cardFitsSequence(cv, meldSuit, currentNaturals, meldWildCount, currentAceIsHigh))) {
+            extending.push(c);
+            unusedIds.delete(c.id);
+            currentNaturals = [...currentNaturals, c];
+            currentAceIsHigh = currentNaturals.some((n) => RANK_VAL[n.rank] >= 11) && currentNaturals.some((n) => n.rank === 'A');
+            changed = true;
+          }
+        }
+      }
 
       if (extending.length > 0) {
         const extended = [...meld.cards, ...extending];

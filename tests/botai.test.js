@@ -265,6 +265,45 @@ describe('findExtensionCandidates', () => {
       '9♥ deve ser identificada quando wild está na borda e pode virar gap interno',
     );
   });
+
+  test('E10 Extensão iterativa: 9♥ habilita 8♥ na borda após ser adicionado', () => {
+    // Meld: [2♥(wild), J♥, Q♥, K♥] — wild age como 10♥ na borda esquerda
+    // Bot tem 9♥ e 8♥:
+    //   - 9♥ encaixa (wild vira gap em 10) → naturais passam a ser [9,11,12,13]
+    //   - Com 9 no meld, borderWilds=0 (wild ocupa gap interno em 10), mas 8 fica na borda
+    //     re-check: naturals=[9,11,12,13], wildCount=1, internalGaps=1, borderWilds=0
+    //     cardFitsSequence(8): v=8 < min=9, precisa v >= 9-0-1=8 ✓
+    //   - Ambas devem ser incluídas no mesmo candidato
+    const meld = {
+      type: 'sequence',
+      suit: '♥',
+      cards: [wild(1), card('J', '♥', 1), card('Q', '♥', 1), card('K', '♥', 1)],
+    };
+    const hand = [card('9', '♥', 1), card('8', '♥', 1)];
+    const cands = findExtensionCandidates(hand, [meld], 'hard');
+    const seqCand = cands.find((c) => c.isSequence && c.meldIndex === 0);
+    assert.ok(seqCand, 'Deve existir candidato de extensão de sequência');
+    assert.ok(seqCand.cardIds.includes('9♥-1'), 'Deve incluir 9♥');
+    assert.ok(seqCand.cardIds.includes('8♥-1'), '8♥ deve ser incluído após 9♥ habilitar a borda');
+  });
+
+  test('E11 Extensão iterativa em cadeia: 9♥ → 8♥ → 7♥ adicionados juntos', () => {
+    // Meld: [2♥(wild), J♥, Q♥, K♥]
+    // Bot tem 9♥, 8♥ e 7♥ — encaixam em cadeia, todos devem ir no mesmo candidato
+    const meld = {
+      type: 'sequence',
+      suit: '♥',
+      cards: [wild(1), card('J', '♥', 1), card('Q', '♥', 1), card('K', '♥', 1)],
+    };
+    const hand = [card('9', '♥', 1), card('8', '♥', 1), card('7', '♥', 1)];
+    const cands = findExtensionCandidates(hand, [meld], 'hard');
+    const seqCand = cands.find((c) => c.isSequence && c.meldIndex === 0);
+    assert.ok(seqCand, 'Deve existir candidato de extensão de sequência');
+    assert.strictEqual(seqCand.cardIds.length, 3, 'Deve incluir todas as 3 cartas no mesmo candidato');
+    assert.ok(seqCand.cardIds.includes('7♥-1'), 'Deve incluir 7♥');
+    assert.ok(seqCand.cardIds.includes('8♥-1'), 'Deve incluir 8♥');
+    assert.ok(seqCand.cardIds.includes('9♥-1'), 'Deve incluir 9♥');
+  });
 });
 
 // ─── decideMeldActions ───────────────────────────────────────────────────────
