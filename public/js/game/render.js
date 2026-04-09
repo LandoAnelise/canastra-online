@@ -530,8 +530,6 @@ export function updateButtons(gs) {
   btnCancel.classList.add('hidden'); // cancel removed — staging is server-side and irreversible
 
   document.getElementById('btn-discard').disabled = !isMyTurn || !drawn || isStaging;
-  document.getElementById('btn-bater').classList.toggle('hidden', !showBater);
-  document.getElementById('btn-bater').disabled = !showBater;
 }
 
 export function onCardClick(cardId) {

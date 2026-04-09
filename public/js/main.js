@@ -104,7 +104,6 @@ socket.on('roundEnded', (result) => {
     'btn-confirm-melds',
     'btn-cancel-melds',
     'btn-discard',
-    'btn-bater',
     'deck-pile',
     'discard-pile',
   ].forEach((id) => {

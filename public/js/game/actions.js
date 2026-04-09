@@ -99,18 +99,6 @@ document.getElementById('btn-discard').addEventListener('click', () => {
   });
 });
 
-document.getElementById('btn-bater').addEventListener('click', () => {
-  const discardCardId = state.selectedCards.length === 1 ? state.selectedCards[0] : null;
-  socket.emit('bater', { discardCardId }, (res) => {
-    if (!res?.ok) {
-      showToast(res?.msg || 'Erro ao bater.', 'error');
-      playBzz();
-      return;
-    }
-    clearSelection();
-  });
-});
-
 document.getElementById('btn-sort-hand').addEventListener('click', () => {
   if (!state.gameState) return;
   state.myHandOrder = autoSortHand(state.gameState.myHand).map((c) => c.id);

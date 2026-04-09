@@ -713,7 +713,6 @@ function updateButtons(state) {
   document.getElementById('btn-take-discard').disabled = !isMyTurn || drawn || !state.discardTop;
   document.getElementById('btn-play-melds').disabled = !isMyTurn || !drawn || selectedCards.length === 0;
   document.getElementById('btn-discard').disabled = !isMyTurn || !drawn;
-  document.getElementById('btn-bater').disabled = !isMyTurn || !drawn || !hasCanastra;
 }
 
 // ─── CARD CLICK ──────────────────────────────────────────────────────────────
@@ -770,17 +769,6 @@ document.getElementById('btn-discard').addEventListener('click', () => {
   socket.emit('discard', { cardId: selectedCards[0] }, (res) => {
     if (!res.ok) {
       showToast(res.msg, 'error');
-      return;
-    }
-    clearSelection();
-  });
-});
-
-document.getElementById('btn-bater').addEventListener('click', () => {
-  const discardCardId = selectedCards.length === 1 ? selectedCards[0] : null;
-  socket.emit('bater', { discardCardId }, (res) => {
-    if (!res?.ok) {
-      showToast(res?.msg || 'Erro ao bater.', 'error');
       return;
     }
     clearSelection();
