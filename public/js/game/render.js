@@ -510,6 +510,86 @@ export function renderMelds(gs) {
       if (newMeld) newMeld.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }
+
+  requestAnimationFrame(_syncAllMeldsScrollbars);
+}
+
+// ── Custom scrollbars for melds groups ───────────────────────────────────────
+function _makeMeldsScrollbar(group) {
+  const content = group.querySelector('.melds-scroll-content');
+  const track = group.querySelector('.melds-scrollbar-track');
+  const thumb = group.querySelector('.melds-scrollbar-thumb');
+  if (!content || !track || !thumb) return null;
+
+  function sync() {
+    const { scrollTop, scrollHeight, clientHeight } = content;
+    const isScrollable = scrollHeight > clientHeight + 1;
+    group.classList.toggle('is-scrollable', isScrollable);
+    if (!isScrollable) return;
+    const trackHeight = track.clientHeight;
+    const thumbHeight = Math.max(24, (clientHeight / scrollHeight) * trackHeight);
+    const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * (trackHeight - thumbHeight);
+    thumb.style.height = thumbHeight + 'px';
+    thumb.style.top = thumbTop + 'px';
+  }
+
+  let isDragging = false, dragStartY = 0, dragStartScrollTop = 0;
+
+  thumb.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    dragStartY = e.clientY;
+    dragStartScrollTop = content.scrollTop;
+    thumb.classList.add('dragging');
+    e.preventDefault();
+  });
+  thumb.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    dragStartY = e.touches[0].clientY;
+    dragStartScrollTop = content.scrollTop;
+    thumb.classList.add('dragging');
+    e.preventDefault();
+  }, { passive: false });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const { scrollHeight, clientHeight } = content;
+    const trackHeight = track.clientHeight;
+    const thumbHeight = parseFloat(thumb.style.height) || 24;
+    const ratio = (scrollHeight - clientHeight) / (trackHeight - thumbHeight);
+    content.scrollTop = dragStartScrollTop + (e.clientY - dragStartY) * ratio;
+  });
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const clientY = e.touches[0].clientY;
+    const { scrollHeight, clientHeight } = content;
+    const trackHeight = track.clientHeight;
+    const thumbHeight = parseFloat(thumb.style.height) || 24;
+    const ratio = (scrollHeight - clientHeight) / (trackHeight - thumbHeight);
+    content.scrollTop = dragStartScrollTop + (clientY - dragStartY) * ratio;
+  }, { passive: true });
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    thumb.classList.remove('dragging');
+  });
+  document.addEventListener('touchend', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    thumb.classList.remove('dragging');
+  });
+
+  content.addEventListener('scroll', sync, { passive: true });
+
+  return sync;
+}
+
+const _meldsSyncFns = [0, 1].map((t) => {
+  const group = document.getElementById(`melds-team${t}`);
+  return group ? _makeMeldsScrollbar(group) : null;
+});
+
+function _syncAllMeldsScrollbars() {
+  _meldsSyncFns.forEach((fn) => fn && fn());
 }
 
 export function updateButtons(gs) {
