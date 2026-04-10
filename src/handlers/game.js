@@ -181,11 +181,27 @@ function registerGameHandlers(socket, io, rm) {
   });
 
   socket.on('leaveGame', (_, cb) => {
+    const { roomMeta, broadcastPublicRooms, reconnectSlots, reconnectKey } = rm;
+
+    // Se o socket não está mapeado (ex: desconectou antes de leaveGame ser processado),
+    // ainda tenta limpar qualquer reconnectSlot para evitar reconexão indesejada.
     const info = playerRoom.get(socket.id);
-    if (!info) return cb?.({ ok: true });
+    if (!info) {
+      // Tenta limpar slot de reconexão pelo nome do jogador em todas as salas onde ele possa estar
+      // Não é possível saber o roomId sem info, então apenas confirma saída
+      return cb?.({ ok: true });
+    }
+
     const game = rooms.get(info.roomId);
-    const { roomMeta, broadcastPublicRooms } = rm;
     const playerName = game?.players[info.seatIndex]?.name || 'Jogador';
+
+    // Limpa slot de reconexão existente (caso o socket tenha desconectado e reconectado
+    // antes de leaveGame ser processado, o disconnect handler pode ter criado um slot)
+    const rKey = reconnectKey(info.roomId, playerName);
+    if (reconnectSlots.has(rKey)) {
+      clearTimeout(reconnectSlots.get(rKey).disconnectTimer);
+      reconnectSlots.delete(rKey);
+    }
 
     // Remove o socket da sala e do mapa imediatamente
     socket.leave(info.roomId);

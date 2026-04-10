@@ -144,6 +144,8 @@ socket.on('stagingPenalty', ({ playerName, teamName }) => {
 });
 
 socket.on('gameState', (gs) => {
+  // Ignora gameState se o jogador saiu intencionalmente (evita retornar à tela de jogo)
+  if (!state.myRoomId) return;
   const prevStatus = state.gameState?.status;
   state.gameState = gs;
   if (gs.myIndex !== undefined) state.mySeatIndex = gs.myIndex;
