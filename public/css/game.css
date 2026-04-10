@@ -726,6 +726,35 @@
   }
 }
 
+/* ── BURACO ANNOUNCEMENT ─────────────────────────────────────── */
+#buraco-announcement {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(180, 50, 50, 0.97);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.6rem;
+  padding: 18px 48px;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  z-index: 150;
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  animation: bater-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#buraco-announcement.hidden {
+  display: none;
+}
+@media (max-width: 600px) {
+  #buraco-announcement {
+    font-size: 1.15rem;
+    padding: 14px 28px;
+  }
+}
+
 /* ── MELD FULL CARDS ─────────────────────────────────────────── */
 .meld-group-full {
   background: rgba(0, 0, 0, 0.22);

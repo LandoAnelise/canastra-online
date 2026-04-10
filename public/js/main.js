@@ -41,6 +41,16 @@ socket.on('roundStarted', ({ round }) => {
   closeModal('modal-round');
   clearSelection();
   resetRoundState();
+
+  const gs = state.gameState;
+  if (gs && gs.scores[gs.myTeam] >= 1000) {
+    const ann = document.getElementById('buraco-announcement');
+    if (ann) {
+      ann.textContent = '⚠️ Você está no buraco!';
+      ann.classList.remove('hidden');
+      setTimeout(() => ann.classList.add('hidden'), 2000);
+    }
+  }
   // Restaurar botões/pilhas que foram ocultados pelo roundEnded
   ['btn-play-melds', 'btn-discard', 'deck-pile', 'discard-pile'].forEach((id) => {
     const el = document.getElementById(id);
