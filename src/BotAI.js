@@ -387,6 +387,9 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
         }
       }
 
+      // Req 1 & 2: canastra limpa já formada — nunca sujar adicionando coringa
+      const meldIsCleanCanasta = meld.cards.length >= 7 && !meld.cards.some((c) => isWild(c));
+
       if (extending.length > 0) {
         const extended = [...meld.cards, ...extending];
         candidates.push({
@@ -398,8 +401,9 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           isSequence: true,
           currentLen: meld.cards.length,
         });
-        // Se a extensão fecha a sequência em 6 e há coringa disponível → candidato composto (canastra)
-        if (extended.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+        // Se a extensão fecha a sequência em 6 e há coringa disponível → candidato composto (canastra suja)
+        // Nunca sujar canastra limpa já completa
+        if (extended.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c)) && !meldIsCleanCanasta) {
           const extWithWild = [...extended, wilds[0]];
           candidates.push({
             meldIndex: meldIdx,
@@ -412,8 +416,54 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           });
         }
       }
+
+      // Req 4: tenta usar 1 coringa da mão como ponte para alcançar naturais adjacentes além do gap
+      // Nunca sujar canastra limpa já completa (req 1 & 2)
+      if (!meldIsCleanCanasta && wilds.length > 0) {
+        const alreadyExtendedIds = new Set(extending.map((c) => c.id));
+        const virtualWildCount = meldWildCount + 1;
+        // Cartas do naipe ainda não usadas como extensão natural
+        const remaining2 = remaining.filter((c) => !alreadyExtendedIds.has(c.id));
+        // currentNaturals já inclui as cartas de extending; usamos como base para a ponte
+        let bridgeNaturals = [...currentNaturals];
+        let bridgeAceIsHigh = currentAceIsHigh;
+        const bridged = [];
+        const bridgedIds = new Set();
+        let bridgeChanged = true;
+        while (bridgeChanged) {
+          bridgeChanged = false;
+          for (const c of remaining2) {
+            if (bridgedIds.has(c.id)) continue;
+            const cardVals = c.rank === 'A' ? [1, 14] : [cardNumVal(c)];
+            if (cardVals.some((cv) => cardFitsSequence(cv, meldSuit, bridgeNaturals, virtualWildCount, bridgeAceIsHigh))) {
+              bridged.push(c);
+              bridgedIds.add(c.id);
+              bridgeNaturals = [...bridgeNaturals, c];
+              bridgeAceIsHigh =
+                bridgeNaturals.some((n) => RANK_VAL[n.rank] >= 11) && bridgeNaturals.some((n) => n.rank === 'A');
+              bridgeChanged = true;
+            }
+          }
+        }
+        if (bridged.length > 0) {
+          // Candidato combinado: naturais diretas + naturais ponteadas + 1 coringa
+          const allExtNat = [...extending, ...bridged];
+          const extWithWild = [...meld.cards, ...allExtNat, wilds[0]];
+          candidates.push({
+            meldIndex: meldIdx,
+            cardIds: [...allExtNat.map((c) => c.id), wilds[0].id],
+            pts: meldPtsWithBonus(extWithWild) - meldPtsWithBonus(meld.cards),
+            resultsCanastra: extWithWild.length >= 7 && meld.cards.length < 7,
+            closesGroupTo6Natural: false,
+            isSequence: true,
+            currentLen: meld.cards.length,
+          });
+        }
+      }
+
       // Sequência já com 6 cartas (sem coringas) → coringa completa a canastra
-      if (meld.cards.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+      // Nunca sujar canastra limpa já completa (req 1 & 2)
+      if (meld.cards.length === 6 && wilds.length > 0 && !meld.cards.some((c) => isWild(c)) && !meldIsCleanCanasta) {
         const extended = [...meld.cards, wilds[0]];
         candidates.push({
           meldIndex: meldIdx,
@@ -501,6 +551,39 @@ function selectMeldActions(newCandidates, extCandidates, hand, hasCanastra, diff
 // ─── DECISÃO DE BAIXAR ────────────────────────────────────────────────────────
 
 /**
+ * Req 3: Verifica se abrir uma nova sequência fragmentaria uma canastra potencial com um
+ * meld de sequência já existente do time (mesmo naipe, gap ≤ 1, combinados ≥ 7 posições).
+ * Quando true, o bot deve segurar as cartas para unir os dois jogos futuramente.
+ */
+function sequenceWouldFragmentCanasta(candidateIds, hand, teamMelds) {
+  const candNaturals = hand.filter((c) => candidateIds.includes(c.id) && !isWild(c));
+  if (candNaturals.length === 0) return false;
+  const suit = candNaturals[0].suit;
+
+  const candVals = candNaturals.map((c) => cardNumVal(c));
+
+  for (const meld of teamMelds) {
+    if (meld.type !== 'sequence') continue;
+    if (meld.cards.length >= 7) continue; // já é canastra, não precisa mais
+
+    const meldNaturals = meld.cards.filter((c) => !isWild(c));
+    if (!meldNaturals.length || meldNaturals[0].suit !== suit) continue;
+
+    const meldVals = meldNaturals.map((c) => cardNumVal(c));
+    const allVals = [...new Set([...meldVals, ...candVals])].sort((a, b) => a - b);
+
+    if (allVals.length < 2) continue;
+    const span = allVals[allVals.length - 1] - allVals[0] + 1;
+    const gaps = span - allVals.length; // posições faltando no intervalo
+
+    // Combinados cobrem 7+ posições com no máximo 1 gap (preenchível por coringa):
+    // não abrir como sequência separada — guardar para unir e fazer canastra
+    if (span >= 7 && gaps <= 1) return true;
+  }
+  return false;
+}
+
+/**
  * Decide quais cartas baixar neste turno.
  * Retorna um array de meldActions compatíveis com game.playMelds().
  */
@@ -552,7 +635,14 @@ function decideMeldActions(game, botIdx, difficulty) {
   const groupCands = findGroupCandidates(hand, difficulty, /* allowWildsInGroups */ false).filter(
     (c) => !c.lowPriority,
   );
-  const newCands = [...groupCands, ...seqCands];
+
+  // Req 3 (hard): não abrir nova sequência que fragmentaria canastra potencial com meld existente
+  const filteredSeqCands =
+    difficulty === 'hard' && game.hasFirstMeld[teamIndex]
+      ? seqCands.filter((c) => !sequenceWouldFragmentCanasta(c.cardIds, hand, teamMelds))
+      : seqCands;
+
+  const newCands = [...groupCands, ...filteredSeqCands];
   const actions = selectMeldActions(newCands, extCands, hand, hasCan, difficulty);
 
   // ── Exceção: coringas em grupos (incl. ranks 5-10) se viabiliza bater ──
@@ -562,7 +652,7 @@ function decideMeldActions(game, botIdx, difficulty) {
     const remNormal = hand.filter((c) => !usedNormal.has(c.id)).length;
     if (remNormal > 1) {
       const groupCandsW = findGroupCandidates(hand, difficulty, true); // inclui lowPriority + wilds
-      const newCandsW = [...groupCandsW, ...seqCands];
+      const newCandsW = [...groupCandsW, ...filteredSeqCands];
       const actionsW = selectMeldActions(newCandsW, extCands, hand, hasCan, difficulty);
       const usedWild = new Set(actionsW.flatMap((a) => a.cards));
       const remWild = hand.filter((c) => !usedWild.has(c.id)).length;
