@@ -19,9 +19,19 @@
   background: #0f0c18;
   border-bottom: 2px solid rgba(201, 168, 76, 0.22);
   flex-shrink: 0;
-  height: 54px;
+  height: 44px;
   position: relative;
   z-index: 5;
+  overflow: hidden;
+  transition: height 0.2s ease, border-color 0.2s ease;
+}
+/* Desktop: placar recolhido */
+#screen-game.topbar-collapsed #game-topbar {
+  height: 0;
+  border-bottom-color: transparent;
+}
+#screen-game.topbar-collapsed #turn-banner {
+  top: 8px;
 }
 .score-block {
   display: flex;
@@ -49,10 +59,19 @@
   flex-direction: row;
   align-items: center;
   gap: 4px;
-  height: 54px; /* mesma altura do topbar */
+  height: 44px; /* mesma altura do topbar */
   padding: 0 10px;
   background: transparent;
   border: none;
+  transition: height 0.2s ease;
+}
+/* Quando o placar está recolhido, mantém os botões visíveis */
+#screen-game.topbar-collapsed #side-panel-content {
+  height: 36px;
+  background: rgba(15, 12, 24, 0.82);
+  border-radius: 0 0 0 10px;
+  border-left: 1px solid rgba(201, 168, 76, 0.18);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.18);
 }
 .btn-side-icon {
   background: none;
@@ -111,12 +130,12 @@
     '. top .'
     'left center right'
     '. bottom .';
-  grid-template-columns: 210px 1fr 210px;
-  grid-template-rows: 130px minmax(0, 1fr) 182px;
+  grid-template-columns: 120px 1fr 120px;
+  grid-template-rows: 96px minmax(0, 1fr) 158px;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  margin: 10px 14px;
+  margin: 6px 8px;
   border-radius: 56px;
   background: radial-gradient(ellipse at 50% 36%, #26934f 0%, #1b7040 50%, #103d22 100%);
   box-shadow:
@@ -140,10 +159,10 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  padding: 8px 24px 8px;
-  gap: 6px;
-  height: 130px;
-  max-height: 130px;
+  padding: 4px 24px 6px;
+  gap: 4px;
+  height: 96px;
+  max-height: 96px;
 }
 
 .player-slot.left {
@@ -151,10 +170,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 12px 6px 12px 18px;
-  gap: 10px;
-  width: 210px;
-  max-width: 210px;
+  padding: 10px 2px 10px 6px;
+  gap: 8px;
+  width: 120px;
+  max-width: 120px;
 }
 
 .player-slot.right {
@@ -162,10 +181,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 12px 18px 12px 6px;
-  gap: 10px;
-  width: 210px;
-  max-width: 210px;
+  padding: 10px 6px 10px 2px;
+  gap: 8px;
+  width: 120px;
+  max-width: 120px;
 }
 
 .player-slot.bottom {
@@ -173,13 +192,13 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 8px 16px 6px;
-  gap: 4px;
+  padding: 4px 16px 2px;
+  gap: 2px;
   background: rgba(0, 0, 0, 0.18);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  height: 182px;
-  min-height: 182px;
-  max-height: 182px;
+  height: 158px;
+  min-height: 158px;
+  max-height: 158px;
   overflow: hidden;
 }
 
@@ -662,7 +681,7 @@
 #action-bar {
   display: flex;
   gap: 8px;
-  padding: 10px 24px;
+  padding: 7px 24px;
   background: #0f0c18;
   border-top: 2px solid rgba(201, 168, 76, 0.18);
   flex-shrink: 0;
@@ -674,7 +693,7 @@
 /* ── TURN BANNER ─────────────────────────────────────────────── */
 #turn-banner {
   position: absolute;
-  top: 62px;
+  top: 52px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(201, 168, 76, 0.92);
@@ -1060,6 +1079,11 @@
 
 /* ── MOBILE ──────────────────────────────────────────────────── */
 @media (max-width: 600px) {
+  /* Oculta botão de toggle do placar no mobile (tem sistema próprio) */
+  #btn-toggle-topbar {
+    display: none;
+  }
+
   /* Topbar */
   #game-topbar {
     height: 42px;
