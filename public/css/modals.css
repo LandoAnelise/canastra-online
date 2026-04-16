@@ -234,6 +234,29 @@
   margin-top: 4px;
 }
 
+.round-abandon-btn {
+  margin-top: 8px;
+  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+.round-abandon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(231, 76, 60, 0.45);
+}
+.round-abandon-btn:active {
+  transform: translateY(0);
+}
+
 /* ── ROUND MODAL: telas estreitas ─────────────────────────────── */
 @media (max-width: 500px) {
   .breakdown-line {

@@ -129,6 +129,7 @@ export function showRoundModal(result) {
   const btnContinue = document.getElementById('btn-continue-round');
   btnContinue.classList.toggle('hidden', !isLeader);
   document.getElementById('round-waiting-leader').classList.toggle('hidden', isLeader);
+  document.getElementById('btn-abandon-round').classList.toggle('hidden', isLeader);
 
   document.getElementById('modal-round').classList.remove('hidden');
 }
@@ -138,6 +139,11 @@ document.getElementById('btn-continue-round').addEventListener('click', () => {
   socket.emit('continueRound', {}, (res) => {
     if (!res.ok) showToast(res.msg || 'Erro ao continuar.', 'error');
   });
+});
+
+document.getElementById('btn-abandon-round').addEventListener('click', () => {
+  closeModal('modal-round');
+  document.getElementById('modal-leave').classList.remove('hidden');
 });
 
 export function showGameOverModal(result) {
