@@ -902,8 +902,6 @@ function showRoundModal(result) {
   if (result.gameOver) return; // game over modal handles it
 
   // Header
-  document.getElementById('round-winner-badge').textContent =
-    `🏆 ${result.winnerPlayerName} bateu! (Dupla ${result.winningTeam + 1})`;
   document.getElementById('round-modal-number').textContent = `Rodada ${result.round}`;
 
   // Per-team breakdown

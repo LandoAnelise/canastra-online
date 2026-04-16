@@ -14,10 +14,6 @@ export function showRoundModal(result) {
   playChime();
 
   // Header
-  const winnerTeamName =
-    (result.teamNames && result.teamNames[result.winningTeam]) || 'Dupla ' + (result.winningTeam + 1);
-  document.getElementById('round-winner-badge').textContent =
-    result.winnerPlayerName + ' bateu! (' + winnerTeamName + ')';
   document.getElementById('round-modal-number').textContent = 'Rodada ' + result.round;
 
   // Per-team breakdown

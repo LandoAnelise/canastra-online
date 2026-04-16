@@ -78,7 +78,6 @@
 
 /* ── ROUND END MODAL ──────────────────────────────────────────── */
 .round-modal-box {
-  position: relative;
   max-width: min(620px, 96vw) !important;
   gap: 16px !important;
   padding: 28px 24px !important;
@@ -90,17 +89,13 @@
   align-items: center;
   gap: 12px;
 }
-.round-winner-badge {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--gold-light);
-}
 .round-number {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 2px;
   opacity: 0.45;
+  flex: 1;
+  text-align: left;
 }
 
 .round-scores-grid {
@@ -236,11 +231,9 @@
 }
 
 .round-abandon-btn {
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
   width: 34px;
   height: 34px;
+  flex-shrink: 0;
   padding: 7px;
   background: rgba(231, 76, 60, 0.15);
   border: 1px solid rgba(231, 76, 60, 0.35);
@@ -281,9 +274,6 @@
   }
   .round-team-name {
     font-size: 0.82rem;
-  }
-  .round-winner-badge {
-    font-size: 1.1rem;
   }
 }
 
