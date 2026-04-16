@@ -84,6 +84,30 @@ function registerLobbyHandlers(socket, rm) {
     resumeGame,
   } = rm;
 
+  function findConnectedSeat(roomId, seatIndex) {
+    for (const entry of playerRoom.values()) {
+      if (entry.roomId === roomId && entry.seatIndex === seatIndex) return true;
+    }
+    return false;
+  }
+
+  function kickBotsIfNeeded(game, roomId) {
+    if (!game.botSeats || game.botSeats.size === 0) return;
+    const difficulty = game.botDifficulty || 'medium';
+    if (game.status === 'playing' && game.botSeats.has(game.currentPlayerIndex)) {
+      console.log(`[Room ${roomId}] 🤖 Resuming bot turn for seat ${game.currentPlayerIndex}`);
+      runBotTurns(game, roomId, rm, difficulty);
+    } else if (game.status === 'roundOver' && game.botSeats.has(game.leaderSeatIndex ?? 0)) {
+      setTimeout(() => {
+        if (game.status !== 'roundOver') return;
+        game.startRound();
+        rm.broadcastToRoom(roomId, 'roundStarted', { round: game.round });
+        rm.broadcastState(game);
+        runBotTurns(game, roomId, rm, difficulty);
+      }, 2000);
+    }
+  }
+
   // ── CREATE ROOM ──
   socket.on(
     'createRoom',
@@ -186,7 +210,8 @@ function registerLobbyHandlers(socket, rm) {
         socket.emit('gameState', gs);
         if (game.lastRoundResult) socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
       } else {
-        resumeGame(game, cleanRoomId, name);
+        const { unpaused } = resumeGame(game, cleanRoomId, name);
+        if (unpaused) kickBotsIfNeeded(game, cleanRoomId);
         if (game.status === 'roundOver' && game.lastRoundResult) {
           socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
         }
@@ -206,6 +231,54 @@ function registerLobbyHandlers(socket, rm) {
         }
       }
       return;
+    }
+
+    // ── COLD RECONNECT path (e.g. server restarted and socket IDs were lost) ──
+    if (game.status === 'playing' || game.status === 'roundOver' || game.status === 'finished') {
+      const normalizedName = name.trim().toLowerCase();
+      const seatIndex = game.players.findIndex((p, i) => {
+        if (!p || typeof p.name !== 'string') return false;
+        if (game.botSeats?.has(i)) return false;
+        return p.name.trim().toLowerCase() === normalizedName;
+      });
+
+      if (seatIndex !== -1) {
+        if (findConnectedSeat(cleanRoomId, seatIndex)) {
+          return cb({ ok: false, msg: 'Esse jogador já está conectado.' });
+        }
+
+        // Limpa o slot de reconexão (pode existir de importState ou de um disconnect anterior)
+        const coldKey = reconnectKey(cleanRoomId, name);
+        if (reconnectSlots.has(coldKey)) {
+          clearTimeout(reconnectSlots.get(coldKey).disconnectTimer);
+          reconnectSlots.delete(coldKey);
+        }
+
+        game.players[seatIndex].id = socket.id;
+        socket.join(cleanRoomId);
+        playerRoom.set(socket.id, { roomId: cleanRoomId, seatIndex });
+
+        console.log(`[Room ${cleanRoomId}] ↩  ${name} reconectou após reinício (assento ${seatIndex})`);
+        cb({ ok: true, seatIndex, roomId: cleanRoomId, reconnected: true });
+
+        if (game.status === 'finished') {
+          const gs = game.getStateFor(seatIndex);
+          gs.isLeader = seatIndex === (game.leaderSeatIndex ?? 0);
+          socket.emit('gameState', gs);
+          if (game.lastRoundResult) socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
+        } else {
+          if (game.paused) {
+            const { unpaused } = resumeGame(game, cleanRoomId, name);
+            if (unpaused) kickBotsIfNeeded(game, cleanRoomId);
+          } else {
+            broadcastState(game);
+          }
+          if (game.status === 'roundOver' && game.lastRoundResult) {
+            socket.emit('roundEnded', { ...game.lastRoundResult, isResync: true });
+          }
+        }
+        return;
+      }
     }
 
     // ── NEW PLAYER path ──

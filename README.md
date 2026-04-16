@@ -37,6 +37,60 @@ npm start
 
 O servidor sobe em `http://localhost:3000`
 
+## Persistência opcional com Redis
+
+Se o Redis estiver disponível, o servidor salva automaticamente salas/lobbies e partidas em andamento,
+permitindo retomada após reinício/atualização do container principal.
+
+Se o Redis não estiver configurado ou estiver indisponível, o comportamento continua em memória (como antes).
+
+### Variáveis de ambiente
+
+- `REDIS_URL` (prioridade maior, ex.: `redis://redis:6379/0`)
+- ou `REDIS_HOST` + opcionais `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD`
+- `REDIS_STATE_KEY` (opcional, padrão: `canastra-online:state:v1`)
+- `REDIS_STATE_KEY_INCLUDE_MODE` (opcional, padrão: `true`) adiciona sufixo automático `:dev` ou `:prod`
+- `REDIS_SAVE_INTERVAL_MS` (opcional, padrão: `2000`)
+- `REDIS_CONNECT_TIMEOUT_MS` (opcional, padrão: `3000`)
+
+Por padrão, os estados ficam isolados por modo:
+
+- DEV_MODE=true salva em `canastra-online:state:v1:dev`
+- DEV_MODE=false (ou ausente) salva em `canastra-online:state:v1:prod`
+
+Se você quiser usar uma chave única sem sufixo de modo, defina `REDIS_STATE_KEY_INCLUDE_MODE=false`.
+
+### Exemplo docker-compose
+
+```yaml
+services:
+  redis:
+    image: redis:8-alpine
+    container_name: canastra-redis
+    restart: unless-stopped
+    networks:
+      - canastra-net
+
+  canastra-online:
+    image: landoanelise/canastra-online:latest
+    pull_policy: always
+    container_name: canastra-online
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_SAVE_INTERVAL_MS=2000
+    networks:
+      - canastra-net
+
+networks:
+  canastra-net:
+    driver: bridge
+```
+
 ## Estrutura do projeto
 
 ```

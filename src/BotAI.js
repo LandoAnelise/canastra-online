@@ -325,7 +325,13 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           currentLen: meld.cards.length,
         });
         // Se a extensão fecha o grupo em 6 e há coringa disponível → candidato composto (canastra suja)
-        if (difficulty !== 'easy' && newLen === 6 && meldRank !== '2' && wilds.length > 0 && !meld.cards.some((c) => isWild(c))) {
+        if (
+          difficulty !== 'easy' &&
+          newLen === 6 &&
+          meldRank !== '2' &&
+          wilds.length > 0 &&
+          !meld.cards.some((c) => isWild(c))
+        ) {
           const extWithWild = [...extended, wilds[0]];
           candidates.push({
             meldIndex: meldIdx,
@@ -366,7 +372,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       //   - 1ª passagem: 9♥ encaixa → naturais passam a ser [9,11,12,13], wild preenche gap em 10
       //   - 2ª passagem: 8♥ agora encaixa na borda → ambas incluídas no mesmo candidato
       let currentNaturals = [...meldNaturals];
-      let currentAceIsHigh = currentNaturals.some((c) => RANK_VAL[c.rank] >= 11) && currentNaturals.some((c) => c.rank === 'A');
+      let currentAceIsHigh =
+        currentNaturals.some((c) => RANK_VAL[c.rank] >= 11) && currentNaturals.some((c) => c.rank === 'A');
       const extending = [];
       const remaining = hand.filter((c) => !isWild(c) && c.suit === meldSuit);
       const unusedIds = new Set(remaining.map((c) => c.id));
@@ -381,7 +388,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
             extending.push(c);
             unusedIds.delete(c.id);
             currentNaturals = [...currentNaturals, c];
-            currentAceIsHigh = currentNaturals.some((n) => RANK_VAL[n.rank] >= 11) && currentNaturals.some((n) => n.rank === 'A');
+            currentAceIsHigh =
+              currentNaturals.some((n) => RANK_VAL[n.rank] >= 11) && currentNaturals.some((n) => n.rank === 'A');
             changed = true;
           }
         }
@@ -435,7 +443,9 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
           for (const c of remaining2) {
             if (bridgedIds.has(c.id)) continue;
             const cardVals = c.rank === 'A' ? [1, 14] : [cardNumVal(c)];
-            if (cardVals.some((cv) => cardFitsSequence(cv, meldSuit, bridgeNaturals, virtualWildCount, bridgeAceIsHigh))) {
+            if (
+              cardVals.some((cv) => cardFitsSequence(cv, meldSuit, bridgeNaturals, virtualWildCount, bridgeAceIsHigh))
+            ) {
               bridged.push(c);
               bridgedIds.add(c.id);
               bridgeNaturals = [...bridgeNaturals, c];
@@ -959,27 +969,31 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   const endGap = d === 'hard' ? hardGap() : Math.floor(randomDelay(d) * 0.3);
 
   // ── 1. Pesca / pega lixo ──
-  await wait(randomDelay(d));
-  if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
+  // Pula a fase de compra se já foi realizada neste turno (ex: servidor reiniciou com drawnThisTurn=true).
+  // Cobre tanto pescar do monte quanto pegar o lixo — ambos definem drawnThisTurn=true no GameEngine.
+  if (!game.drawnThisTurn) {
+    await wait(randomDelay(d));
+    if (game.status !== 'playing' || game.currentPlayerIndex !== botIdx) return;
 
-  let tookPile = false;
-  if (shouldTakeDiscard(game, botIdx, d)) {
-    const res = game.takeDiscard(botIdx);
-    if (res.ok) {
-      rm.broadcastToRoom(roomId, 'playerTookDiscard', {});
+    let tookPile = false;
+    if (shouldTakeDiscard(game, botIdx, d)) {
+      const res = game.takeDiscard(botIdx);
+      if (res.ok) {
+        rm.broadcastToRoom(roomId, 'playerTookDiscard', {});
+        rm.broadcastState(game);
+        tookPile = true;
+      }
+    }
+
+    if (!tookPile) {
+      const res = game.drawFromDeck(botIdx);
+      if (!res.ok) return;
+      if (res.deckNowEmpty) {
+        rm.broadcastToRoom(roomId, 'deckEmpty', { playerName: game.players[botIdx]?.name });
+      }
+      rm.broadcastToRoom(roomId, 'playerDrew', {});
       rm.broadcastState(game);
-      tookPile = true;
     }
-  }
-
-  if (!tookPile) {
-    const res = game.drawFromDeck(botIdx);
-    if (!res.ok) return;
-    if (res.deckNowEmpty) {
-      rm.broadcastToRoom(roomId, 'deckEmpty', { playerName: game.players[botIdx]?.name });
-    }
-    rm.broadcastToRoom(roomId, 'playerDrew', {});
-    rm.broadcastState(game);
   }
 
   // ── 2. Baixa cartas ──
