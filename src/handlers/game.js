@@ -238,6 +238,7 @@ function registerGameHandlers(socket, io, rm) {
       `[Room ${info.roomId}] 🤖 ${playerName} saiu voluntariamente — bot hard assume assento ${info.seatIndex}`,
     );
     game.players[info.seatIndex].id = `bot_${info.seatIndex}_${Date.now()}`;
+    game.players[info.seatIndex].name = `(bot) ${playerName}`;
     game.botSeats.add(info.seatIndex);
     game.botDifficulty = 'hard';
     game.paused = false;
