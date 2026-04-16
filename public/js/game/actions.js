@@ -152,6 +152,19 @@ function toggleSidePanel() {
 document.getElementById('side-panel-open').addEventListener('click', toggleSidePanel);
 document.getElementById('side-panel-tab').addEventListener('click', toggleSidePanel);
 
+// ── Toggle placar (desktop) ───────────────────────────────────────────────────
+const btnToggleTopbar = document.getElementById('btn-toggle-topbar');
+function updateToggleTopbarBtn() {
+  const collapsed = screenGame.classList.contains('topbar-collapsed');
+  btnToggleTopbar.textContent = collapsed ? '▾ Placar' : '▲ Placar';
+  btnToggleTopbar.title = collapsed ? 'Expandir placar' : 'Minimizar placar';
+}
+btnToggleTopbar.addEventListener('click', () => {
+  if (isMobileLayout()) return;
+  screenGame.classList.toggle('topbar-collapsed');
+  updateToggleTopbarBtn();
+});
+
 // ── Botão sair da partida ─────────────────────────────────────────────────────
 document.getElementById('btn-leave-game').addEventListener('click', () => {
   document.getElementById('modal-leave').classList.remove('hidden');
