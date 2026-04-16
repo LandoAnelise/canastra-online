@@ -170,10 +170,16 @@ document.getElementById('btn-leave-game').addEventListener('click', () => {
   document.getElementById('modal-leave').classList.remove('hidden');
 });
 document.getElementById('btn-leave-cancel').addEventListener('click', () => {
-  document.getElementById('modal-leave').classList.add('hidden');
+  const leaveModal = document.getElementById('modal-leave');
+  const from = leaveModal.dataset.from;
+  leaveModal.classList.add('hidden');
+  delete leaveModal.dataset.from;
+  if (from === 'round') document.getElementById('modal-round').classList.remove('hidden');
 });
 document.getElementById('btn-leave-confirm').addEventListener('click', () => {
-  document.getElementById('modal-leave').classList.add('hidden');
+  const leaveModal = document.getElementById('modal-leave');
+  leaveModal.classList.add('hidden');
+  delete leaveModal.dataset.from;
   socket.emit('leaveGame', {}, () => {
     clearSession();
     state.gameState = null;
