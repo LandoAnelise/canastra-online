@@ -109,19 +109,14 @@ socket.on('playerDealt', () => {
 
 socket.on('roundEnded', (result) => {
   // Desabilita todos os botões de ação imediatamente — rodada encerrada (mas mantém visíveis)
-  [
-    'btn-play-melds',
-    'btn-confirm-melds',
-    'btn-cancel-melds',
-    'btn-discard',
-    'deck-pile',
-    'discard-pile',
-  ].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.disabled = true;
-    }
-  });
+  ['btn-play-melds', 'btn-confirm-melds', 'btn-cancel-melds', 'btn-discard', 'deck-pile', 'discard-pile'].forEach(
+    (id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.disabled = true;
+      }
+    },
+  );
 
   if (!result.isResync && result.winnerPlayerName) {
     const ann = document.getElementById('bater-announcement');
@@ -132,12 +127,15 @@ socket.on('roundEnded', (result) => {
   }
 
   window._roundEndedPending = true;
-  setTimeout(() => {
-    window._roundEndedPending = false;
-    const ann = document.getElementById('bater-announcement');
-    if (ann) ann.classList.add('hidden');
-    showRoundModal(result);
-  }, result.isResync ? 0 : 2500);
+  setTimeout(
+    () => {
+      window._roundEndedPending = false;
+      const ann = document.getElementById('bater-announcement');
+      if (ann) ann.classList.add('hidden');
+      showRoundModal(result);
+    },
+    result.isResync ? 0 : 2500,
+  );
 });
 
 socket.on('deckEmpty', ({ playerName }) => {
@@ -213,29 +211,53 @@ socket.on('connect', () => {
   if (!session.roomId) return; // sem sala para reconectar
 
   showToast('Reconectando à partida...', 'info', 3000);
-  socket.emit('joinRoom', { roomId: session.roomId, playerName: session.playerName }, (res) => {
-    if (!res.ok) {
-      clearRoomFromSession();
-      showToast('Sala não encontrada. Redirecionando...', 'error', 3000);
-      showScreen('screen-lobby');
-      return;
-    }
-    state.myName = session.playerName;
-    state.myRoomId = session.roomId;
-    state.mySeatIndex = res.seatIndex;
-    // Preenche o nome no campo do lobby caso o jogador volte ao lobby depois
-    const nameInput = document.getElementById('input-name');
-    if (nameInput && !nameInput.value) nameInput.value = session.playerName;
 
-    if (res.reconnected) {
-      showToast('✅ Reconectado!', 'success', 1500);
-      // gameState chegará em seguida e renderizará o jogo automaticamente
-    } else {
-      // Estava em sala de espera — volta para a tela de espera
-      document.getElementById('waiting-room-code').textContent = session.roomId;
-      showScreen('screen-waiting');
-    }
-  });
+  const MAX_ATTEMPTS = 4;
+  const RETRY_DELAY_MS = 2500;
+  let attempts = 0;
+
+  function tryJoin() {
+    if (!socket.connected) return; // socket desconectou enquanto tentava — o próximo 'connect' tenta de novo
+    attempts++;
+    socket.emit('joinRoom', { roomId: session.roomId, playerName: session.playerName }, (res) => {
+      if (!res.ok) {
+        // Erro permanente: sala definitivamente não existe
+        if (res.msg === 'Sala não encontrada.') {
+          clearRoomFromSession();
+          showToast('Sala não encontrada.', 'error', 4000);
+          showScreen('screen-lobby');
+          return;
+        }
+        // Erro transitório (ex: servidor ainda iniciando, jogo em andamento aguardando restauração)
+        if (attempts < MAX_ATTEMPTS) {
+          showToast(`Reconectando... (${attempts}/${MAX_ATTEMPTS})`, 'info', RETRY_DELAY_MS);
+          setTimeout(tryJoin, RETRY_DELAY_MS);
+          return;
+        }
+        // Esgotou as tentativas: vai ao lobby mas mantém o código para tentativa manual
+        showToast(`Não foi possível reconectar: ${res.msg}`, 'error', 5000);
+        showScreen('screen-lobby');
+        return;
+      }
+      state.myName = session.playerName;
+      state.myRoomId = session.roomId;
+      state.mySeatIndex = res.seatIndex;
+      // Preenche o nome no campo do lobby caso o jogador volte ao lobby depois
+      const inp = document.getElementById('input-name');
+      if (inp && !inp.value) inp.value = session.playerName;
+
+      if (res.reconnected) {
+        showToast('✅ Reconectado!', 'success', 1500);
+        // gameState chegará em seguida e renderizará o jogo automaticamente
+      } else {
+        // Estava em sala de espera — volta para a tela de espera
+        document.getElementById('waiting-room-code').textContent = session.roomId;
+        showScreen('screen-waiting');
+      }
+    });
+  }
+
+  tryJoin();
 });
 
 socket.on('disconnect', () => {

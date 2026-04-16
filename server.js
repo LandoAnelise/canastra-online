@@ -7,6 +7,8 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const { createRoomManager } = require('./src/roomManager');
+const { createRedisPersistence } = require('./src/statePersistence');
+const { runBotTurns } = require('./src/BotAI');
 const { registerLobbyHandlers } = require('./src/handlers/lobby');
 const { registerTeamHandlers } = require('./src/handlers/teams');
 const { registerGameHandlers } = require('./src/handlers/game');
@@ -27,14 +29,21 @@ const io = new Server(server, {
   maxHttpBufferSize: 1e6, // 1MB
 });
 
-// Hash do commit atual — usado como fallback quando não há build do Vite
-const BUILD_HASH = (() => {
+// Hash de fallback — só é calculado quando não há build do Vite
+let cachedBuildHash = null;
+function getBuildHash() {
+  if (cachedBuildHash) return cachedBuildHash;
   try {
-    return execSync('git rev-parse --short HEAD').toString().trim();
+    cachedBuildHash = execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
   } catch {
-    return Date.now().toString(36);
+    cachedBuildHash = Date.now().toString(36);
   }
-})();
+  return cachedBuildHash;
+}
 
 // Manifesto gerado pelo Vite — só é usado em produção
 let buildManifest = null;
@@ -118,9 +127,10 @@ function serveVersionedHtml(res) {
     });
   } else {
     // Sempre usa ?v=HASH em dev
+    const buildHash = getBuildHash();
     html = html.replace(/(href|src)="(\/(?:css|js)[^"]+)"/g, (_, attr, url) => {
       const sep = url.includes('?') ? '&' : '?';
-      return `${attr}="${url}${sep}v=${BUILD_HASH}"`;
+      return `${attr}="${url}${sep}v=${buildHash}"`;
     });
   }
   res.setHeader('Cache-Control', 'no-store');
@@ -129,6 +139,124 @@ function serveVersionedHtml(res) {
 }
 
 const rm = createRoomManager(io);
+const persistence = createRedisPersistence(console);
+let persistenceSaveRunning = false;
+
+async function flushPersistentState(reason, { force = false } = {}) {
+  if (!persistence.isEnabled()) return;
+  if (persistenceSaveRunning) return;
+  if (!force && !rm.isDirty()) return;
+
+  persistenceSaveRunning = true;
+  try {
+    const snapshot = rm.exportState();
+    const ok = await persistence.saveState(snapshot);
+    if (ok) {
+      rm.clearDirty();
+      if (reason && reason !== 'interval') console.log(`[Redis] Snapshot saved (${reason}).`);
+    }
+  } finally {
+    persistenceSaveRunning = false;
+  }
+}
+
+async function initPersistence() {
+  const connected = await persistence.init();
+  if (!connected) return;
+
+  const savedState = await persistence.loadState();
+  if (savedState) {
+    const restored = rm.importState(savedState);
+    console.log(
+      `[Redis] Restored ${restored.restoredRooms} room(s) and ${restored.restoredPublicRooms} public lobby/lobbies.`,
+    );
+    scheduleRestoredDisconnectTimers();
+  } else {
+    console.log('[Redis] No saved state found.');
+  }
+
+  const saveIntervalMs = persistence.getSaveIntervalMs();
+  setInterval(() => {
+    void flushPersistentState('interval');
+  }, saveIntervalMs);
+}
+
+// After a server restart the reconnect slots rebuilt from Redis have no live timer.
+// This restarts the 5-minute bot-replacement countdown for each of those slots.
+function scheduleRestoredDisconnectTimers() {
+  const {
+    rooms,
+    roomMeta,
+    reconnectSlots,
+    RECONNECT_TIMEOUT_MS,
+    broadcastToRoom,
+    broadcastState,
+    countDisconnectedPlayers,
+  } = rm;
+
+  for (const [key, slot] of reconnectSlots) {
+    if (slot.disconnectTimer !== null) continue;
+
+    const [roomId] = key.split('|');
+    const game = rooms.get(roomId);
+    if (!game) {
+      reconnectSlots.delete(key);
+      continue;
+    }
+
+    const seatIndex = slot.seatIndex;
+    const playerName = slot.playerName || key.split('|')[1];
+
+    slot.disconnectTimer = setTimeout(() => {
+      reconnectSlots.delete(key);
+      if (!rooms.has(roomId)) return;
+
+      game.botSeats = game.botSeats || new Set();
+      const remainingHumans = game.players.filter((p, i) => i !== seatIndex && p?.id && !game.botSeats.has(i));
+
+      if (remainingHumans.length === 0) {
+        console.log(`[Room ${roomId}] Todos os jogadores saíram — encerrando sala`);
+        broadcastToRoom(roomId, 'gameAbandoned', { playerName });
+        rooms.delete(roomId);
+        roomMeta.delete(roomId);
+        return;
+      }
+
+      console.log(`[Room ${roomId}] 🤖 ${playerName} substituído por bot (após reinício)`);
+      game.players[seatIndex].id = `bot_${seatIndex}_${Date.now()}`;
+      game.botSeats.add(seatIndex);
+      game.botDifficulty = game.botDifficulty || 'medium';
+
+      if (game.leaderSeatIndex === seatIndex) {
+        const nextHuman = game.players.findIndex((p, i) => i !== seatIndex && p?.id && !game.botSeats.has(i));
+        if (nextHuman !== -1) game.leaderSeatIndex = nextHuman;
+      }
+
+      const stillDisconnected = countDisconnectedPlayers(roomId);
+      if (stillDisconnected === 0) game.paused = false;
+
+      broadcastToRoom(roomId, 'gameResumed', {
+        playerName: `${playerName} (Bot)`,
+        stillPaused: stillDisconnected > 0,
+      });
+      broadcastState(game);
+
+      if (game.status === 'playing' && game.currentPlayerIndex === seatIndex) {
+        runBotTurns(game, roomId, rm, game.botDifficulty);
+      }
+
+      if (game.status === 'roundOver' && game.leaderSeatIndex === seatIndex) {
+        setTimeout(() => {
+          if (game.status !== 'roundOver') return;
+          game.startRound();
+          broadcastToRoom(roomId, 'roundStarted', { round: game.round });
+          broadcastState(game);
+          runBotTurns(game, roomId, rm, game.botDifficulty);
+        }, 3000);
+      }
+    }, RECONNECT_TIMEOUT_MS);
+  }
+}
 
 // ── CONNECTION RATE LIMITING ──
 const connectionAttempts = new Map(); // ip → { count, resetAt }
@@ -194,6 +322,28 @@ setInterval(() => {
 }, STALE_ROOM_CHECK_INTERVAL);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`\n🃏 Canastra Online rodando em http://localhost:${PORT}\n`);
+
+async function start() {
+  await initPersistence();
+
+  server.listen(PORT, () => {
+    console.log(`\n🃏 Canastra Online rodando em http://localhost:${PORT}\n`);
+  });
+}
+
+async function shutdown(signal) {
+  console.log(`[Server] Received ${signal}, flushing state...`);
+  await flushPersistentState(signal, { force: true });
+  await persistence.close();
+  process.exit(0);
+}
+
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
 });
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});
+
+void start();
