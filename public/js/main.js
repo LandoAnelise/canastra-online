@@ -238,7 +238,10 @@ socket.on('connect', () => {
   });
 });
 
-socket.on('disconnect', () => showToast('⚠️ Conexão perdida. Reconectando...', 'error', 8000));
+socket.on('disconnect', () => {
+  _autoReconnectDone = false; // permite rejoin automático ao reconectar
+  showToast('⚠️ Conexão perdida. Reconectando...', 'error', 8000);
+});
 socket.on('connect_error', () => showToast('Erro de conexão.', 'error', 5000));
 
 // ── Escala proporcional para telas menores que o design mínimo ────────────────
