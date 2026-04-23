@@ -290,6 +290,33 @@ function findSequenceCandidates(hand, difficulty) {
 }
 
 /**
+ * Conta quantos 2s num meld de sequência estão atuando como coringas
+ * (não ocupando o slot natural do rank 2). Espelha GameEngine.js countWildsActing.
+ */
+function seqMeldWildsActing(meldCards) {
+  const naturals = meldCards.filter((c) => !isWild(c));
+  const wilds = meldCards.filter((c) => isWild(c));
+  if (wilds.length === 0) return 0;
+
+  const suit = naturals[0]?.suit;
+  const sortedVals = naturals.map((c) => RANK_VAL[c.rank]).sort((a, b) => a - b);
+  const minVal = sortedVals[0];
+  const maxVal = sortedVals[sortedVals.length - 1];
+
+  const internalGaps = maxVal - minVal - (naturals.length - 1);
+  const borderWilds = wilds.length - internalGaps;
+  const leftBorder = Math.min(Math.max(0, borderWilds), minVal - 2);
+  const startVal = minVal - leftBorder;
+  const endVal = maxVal + (borderWilds - leftBorder);
+
+  const rank2InRange = startVal <= 2 && 2 <= endVal;
+  const suitedWilds = suit ? wilds.filter((c) => c.suit === suit).length : 0;
+  const naturalWilds = rank2InRange && suitedWilds > 0 ? 1 : 0;
+
+  return Math.max(0, wilds.length - naturalWilds);
+}
+
+/**
  * Encontra cartas na mão que podem ser adicionadas aos melds existentes do time.
  * Retorna candidatos do tipo 'add'.
  */
@@ -365,7 +392,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       if (!meldNaturals.length) continue;
 
       const meldSuit = meldNaturals[0].suit;
-      const meldWildCount = meld.cards.filter((c) => isWild(c)).length;
+      // Usa contagem real de coringas atuando: 2 do mesmo naipe no slot natural não conta como coringa.
+      const meldWildCount = seqMeldWildsActing(meld.cards);
 
       // Busca iterativa: adicionar uma carta pode habilitar outras cartas nas bordas.
       // Ex: sequência J♥Q♥K♥+wild com 9♥ e 8♥ na mão:
@@ -396,7 +424,8 @@ function findExtensionCandidates(hand, teamMelds, difficulty) {
       }
 
       // Req 1 & 2: canastra limpa já formada — nunca sujar adicionando coringa
-      const meldIsCleanCanasta = meld.cards.length >= 7 && !meld.cards.some((c) => isWild(c));
+      // meldWildCount já usa seqMeldWildsActing, então funciona corretamente para meld [2,3..8].
+      const meldIsCleanCanasta = meld.cards.length >= 7 && meldWildCount === 0;
 
       if (extending.length > 0) {
         const extended = [...meld.cards, ...extending];
