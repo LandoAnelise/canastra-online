@@ -182,8 +182,8 @@ export function renderMe(gs) {
   const numRows = isMobile && ordered.length > 0 ? Math.ceil(ordered.length / perRow) : 1;
   const needsMultiRows = numRows > 1;
 
-  // Heights: single-row slot = 124px; each extra row adds 38px (card 80 - overlap 42)
-  const SLOT_H_BASE = 124,
+  // Heights: single-row slot = 110px (matches .player-slot.bottom mobile); each extra row adds 38px (card 80 - overlap 42)
+  const SLOT_H_BASE = 110,
     ROW_ADD = 38;
   const slotH = needsMultiRows ? SLOT_H_BASE + (numRows - 1) * ROW_ADD : SLOT_H_BASE;
   if (needsMultiRows) {

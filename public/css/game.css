@@ -1206,7 +1206,7 @@
       'left center right'
       'bottom bottom bottom';
     grid-template-columns: 46px 1fr 46px;
-    grid-template-rows: 36px minmax(0, 1fr) 124px;
+    grid-template-rows: 36px minmax(0, 1fr) 110px;
     margin: 5px;
     border-radius: 28px;
     box-shadow:
@@ -1289,11 +1289,11 @@
 
   /* ── Bottom (my) slot ───────────────────────────── */
   .player-slot.bottom {
-    height: 124px;
-    min-height: 124px;
-    max-height: 124px;
-    padding: 0 6px 4px;
-    gap: 2px;
+    height: 110px;
+    min-height: 110px;
+    max-height: 110px;
+    padding: 0 6px 2px;
+    gap: 1px;
     justify-content: flex-end;
     overflow: visible;
     clip-path: inset(-18px 0 0 0); /* allow 18px top overflow for selected cards (translateY -14px) */
@@ -1600,7 +1600,9 @@
     left: 0;
     right: 0;
     z-index: 200;
-    padding: 6px 6px env(safe-area-inset-bottom, 6px);
+    /* Folga extra abaixo dos botões para não colarem na borda inferior nem
+       ficarem sob a barra de gestos do celular (mín. 16px além do safe-area). */
+    padding: 8px 6px calc(env(safe-area-inset-bottom, 0px) + 16px);
     gap: 4px;
     flex-wrap: nowrap;
     justify-content: center;
@@ -1619,7 +1621,7 @@
 
   /* Push table up so fixed action bar doesn't cover the hand */
   #screen-game {
-    padding-bottom: calc(42px + env(safe-area-inset-bottom, 6px));
+    padding-bottom: calc(54px + env(safe-area-inset-bottom, 6px));
   }
 }
 
