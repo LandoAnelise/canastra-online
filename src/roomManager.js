@@ -52,6 +52,7 @@ function hydrateGame(roomId, plain) {
   if (!Array.isArray(game.hasFirstMeld)) game.hasFirstMeld = [false, false];
   if (!Array.isArray(game.stagedMelds)) game.stagedMelds = [[], [], [], []];
   if (!Array.isArray(game.firstMeldPenalty)) game.firstMeldPenalty = [false, false];
+  if (!Array.isArray(game.roundHistory)) game.roundHistory = [];
 
   return game;
 }

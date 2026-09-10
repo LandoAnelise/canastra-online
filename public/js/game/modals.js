@@ -143,6 +143,67 @@ document.getElementById('btn-abandon-round').addEventListener('click', () => {
   document.getElementById('modal-leave').classList.remove('hidden');
 });
 
+function renderRoundHistory(result) {
+  const el = document.getElementById('go-round-history');
+  if (!el) return;
+
+  const history = result.roundHistory || state.gameState?.roundHistory || [];
+  const tNames = result.teamNames || ['Dupla 1', 'Dupla 2'];
+
+  if (!history.length) {
+    el.innerHTML = '';
+    el.classList.add('hidden');
+    return;
+  }
+  el.classList.remove('hidden');
+
+  const totals = [
+    history.reduce((s, h) => s + (h.roundPoints?.[0] || 0), 0),
+    history.reduce((s, h) => s + (h.roundPoints?.[1] || 0), 0),
+  ];
+  const fmt = (v) => (v > 0 ? '+' + v : '' + v);
+  const cls = (v) => (v >= 0 ? 'rh-pos' : 'rh-neg');
+
+  const rows = history
+    .map(
+      (h) =>
+        '<tr>' +
+        '<td class="rh-round">' +
+        h.round +
+        '</td>' +
+        '<td class="' +
+        cls(h.roundPoints[0]) +
+        '">' +
+        fmt(h.roundPoints[0]) +
+        '</td>' +
+        '<td class="' +
+        cls(h.roundPoints[1]) +
+        '">' +
+        fmt(h.roundPoints[1]) +
+        '</td>' +
+        '</tr>',
+    )
+    .join('');
+
+  el.innerHTML =
+    '<div class="rh-title">Hist\xf3rico de pontos por rodada</div>' +
+    '<div class="rh-scroll"><table class="rh-table">' +
+    '<thead><tr><th class="rh-round">Rod.</th><th>' +
+    escapeHtml(tNames[0]) +
+    '</th><th>' +
+    escapeHtml(tNames[1]) +
+    '</th></tr></thead>' +
+    '<tbody>' +
+    rows +
+    '</tbody>' +
+    '<tfoot><tr><td class="rh-round">Total</td><td class="rh-total">' +
+    totals[0] +
+    '</td><td class="rh-total">' +
+    totals[1] +
+    '</td></tr></tfoot>' +
+    '</table></div>';
+}
+
 export function showGameOverModal(result) {
   const winner = result.winnerTeam ?? (result.scores[0] >= 2000 && result.scores[1] >= 2000 ? (result.scores[0] >= result.scores[1] ? 0 : 1) : result.scores[0] >= 2000 ? 0 : 1);
   const tNames = result.teamNames || ['Dupla 1', 'Dupla 2'];
@@ -245,6 +306,8 @@ export function showGameOverModal(result) {
     document.getElementById('go-total-' + t).innerHTML =
       '<span class="total-label">Total geral</span>' + '<span class="total-val">' + result.scores[t] + '</span>';
   }
+
+  renderRoundHistory(result);
 
   // Player chips
   const losses = document.getElementById('go-hand-losses');

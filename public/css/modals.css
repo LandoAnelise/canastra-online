@@ -82,6 +82,10 @@
   gap: 16px !important;
   padding: 28px 24px !important;
 }
+#modal-gameover .round-modal-box {
+  max-height: 92vh;
+  overflow-y: auto;
+}
 
 .round-modal-header {
   display: flex;
@@ -224,6 +228,72 @@
 .hand-loss-chip.safe {
   border-color: rgba(100, 220, 100, 0.25);
   color: #7ddba0;
+}
+
+/* ── ROUND HISTORY (game over) ────────────────────────────────── */
+.round-history {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.round-history.hidden {
+  display: none;
+}
+.round-history .rh-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.5;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.round-history .rh-scroll {
+  max-height: 34vh;
+  overflow-y: auto;
+}
+.rh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.rh-table th,
+.rh-table td {
+  padding: 5px 8px;
+  text-align: right;
+  white-space: nowrap;
+}
+.rh-table th {
+  font-weight: 600;
+  color: var(--gold-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.78rem;
+}
+.rh-table th.rh-round,
+.rh-table td.rh-round {
+  text-align: left;
+  opacity: 0.55;
+}
+.rh-table tbody td {
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.rh-table .rh-pos {
+  color: #6de89a;
+}
+.rh-table .rh-neg {
+  color: #e74c3c;
+}
+.rh-table tfoot td {
+  padding-top: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+.rh-table tfoot .rh-total {
+  font-family: var(--font-display);
+  color: var(--gold-light);
+  font-variant-numeric: tabular-nums;
 }
 
 .round-continue-btn {

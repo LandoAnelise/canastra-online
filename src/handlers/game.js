@@ -292,6 +292,7 @@ function registerGameHandlers(socket, io, rm) {
 
     game.scores = [0, 0];
     game.round = 0;
+    game.roundHistory = [];
     game.readyPlayers = new Set();
     game.startRound();
     broadcastToRoom(info.roomId, 'roundStarted', { round: game.round });

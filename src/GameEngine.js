@@ -362,6 +362,7 @@ class Game {
     this.round = 0;
     this.testMode = false;
     this.botSeats = new Set();
+    this.roundHistory = []; // [{ round, roundPoints: [t0, t1], scores: [t0, t1] }] — acumulado do jogo inteiro
 
     // round state
     this.deck = [];
@@ -837,6 +838,12 @@ class Game {
     this.scores[0] += roundPoints[0];
     this.scores[1] += roundPoints[1];
 
+    this.roundHistory.push({
+      round: this.round,
+      roundPoints: [roundPoints[0], roundPoints[1]],
+      scores: [this.scores[0], this.scores[1]],
+    });
+
     const gameOver = this.scores[0] >= WIN_SCORE || this.scores[1] >= WIN_SCORE;
     if (gameOver) {
       this.status = 'finished';
@@ -884,6 +891,11 @@ class Game {
       playerHandLoss,
       teamNames: this.teamNames,
       round: this.round,
+      roundHistory: this.roundHistory.map((h) => ({
+        round: h.round,
+        roundPoints: [...h.roundPoints],
+        scores: [...h.scores],
+      })),
     };
   }
 
@@ -925,6 +937,7 @@ class Game {
       draft: this.draft,
       stagedMelds: this.stagedMelds,
       firstMeldPenalty: this.firstMeldPenalty,
+      roundHistory: this.roundHistory,
       testMode: this.testMode,
       botSeats: this.botSeats ? [...this.botSeats] : [],
       allHands: this.testMode ? this.hands : undefined,
