@@ -369,6 +369,24 @@ export function renderMelds(gs) {
       });
     }
 
+    // Modo espera do buraco após recolher (0 jogos em espera): mantém o aviso "Em espera"
+    // na mesa da minha dupla para deixar claro que a jogada ainda não foi concluída.
+    if (t === gs.myTeam && !!gs.stagingLocked?.[gs.myIndex] && (gs.stagedMelds?.[gs.myIndex]?.length ?? 0) === 0) {
+      hasStagedForTeam = true;
+      const penaltyBadge = gs.firstMeldPenalty?.[t]
+        ? '<span class="canastra-badge suja" title="Penalidade: precisam de 150 pts">⚠ 150 pts</span>'
+        : '';
+      const el = document.createElement('div');
+      el.className = 'meld-group-full staged-pending staged-empty';
+      el.innerHTML = `
+        <div class="meld-header">
+          <span class="meld-type-label staged-label-text">Em espera</span>
+          ${penaltyBadge}
+        </div>
+        <div class="staged-empty-hint">Baixe as cartas e confirme para concluir a jogada.</div>`;
+      list.appendChild(el);
+    }
+
     if (gs.melds[t].length === 0 && !hasStagedForTeam) {
       list.innerHTML = '<span class="melds-empty">Nenhum grupo ainda</span>';
       continue;
@@ -597,23 +615,28 @@ export function updateButtons(gs) {
   const drawn = gs.drawnThisTurn;
   const hasCanastra = gs.melds[gs.myTeam]?.some((m) => m.cards.length >= 7);
   const isStaging = (gs.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
+  // Travado no modo espera do buraco: baixou cartas na mesa e ainda não confirmou.
+  // Continua travado mesmo depois de recolher (stagedMelds vazio) até confirmar a baixa.
+  const stagingLocked = !!gs.stagingLocked?.[gs.myIndex] || isStaging;
   const showBater = isMyTurn && drawn && hasCanastra && gs.myHand.length === 1;
 
   const btnPlayMelds = document.getElementById('btn-play-melds');
   const btnConfirm = document.getElementById('btn-confirm-melds');
   const btnUnstage = document.getElementById('btn-unstage-melds');
   const btnCancel = document.getElementById('btn-cancel-melds');
+  const btnDiscard = document.getElementById('btn-discard');
 
-  // During staging: "Baixar" stays active (add more melds), "Confirmar" + "Recolher cartas" appear
+  // Modo espera do buraco: "Baixar" segue ativo para baixar de novo; "Confirmar" e
+  // "Recolher" ficam visíveis até confirmar; "Descartar" some da barra (volta após confirmar).
   btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length < 3;
-  btnConfirm.classList.toggle('hidden', !isStaging);
+  btnConfirm.classList.toggle('hidden', !stagingLocked);
   btnConfirm.disabled = !isStaging;
-  // "Recolher cartas": devolve os jogos em espera à mão para reorganizar antes de confirmar
-  btnUnstage.classList.toggle('hidden', !isStaging);
+  btnUnstage.classList.toggle('hidden', !stagingLocked);
   btnUnstage.disabled = !isStaging || !isMyTurn;
   btnCancel.classList.add('hidden'); // cancel removed — staging is server-side and irreversible
 
-  document.getElementById('btn-discard').disabled = !isMyTurn || !drawn || isStaging;
+  btnDiscard.classList.toggle('hidden', stagingLocked);
+  btnDiscard.disabled = !isMyTurn || !drawn || stagingLocked;
 }
 
 export function onCardClick(cardId) {

@@ -990,6 +990,18 @@ async function executeBotTurn(game, botIdx, difficulty, rm, roomId) {
   if (game.status !== 'playing') return;
   if (game.currentPlayerIndex !== botIdx) return;
 
+  // Se um humano travou no modo espera do buraco e foi substituído por bot no meio do
+  // turno, recolhe as cartas em espera para a mão e destrava — o bot decide a baixa via playMelds.
+  if (game.stagingLocked?.[botIdx] || (game.stagedMelds?.[botIdx]?.length ?? 0) > 0) {
+    const staged = game.stagedMelds?.[botIdx] || [];
+    if (staged.length > 0) {
+      game.hands[botIdx] = [...game.hands[botIdx], ...staged.flatMap((m) => m.cards)];
+      game.stagedMelds[botIdx] = [];
+    }
+    if (game.stagingLocked) game.stagingLocked[botIdx] = false;
+    rm.broadcastState(game);
+  }
+
   const d = difficulty || 'medium';
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   // Hard: intervalo aleatório 1500-2500ms entre cada ação visível. Outros: delays aleatórios originais.

@@ -9,6 +9,12 @@ function isInBuraco(gs) {
   return gs && !gs.hasFirstMeld[gs.myTeam] && gs.scores[gs.myTeam] >= 1000;
 }
 
+// Travado no modo espera do buraco: baixou cartas na mesa e ainda não confirmou
+// (continua travado mesmo após recolher). Não pode descartar até confirmar a baixa.
+function isStagingLocked(gs) {
+  return !!gs?.stagingLocked?.[gs.myIndex] || (gs?.stagedMelds?.[gs?.myIndex]?.length ?? 0) > 0;
+}
+
 document.getElementById('btn-play-melds').addEventListener('click', () => {
   const gs = state.gameState;
   if (gs?.currentPlayerIndex !== state.mySeatIndex) {
@@ -102,6 +108,11 @@ document.getElementById('btn-confirm-melds-ok').addEventListener('click', () => 
 });
 
 document.getElementById('btn-discard').addEventListener('click', () => {
+  if (isStagingLocked(state.gameState)) {
+    showToast('Confirme a baixa do buraco antes de descartar.', 'error');
+    playBzz();
+    return;
+  }
   if (state.selectedCards.length !== 1) {
     showToast('Selecione exatamente 1 carta para descartar.', 'error');
     playBzz();
@@ -254,6 +265,7 @@ const discardPileEl = document.getElementById('discard-pile');
 discardPileEl.addEventListener('dragover', (e) => {
   if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || !state.gameState.drawnThisTurn)
     return;
+  if (isStagingLocked(state.gameState)) return;
   if (!getDragCardId()) return;
   e.preventDefault();
   discardPileEl.classList.add('drop-target');
@@ -269,6 +281,11 @@ discardPileEl.addEventListener('drop', (e) => {
   if (!getDragCardId()) return;
   if (!state.gameState || state.gameState.currentPlayerIndex !== state.mySeatIndex || !state.gameState.drawnThisTurn)
     return;
+  if (isStagingLocked(state.gameState)) {
+    showToast('Confirme a baixa do buraco antes de descartar.', 'error');
+    playBzz();
+    return;
+  }
   socket.emit('discard', { cardId: getDragCardId() }, (res) => {
     if (!res.ok) {
       showToast(res.msg, 'error');

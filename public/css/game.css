@@ -825,6 +825,15 @@
 .staged-label-text {
   color: #7ee787;
 }
+.meld-group-full.staged-empty {
+  min-width: 190px;
+}
+.staged-empty-hint {
+  font-size: 0.68rem;
+  line-height: 1.3;
+  color: rgba(126, 231, 135, 0.75);
+  padding: 2px 0 1px;
+}
 .meld-group-full.drop-target {
   border-color: var(--gold) !important;
   background: rgba(201, 168, 76, 0.12);

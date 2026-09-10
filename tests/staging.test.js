@@ -553,3 +553,150 @@ describe('unstageMelds — recolher cartas em espera', () => {
     assert.equal(stateFor1.stagedMelds[0].length, 0, 'jogador 1 não vê mais cartas em espera');
   });
 });
+
+// ─── Testes: stagingLocked (não sai do modo espera sem confirmar) ────────────
+
+describe('stagingLocked — trava do modo espera do buraco', () => {
+  function stagedBuraco() {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const trinca = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    const junk = [card('3', '♠', 1), card('4', '♠', 1), card('5', '♠', 1)];
+    g.hands[0] = [...trinca, ...junk];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        trinca.map((c) => c.id),
+      ).ok,
+    );
+    return { g, junk };
+  }
+
+  test('25. stageMeld trava o jogador (stagingLocked = true)', () => {
+    const { g } = stagedBuraco();
+    assert.equal(g.stagingLocked[0], true);
+  });
+
+  test('26. Não pode descartar enquanto travado (com cartas em espera)', () => {
+    const { g, junk } = stagedBuraco();
+    const res = g.discard_(0, junk[0].id);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /confirme a baixa/i);
+  });
+
+  test('27. Recolher NÃO destrava — segue sem poder descartar', () => {
+    const { g, junk } = stagedBuraco();
+    assert.ok(g.unstageMelds(0).ok);
+    assert.equal(g.stagingLocked[0], true, 'recolher mantém a trava');
+    assert.equal(g.stagedMelds[0].length, 0);
+    const res = g.discard_(0, junk[0].id);
+    assert.ok(!res.ok, 'não pode descartar mesmo após recolher');
+    assert.match(res.msg, /confirme a baixa/i);
+  });
+
+  test('28. Não pode bater enquanto travado', () => {
+    const { g } = stagedBuraco();
+    const res = g.bater(0);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /confirme a baixa/i);
+  });
+
+  test('29. Confirmar com pontos suficientes destrava e libera o descarte', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)];
+    const junk = [card('3', '♠', 1), card('4', '♠', 1)];
+    g.hands[0] = [...aces, ...kings, ...junk];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        aces.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(
+      g.stageMeld(
+        0,
+        kings.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(g.confirmStagedMelds(0).ok);
+    assert.equal(g.stagingLocked[0], false, 'confirmação destrava');
+    const res = g.discard_(0, junk[0].id);
+    assert.ok(res.ok, res.msg);
+  });
+
+  test('30. Confirmar com pontos insuficientes (penalidade) também destrava', () => {
+    const { g, junk } = stagedBuraco(); // trinca de Ks = 30 pts (< 100)
+    const res = g.confirmStagedMelds(0);
+    assert.ok(!res.ok);
+    assert.ok(res.penalized);
+    assert.equal(g.stagingLocked[0], false, 'penalidade encerra a obrigação do modo espera');
+    assert.ok(g.discard_(0, junk[0].id).ok, 'pode descartar após a penalidade');
+  });
+
+  test('31. Falha de mão mínima ao confirmar mantém a trava', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    // 4 As + 4 Ks = 100 pts, mas sobra só 1 carta na mão e sem canastra → recusa por mão mínima
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)];
+    g.hands[0] = [...aces, ...kings, card('3', '♠', 1)];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        aces.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(
+      g.stageMeld(
+        0,
+        kings.map((c) => c.id),
+      ).ok,
+    );
+    const res = g.confirmStagedMelds(0);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /guardar pelo menos 2 cartas/i);
+    assert.equal(g.stagingLocked[0], true, 'confirmação inválida não destrava');
+  });
+
+  test('32. getStateFor expõe stagingLocked', () => {
+    const { g } = stagedBuraco();
+    assert.equal(g.getStateFor(0).stagingLocked[0], true);
+    assert.equal(g.getStateFor(2).stagingLocked[0], true);
+  });
+
+  test('33. startRound zera stagingLocked', () => {
+    const { g } = stagedBuraco();
+    g.startRound();
+    assert.deepEqual(g.stagingLocked, [false, false, false, false]);
+  });
+
+  test('34. playMelds (fora do fluxo de espera) também destrava', () => {
+    const { g } = stagedBuraco();
+    g.stagingLocked[0] = true;
+    // devolve as cartas em espera à mão e baixa direto via playMelds
+    g.unstageMelds(0);
+    g.hands[0] = [
+      card('A', '♠', 1),
+      card('A', '♥', 1),
+      card('A', '♦', 1),
+      card('A', '♣', 1),
+      card('K', '♠', 1),
+      card('K', '♥', 1),
+      card('K', '♦', 1),
+      card('K', '♣', 1),
+      card('3', '♠', 1),
+      card('4', '♠', 1),
+    ];
+    const res = g.playMelds(0, [
+      { type: 'new', cards: ['A♠-1', 'A♥-1', 'A♦-1', 'A♣-1'] },
+      { type: 'new', cards: ['K♠-1', 'K♥-1', 'K♦-1', 'K♣-1'] },
+    ]);
+    assert.ok(res.ok, res.msg);
+    assert.equal(g.stagingLocked[0], false);
+  });
+});

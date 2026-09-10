@@ -374,6 +374,9 @@ class Game {
     this.hasFirstMeld = [false, false]; // se a dupla já baixou pela primeira vez
     this.stagedMelds = [[], [], [], []];
     this.firstMeldPenalty = [false, false];
+    // Por jogador: entrou no modo espera do buraco (baixou cartas na mesa) e ainda não
+    // confirmou. Enquanto true, não pode descartar/bater — nem recolhendo as cartas.
+    this.stagingLocked = [false, false, false, false];
   }
 
   setTestScores(s0, s1) {
@@ -448,6 +451,7 @@ class Game {
     this.drawnThisTurn = false;
     this.stagedMelds = [[], [], [], []]; // cartas em espera por jogador (buraco — ainda não confirmadas)
     this.firstMeldPenalty = [false, false]; // dupla recebeu penalidade por tentar baixar com pontos insuficientes
+    this.stagingLocked = [false, false, false, false]; // travado no modo espera do buraco até confirmar
 
     // Distribuir 13 cartas para cada jogador
     for (let i = 0; i < 13; i++) {
@@ -599,6 +603,7 @@ class Game {
     this.melds[teamIndex] = melds;
     this.hands[playerIndex] = remainingHand;
     this.hasPlayedMelds[playerIndex] = true;
+    this.stagingLocked[playerIndex] = false; // baixa efetivada — sai do modo espera
 
     // Baixou todas as cartas e tem canastra → bater automático
     if (remainingHand.length === 0 && hasCanastraAfter) {
@@ -629,6 +634,8 @@ class Game {
     const usedIds = new Set(cardIds);
     this.hands[playerIndex] = hand.filter((c) => !usedIds.has(c.id));
     this.stagedMelds[playerIndex].push({ cards: sortedCards, type });
+    // Baixou cartas na mesa no buraco → trava no modo espera até confirmar
+    this.stagingLocked[playerIndex] = true;
 
     return { ok: true };
   }
@@ -687,6 +694,9 @@ class Game {
         this.firstMeldPenalty[teamIndex] = true;
       }
 
+      // A tentativa de confirmar foi feita — a penalidade encerra a obrigação do modo espera
+      this.stagingLocked[playerIndex] = false;
+
       return {
         ok: false,
         penalized: !alreadyPenalized,
@@ -714,6 +724,7 @@ class Game {
     this.stagedMelds[playerIndex] = [];
     this.hasFirstMeld[teamIndex] = true;
     this.hasPlayedMelds[playerIndex] = true;
+    this.stagingLocked[playerIndex] = false; // baixa confirmada — sai do modo espera
 
     // Auto-bater se ficou sem cartas e tem canastra
     if (this.hands[playerIndex].length === 0 && hasCanastraAfter) {
@@ -725,7 +736,8 @@ class Game {
 
   // Recolher cartas em espera (buraco — primeira baixa): devolve todos os jogos
   // em espera para a mão, sem penalidade, para o jogador reorganizar e baixar de novo.
-  // Não encerra o modo baixa — o jogador ainda precisa baixar e confirmar para finalizar.
+  // NÃO destrava o modo espera (stagingLocked continua true) — o jogador segue obrigado
+  // a baixar de novo e confirmar; não pode descartar nem encerrar o turno recolhendo.
   unstageMelds(playerIndex) {
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de recolher.' };
@@ -745,6 +757,9 @@ class Game {
     if (this.status !== 'playing') return { ok: false, msg: 'A rodada já foi encerrada.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de descartar.' };
+    if (this.stagingLocked[playerIndex]) {
+      return { ok: false, msg: 'Você baixou no buraco. Confirme a baixa antes de descartar.' };
+    }
 
     // Regra: carta única do lixo não pode ser devolvida no mesmo turno
     if (this.tookSingleDiscardId && cardId === this.tookSingleDiscardId) {
@@ -789,6 +804,9 @@ class Game {
     if (this.status !== 'playing') return { ok: false, msg: 'A rodada já foi encerrada.' };
     if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
     if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de bater.' };
+    if (this.stagingLocked[playerIndex]) {
+      return { ok: false, msg: 'Você baixou no buraco. Confirme a baixa antes de bater.' };
+    }
 
     const teamIndex = this.players[playerIndex].teamIndex;
 
@@ -937,6 +955,7 @@ class Game {
       draft: this.draft,
       stagedMelds: this.stagedMelds,
       firstMeldPenalty: this.firstMeldPenalty,
+      stagingLocked: this.stagingLocked,
       roundHistory: this.roundHistory,
       testMode: this.testMode,
       botSeats: this.botSeats ? [...this.botSeats] : [],
