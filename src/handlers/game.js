@@ -88,6 +88,17 @@ function registerGameHandlers(socket, io, rm) {
   );
 
   socket.on(
+    'unstageMelds',
+    gameAction((game, info, _, cb) => {
+      const result = game.unstageMelds(info.seatIndex);
+      if (!result.ok) return cb?.({ ok: false, msg: result.msg });
+      cb?.({ ok: true });
+      socket.to(info.roomId).emit('playerDealt', {});
+      broadcastState(game);
+    }),
+  );
+
+  socket.on(
     'confirmStagedMelds',
     gameAction((game, info, _, cb) => {
       const result = game.confirmStagedMelds(info.seatIndex);

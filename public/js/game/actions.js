@@ -74,6 +74,24 @@ document.getElementById('btn-confirm-melds').addEventListener('click', () => {
   document.getElementById('modal-confirm-melds').classList.remove('hidden');
 });
 
+// Recolher cartas: devolve os jogos em espera à mão para reorganizar.
+// Não encerra o modo baixa — o jogador ainda precisa baixar e confirmar.
+document.getElementById('btn-unstage-melds').addEventListener('click', () => {
+  const gs = state.gameState;
+  const hasStagedMelds = (gs?.stagedMelds?.[gs.myIndex]?.length ?? 0) > 0;
+  if (!hasStagedMelds) return;
+  socket.emit('unstageMelds', {}, (res) => {
+    if (!res.ok) {
+      showToast(res.msg, 'error');
+      playBzz();
+      return;
+    }
+    showToast('Cartas recolhidas — reorganize e baixe novamente.', 'success', 1500);
+    playWhoosh();
+    clearSelection();
+  });
+});
+
 document.getElementById('btn-confirm-melds-cancel').addEventListener('click', () => {
   document.getElementById('modal-confirm-melds').classList.add('hidden');
 });

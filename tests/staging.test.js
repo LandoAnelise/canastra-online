@@ -398,3 +398,158 @@ describe('confirmStagedMelds — auto-bater', () => {
     assert.equal(res.teamMeldDetails[0].baterBonus, 100, 'Batida limpa (nunca baixou antes) deve valer 100 pts');
   });
 });
+
+// ─── Testes: unstageMelds (recolher cartas) ─────────────────────────────────
+
+describe('unstageMelds — recolher cartas em espera', () => {
+  test('18. Recolhe todos os jogos em espera de volta à mão, sem penalidade', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    const junk = [card('3', '♠', 1), card('4', '♠', 1)];
+    g.hands[0] = [...aces, ...kings, ...junk];
+    fakeDraw(g, 0);
+
+    assert.ok(
+      g.stageMeld(
+        0,
+        aces.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(
+      g.stageMeld(
+        0,
+        kings.map((c) => c.id),
+      ).ok,
+    );
+    assert.equal(g.hands[0].length, 2);
+    assert.equal(g.stagedMelds[0].length, 2);
+
+    const res = g.unstageMelds(0);
+    assert.ok(res.ok, res.msg);
+    assert.equal(res.returned, 6);
+    assert.equal(g.stagedMelds[0].length, 0, 'staged deve ficar vazio');
+    assert.equal(g.hands[0].length, 8, 'todas as cartas voltam à mão');
+    assert.equal(g.firstMeldPenalty[0], false, 'recolher não penaliza');
+    assert.equal(g.hasFirstMeld[0], false, 'recolher não conta como primeira baixa');
+  });
+
+  test('19. Após recolher, o jogador pode baixar novamente e confirmar normalmente', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const aces = [card('A', '♠', 1), card('A', '♥', 1), card('A', '♦', 1), card('A', '♣', 1)];
+    const kings = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1), card('K', '♣', 1)];
+    const junk = [card('3', '♠', 1), card('4', '♠', 1)];
+    g.hands[0] = [...aces, ...kings, ...junk];
+    fakeDraw(g, 0);
+
+    assert.ok(
+      g.stageMeld(
+        0,
+        aces.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(g.unstageMelds(0).ok);
+
+    // baixa novamente após reorganizar
+    assert.ok(
+      g.stageMeld(
+        0,
+        aces.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(
+      g.stageMeld(
+        0,
+        kings.map((c) => c.id),
+      ).ok,
+    );
+    const res = g.confirmStagedMelds(0);
+    assert.ok(res.ok, res.msg);
+    assert.ok(g.hasFirstMeld[0]);
+    assert.equal(g.melds[0].length, 2);
+  });
+
+  test('20. Recolher sem cartas em espera retorna erro', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    fakeDraw(g, 0);
+    const res = g.unstageMelds(0);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /espera/i);
+  });
+
+  test('21. Recusa recolher se não for a vez do jogador', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const trinca = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    g.hands[0] = [...trinca, card('3', '♠', 1), card('4', '♠', 1)];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        trinca.map((c) => c.id),
+      ).ok,
+    );
+
+    const res = g.unstageMelds(1);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /vez/i);
+  });
+
+  test('22. Recusa recolher antes de comprar', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const trinca = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    g.hands[0] = [...trinca, card('3', '♠', 1), card('4', '♠', 1)];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        trinca.map((c) => c.id),
+      ).ok,
+    );
+    g.drawnThisTurn = false;
+
+    const res = g.unstageMelds(0);
+    assert.ok(!res.ok);
+    assert.match(res.msg, /comprar/i);
+  });
+
+  test('23. Preserva penalidade já existente ao recolher (não a limpa)', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    g.firstMeldPenalty[0] = true;
+    const trinca = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    g.hands[0] = [...trinca, card('3', '♠', 1), card('4', '♠', 1)];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        trinca.map((c) => c.id),
+      ).ok,
+    );
+
+    assert.ok(g.unstageMelds(0).ok);
+    assert.equal(g.firstMeldPenalty[0], true, 'penalidade anterior permanece');
+  });
+
+  test('24. Cartas recolhidas ficam visíveis no estado para todos', () => {
+    const g = setupGame();
+    g.scores[0] = 1000;
+    const trinca = [card('K', '♠', 1), card('K', '♥', 1), card('K', '♦', 1)];
+    g.hands[0] = [...trinca, card('3', '♠', 1), card('4', '♠', 1)];
+    fakeDraw(g, 0);
+    assert.ok(
+      g.stageMeld(
+        0,
+        trinca.map((c) => c.id),
+      ).ok,
+    );
+    assert.ok(g.unstageMelds(0).ok);
+
+    const stateFor1 = g.getStateFor(1);
+    assert.equal(stateFor1.stagedMelds[0].length, 0, 'jogador 1 não vê mais cartas em espera');
+  });
+});

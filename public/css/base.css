@@ -150,6 +150,14 @@ body {
   background: rgba(192, 57, 43, 0.12);
   border-color: #e74c3c;
 }
+.btn-action.recolher-melds {
+  border-color: rgba(201, 168, 76, 0.5);
+  color: #e8c877;
+}
+.btn-action.recolher-melds:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.14);
+  border-color: rgba(201, 168, 76, 0.8);
+}
 .btn-action.sort-hand {
   border-color: rgba(120, 180, 255, 0.35);
   color: #a8d4ff;

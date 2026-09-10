@@ -601,12 +601,16 @@ export function updateButtons(gs) {
 
   const btnPlayMelds = document.getElementById('btn-play-melds');
   const btnConfirm = document.getElementById('btn-confirm-melds');
+  const btnUnstage = document.getElementById('btn-unstage-melds');
   const btnCancel = document.getElementById('btn-cancel-melds');
 
-  // During staging: "Baixar" stays active (add more melds), "Confirmar" appears, "Cancelar" hidden
+  // During staging: "Baixar" stays active (add more melds), "Confirmar" + "Recolher cartas" appear
   btnPlayMelds.disabled = !isMyTurn || !drawn || state.selectedCards.length < 3;
   btnConfirm.classList.toggle('hidden', !isStaging);
   btnConfirm.disabled = !isStaging;
+  // "Recolher cartas": devolve os jogos em espera à mão para reorganizar antes de confirmar
+  btnUnstage.classList.toggle('hidden', !isStaging);
+  btnUnstage.disabled = !isStaging || !isMyTurn;
   btnCancel.classList.add('hidden'); // cancel removed — staging is server-side and irreversible
 
   document.getElementById('btn-discard').disabled = !isMyTurn || !drawn || isStaging;

@@ -722,6 +722,23 @@ class Game {
     return { ok: true, meldTypes: staged.map((m) => m.type) };
   }
 
+  // Recolher cartas em espera (buraco — primeira baixa): devolve todos os jogos
+  // em espera para a mão, sem penalidade, para o jogador reorganizar e baixar de novo.
+  // Não encerra o modo baixa — o jogador ainda precisa baixar e confirmar para finalizar.
+  unstageMelds(playerIndex) {
+    if (!this._isCurrentPlayer(playerIndex)) return { ok: false, msg: 'Não é sua vez.' };
+    if (!this.drawnThisTurn) return { ok: false, msg: 'Você precisa comprar antes de recolher.' };
+
+    const staged = this.stagedMelds[playerIndex];
+    if (!staged || staged.length === 0) return { ok: false, msg: 'Nenhuma carta em espera para recolher.' };
+
+    const allCards = staged.flatMap((m) => m.cards);
+    this.hands[playerIndex] = [...this.hands[playerIndex], ...allCards];
+    this.stagedMelds[playerIndex] = [];
+
+    return { ok: true, returned: allCards.length };
+  }
+
   // Descartar e encerrar turno
   discard_(playerIndex, cardId) {
     if (this.status !== 'playing') return { ok: false, msg: 'A rodada já foi encerrada.' };
