@@ -1619,6 +1619,32 @@
     flex-shrink: 1;
   }
 
+  /* Reordena os botões no mobile: Baixar, Ordenar (naipe/número), Descartar.
+     Evita miss-click entre Baixar e Descartar, que ficavam lado a lado.
+     display:contents "achata" os grupos para que o order dos botões valha
+     em relação a toda a action-bar, não só dentro de cada grupo. */
+  #action-bar .action-group {
+    display: contents;
+  }
+  #action-bar .action-sep {
+    display: none;
+  }
+  #action-bar #btn-play-melds {
+    order: 1;
+  }
+  #action-bar #btn-confirm-melds,
+  #action-bar #btn-unstage-melds,
+  #action-bar #btn-cancel-melds {
+    order: 2;
+  }
+  #action-bar #btn-sort-hand,
+  #action-bar #btn-sort-rank {
+    order: 3;
+  }
+  #action-bar #btn-discard {
+    order: 4;
+  }
+
   /* Push table up so fixed action bar doesn't cover the hand */
   #screen-game {
     padding-bottom: calc(54px + env(safe-area-inset-bottom, 6px));
